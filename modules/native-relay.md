@@ -1,5 +1,5 @@
 ---
-description: Streams Prices and Liquidity to Existing Channels.
+description: Enables Direct-Access for Professional Market Makers
 ---
 
 # Native Relay

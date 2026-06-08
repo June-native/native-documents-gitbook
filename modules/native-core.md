@@ -1,5 +1,5 @@
 ---
-description: Matches Orders with High-Performance, On-chain CLOB
+description: Matches Orders in High-Performance, On-chain CLOB
 ---
 
 # Native Core
@@ -14,6 +14,7 @@ It is built for traders who want centralized-exchange-grade performance with ful
 
 #### Explore Native Core
 
-Check markets and txs on Native Core:
-
 {% embed url="https://app.native.org/explorer" %}
+
+* 50ms block finality time
+* Max 1M TPS

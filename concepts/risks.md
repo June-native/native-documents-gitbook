@@ -6,7 +6,7 @@ Although our smart contracts have undergone audits by third-party firms, it is t
 
 Mitigation:
 
-* Engaging multiple professional third-party firms to audit smart contracts significantly mitigates the risk of vulnerabilities. Audit reports are available \[here].
+* Engaging multiple professional third-party firms to audit smart contracts significantly mitigates the risk of vulnerabilities. Audit reports are available [here](../resources/audits.md).
 * Additionally, we implement a bug bounty program to incentivize individuals to identify vulnerabilities in our live code, serving as an additional measure to filter out potential issues.
 * We meticulously evaluate any new tokens or utilities that we choose to list and utilize, collaborating exclusively with those that have undergone auditing and demonstrated a proven track record of robust security.
 

@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # CrossChain Swap API
 
 ## Overview
