@@ -2,11 +2,9 @@
 
 ## Overview
 
-The Native Bridge API enables seamless cross-chain token bridging and swapping across multiple blockchain networks, utilising the same reliable Native Swap Engine and Native Credit Pool for superb pricing and performance.
+The Native Relay Bridge API enables seamless cross-chain token bridging and swapping across multiple blockchain networks, utilising the same reliable Native Core and Native Pool for superb pricing and performance.
 
 ## Endpoints
-
-Our API enables users to fetch cross-chain bridge quotes, generate transaction data for executing on-chain bridge transactions via Native's infrastructure, and manage their bridging lifecycle. The intelligent routing algorithm ensures users receive the best possible market prices for optimal cross-chain trading outcomes.
 
 * **Indicative quote**: Use `GET /bridge/indicative-quote` to obtain fast, indicative quotes for bridging tokens across chains. This endpoint provides pricing information without generating calldata, making it ideal for displaying estimated rates to users before they commit to a transaction.
 * **Firm quote**: Use `GET /bridge/firm-quote` to obtain executable transaction data necessary to initiate cross-chain bridge transactions. This endpoint returns the complete calldata, target contract address, and all necessary parameters for executing the bridge transaction on the source chain.

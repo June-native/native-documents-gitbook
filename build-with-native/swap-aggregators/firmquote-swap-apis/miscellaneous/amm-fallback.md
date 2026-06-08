@@ -4,7 +4,9 @@
 Only supported in version 4 and above
 {% endhint %}
 
-Native's own liquidity provides remarkable depth and competitiveness for major assets like WETH and WBTC. However, to use the Swap API in wallets or swap widgets, Native offers an AMM fallback option to support trading of nearly any tokens.
+Native Core liquidity provides remarkable depth and competitiveness for major assets like WETH and WBTC.&#x20;
+
+However, to use the Native Relay API in wallets or swap widgets, Native offers an AMM fallback option to support trading of nearly any tokens.
 
 To enable this feature for your API key, contact Native team members through an existing channel.
 

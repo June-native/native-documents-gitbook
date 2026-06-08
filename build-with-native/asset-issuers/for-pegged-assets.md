@@ -2,13 +2,13 @@
 
 A [prime example](https://medium.com/@official_42951/pioneering-a-new-era-of-liquidity-stakestone-x-native-90d401002319) is Native's collaboration with StakeStone, where we successfully solved the liquidity issue for STONE.
 
-Native V2 ensures tokens like **STONE** achieve sufficient liquidity to be accepted by leading DeFi protocols including lending protocols, yield trading platform and oracles. By building robust on-chain liquidity through its credit pool model, Native V2 unlocks the following benefits:
+Together, Native Core, Relay and Pool ensures tokens like **STONE** achieve sufficient liquidity to be accepted by leading DeFi protocols including lending protocols, yield trading platform and oracles. By building robust on-chain liquidity through its credit pool model, Native unlocks the following benefits:
 
 #### **Effective LP Incentives**
 
-* By leveraging liquidity in the credit pool, Native V2 boosts **TVL**, demonstrating a token’s viability and security.
-* With [Liquidity Paring](../../legacy-v2/liquidity-pairing.md) mechanism and [single-sided LP](../../legacy-v2/single-sided-liquidity-pools.md) provision, asset issuers save half of the cost of AMM LP incentives on Native.
-* Example: Tokens with **$10M+** [**Total Available Liquidity**](../../legacy-v2/total-available-liquidity.md) are more likely to meet benchmarks of lending protocols like **Morpho**.
+* By leveraging liquidity in the credit pool, Native boosts **TVL**, demonstrating a token’s viability and security.
+* With single-sided LP provision, asset issuers save half of the cost of AMM LP incentives on Native.
+* Example: Tokens with **$10M+** **Total Available Liquidity** are more likely to meet benchmarks of lending protocols like **Morpho**.
 
 #### **Trading Volume**
 
@@ -20,7 +20,7 @@ Native V2 ensures tokens like **STONE** achieve sufficient liquidity to be accep
 * With a contractual rate, PMM network on Native can ensure a customized pricing range for the listed asset.
 * Example: Tokens within **0.5% slippage** are more likely to meet the benchmarks of yield trading platform like **Pendle**.
 
-However, this is just one way to collaborate with Native V2 — we're open to exploring other partnership opportunities as well.
+However, this is just one way to collaborate with Native — we're open to exploring other partnership opportunities as well.
 
 {% hint style="info" %}
 Fill out this [form](https://docs.google.com/forms/d/e/1FAIpQLSdyOZGlRzB9A31qh-ryrqdHlSpJDPz-lTDqZ8t40e19WHQyTw/viewform), and the Native team will be in touch.

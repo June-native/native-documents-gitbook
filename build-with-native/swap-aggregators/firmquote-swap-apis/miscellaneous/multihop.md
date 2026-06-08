@@ -1,6 +1,6 @@
 # Multihop
 
-Swap API and Router support multihop between all trading pairs in `/orderbook` return, making swapping with Native liquidity more versatile.
+Native Relay API and Router support multihop between all trading pairs in `/orderbook` return, making swapping with Native liquidity more versatile.
 
 To enable, add `allow_multihop=true` when requesting `/indicative-quote` or `/firm-quote`.
 

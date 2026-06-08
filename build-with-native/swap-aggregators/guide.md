@@ -1,17 +1,8 @@
 # Guide
 
-## About Swap API
+The Native Relay API connects you with Native Core's industry-grade liquidity and pricing, via familiar RFQ format, powered by Native Relay — Mode RFQ.
 
-The Swap API connects you with Native's Credit Pool liquidity and competitive quotes, powered by Native Swap Engine.
-
-Native V2 supports two types of orders:
-
-* [auto-sign-orders.md](../../legacy-v2/auto-sign-orders.md "mention")
-* [firm-quote.md](../../concepts/firm-quote.md "mention")
-
-Each order type will have their own corresponding Swap API endpoints.
-
-## Set up a Swap using FirmQuote APIs
+## Set up a Swap using Native Relay APIs
 
 ### 1. Get an API key
 
@@ -22,7 +13,7 @@ To start testing, please fill out the [form](https://forms.gle/12LaH1JQyhZqBHqw9
 The latest prices for each pair Native quotes on a specified chain are published in an orderbook.
 
 {% hint style="info" %}
-Our orderbook is updated every second with the latest prices quoted by our partners
+Our RFQ orderbook is updated every second with the latest prices from Native Core.
 {% endhint %}
 
 Here's how to retrieve the orderbook:

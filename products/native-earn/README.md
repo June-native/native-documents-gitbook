@@ -1,6 +1,15 @@
-# Native Earn
+# Native Earn Program
 
-Native enables liquidity providers to earn steady yields through single-sided liquidity provisioning. Within Native's system, there are two primary avenues for earning rewards: Flexible Earn and the Fixed-Term Earn product, all powered by Native credit pool. Native offers LPs a permissionless way to tap into best-in-class yield opportunities in single-sided liquidity provision on-chain, without the need to actively manage positions.
+Native Pool enables liquidity providers to earn steady yields through single-sided liquidity provisioning.&#x20;
+
+Within Native's system, there are two primary avenues for earning rewards:&#x20;
+
+* Flexible Earn
+* Fixed-Term Earn&#x20;
+
+All powered by Native Pool.&#x20;
+
+Native offers LPs a permissionless way to tap into best-in-class yield opportunities in single-sided liquidity provision on-chain, without the need to actively manage positions.
 
 ### Fixed-Term Earn Product
 

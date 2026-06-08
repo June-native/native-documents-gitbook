@@ -42,7 +42,7 @@
 
 ## Build with Native
 
-* [Swap Aggregators](build-with-native/swap-aggregators/README.md)
+* [DEX Aggregators](build-with-native/swap-aggregators/README.md)
   * [Guide](build-with-native/swap-aggregators/guide.md)
   * [FirmQuote Swap APIs](build-with-native/swap-aggregators/firmquote-swap-apis/README.md)
     * [GET Orderbook](build-with-native/swap-aggregators/firmquote-swap-apis/get-orderbook.md)

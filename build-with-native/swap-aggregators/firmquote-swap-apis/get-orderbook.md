@@ -1,7 +1,7 @@
 # GET Orderbook
 
 {% hint style="info" %}
-RFQ liquidity being super efficient, often moves rapidly to meet the market mid-price.
+Native Relay liquidity being super efficient, often moves rapidly to meet the market mid-price.
 
 Therefore it is common for one side of the liquidity to be depleted completely. Or, the available liquidity switches from one direction to the opposite.
 

@@ -2,7 +2,7 @@
 
 ### Flexible Input Amount
 
-Since AMM swaps’ output amount is only fixed upon onchain execution, Native RFQ is designed to handle flexible input (+10% or -50% of the original quoted input amount) to felicitate multi-hop routing with AMMs or other liquidity sources.
+Since AMM swaps’ output amount is only fixed upon onchain execution, Native Relay RFQ is designed to handle flexible input (+10% or -50% of the original quoted input amount) to felicitate multi-hop routing with AMMs or other liquidity sources.
 
 You may also use this feature to perform: over-quote then under-fill in some solving cases.
 
