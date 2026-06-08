@@ -1,13 +1,13 @@
 # Slippage
 
-The slippage parameter is required for both firm quotes and auto-sign orders.
+Slippage is the difference between the expected price of a swap and the price at which it actually executes. A slippage parameter sets the maximum tolerated difference before a swap is rejected.
 
-Slippage is applied in the following scenarios:
+For swaps routed through [Native Relay](../modules/native-relay.md), slippage is applied in the following scenarios:
 
 1. When external liquidity is aggregated for a swap.
-2. When executing auto-sign orders.
+2. When executing against streamed order-book levels.
 
 If the slippage limit is exceeded during a swap:
 
-* **External liquidity**: The **Native Swap Engine** contract will revert the transaction on-chain, indicating insufficient liquidity.
-* **Auto-sign orders**: An error will be returned by the **Native Swap Engine** backend API, indicating that the most recent orderbook levels do not meet the required quote.
+* **External liquidity**: the on-chain swap contract reverts the transaction, indicating insufficient liquidity.
+* **Order-book execution**: an error is returned by the backend API, indicating that the most recent order-book levels do not meet the required quote.
