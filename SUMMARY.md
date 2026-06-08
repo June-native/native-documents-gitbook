@@ -16,12 +16,12 @@
 ## CONCEPTS
 
 * [CLOB](concepts/central-limit-orderbook.md)
-* [Order Types & Time in Force](concepts/order-types-and-time-in-force.md)
-* [Markets, Assets & Decimals](concepts/markets-and-assets.md)
-* [On-chain Verifiability](concepts/on-chain-verifiability.md)
 * [Liquidity Relaying](concepts/integration-modes.md)
+* [On-chain Verifiability](concepts/on-chain-verifiability.md)
+* [Non-custodial Accounts](concepts/agents-and-accounts.md)
+* [Markets, Assets & Decimals](concepts/markets-and-assets.md)
+* [Order Types](concepts/order-types-and-time-in-force.md)
 * [Unified Balance](concepts/unified-balance.md)
-* [Agents & Accounts](concepts/agents-and-accounts.md)
 * [Deposit & Withdraw](concepts/deposit-and-withdraw.md)
 * [Market-Responsive Pricing](concepts/market-responsive-pricing.md)
 * [Firm Quote](concepts/firm-quote.md)

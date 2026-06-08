@@ -1,5 +1,5 @@
 ---
-description: The Integrator SDK/API That Streams Core Prices and Routes Orders into Native
+description: Streams Prices and Liquidity to Existing Channels.
 ---
 
 # Native Relay

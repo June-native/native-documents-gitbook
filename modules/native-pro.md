@@ -1,5 +1,5 @@
 ---
-description: The Direct-Access Layer for Professional Market Makers
+description: Direct-Access for Professional Market Makers
 ---
 
 # Native Pro

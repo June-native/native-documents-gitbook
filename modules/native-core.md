@@ -1,5 +1,5 @@
 ---
-description: The On-Chain, High-Performance CLOB Where Pricing and Matching Are Finalized
+description: High-Performance, On-chain CLOB
 ---
 
 # Native Core

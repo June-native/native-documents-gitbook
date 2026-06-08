@@ -1,5 +1,5 @@
 ---
-description: EVM Vaults That Custody Assets and Enforce Settlement
+description: Hosts Assets and Enforce Settlement
 ---
 
 # Native Pool
