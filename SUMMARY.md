@@ -42,7 +42,7 @@
 
 ## Build with Native
 
-* [Wallets & Aggregators](build-with-native/swap-aggregators/README.md)
+* [Wallets, Aggregators & Solvers](build-with-native/swap-aggregators/README.md)
   * [Guide](build-with-native/swap-aggregators/guide.md)
   * [FirmQuote Swap APIs](build-with-native/swap-aggregators/firmquote-swap-apis/README.md)
     * [GET Orderbook](build-with-native/swap-aggregators/firmquote-swap-apis/get-orderbook.md)
