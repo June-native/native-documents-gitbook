@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # Auto LP
 
 **Auto LP** is an automated, transparent market-making service that **bootstraps order-book depth** for tokens on [Native Core](../modules/native-core.md) from day one — solving the cold-start liquidity problem for new markets without requiring a dedicated market maker.

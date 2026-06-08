@@ -1,19 +1,20 @@
+---
+hidden: true
+---
+
 # Deposit & Withdraw
 
-**Deposit & Withdraw** is the pipeline that keeps a user's [Unified Balance](unified-balance.md) on [Native Core](../modules/native-core.md) in sync with their assets on external chains. It is enforced by [Native Pool](../modules/native-pool.md) vault contracts together with an independent **signer network** and an accounting service.
+**Deposit & Withdraw** is the pipeline that helps user start trading directly on Native Core. It is enforced by Native Pool vault contracts together with an independent accounting service.
 
 ### Key Components
 
-* **Vault contract (EVM):** accepts user deposits, locks assets in the vault, and releases them on withdrawal.
-* **Signer network:** a set of independent signers that co-confirm deposit crediting on Native Core and co-sign withdrawal releases on the external chain. Multi-party agreement is required before any funds move.
-* **Accounting service:** detects on-chain events, submits the corresponding balance transactions on Native Core, and waits for safe finality before finalizing.
+* **Vault contract (Public Networks):** accepts user deposits, locks assets in the vault, and releases them on withdrawal.
+* **Accounting service:** an independent, multi-node, distributed service to help processing the deposit and withdraws.
 
-### Deposit Flow
+### Deposit and Withdraw Flow
 
-1. The user deposits on a source chain; the vault locks the funds and emits an event.
-2. The accounting service **provisionally credits** the user's unified balance on Native Core.
-3. Once the source chain reaches **safe finality**, signers verify the state and the service **finalizes** the credit.
-4. If confirmation fails (e.g. a reorg), the provisional credit is **revoked**.
+1. The user deposits on a source chain.
+2. The accounting service credits user on Native Core.
 
 ### Withdrawal Flow
 

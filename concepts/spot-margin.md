@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # Spot Margin
 
 **Spot Margin** is how professional market makers onboard and trade on [Native Core](../modules/native-core.md) via [Native Pro](../modules/native-pro.md) — posting collateral and trading against **credited available margin**, without first running the full deposit/withdraw pipeline for every trade.

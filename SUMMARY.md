@@ -15,21 +15,21 @@
 
 ## CONCEPTS
 
-* [Central Limit Order Book](concepts/central-limit-orderbook.md)
+* [CLOB](concepts/central-limit-orderbook.md)
+* [Liquidity Relaying](concepts/integration-modes.md)
 * [Unified Balance](concepts/unified-balance.md)
-* [Integration Modes](concepts/integration-modes.md)
+* [Deposit & Withdraw](concepts/deposit-and-withdraw.md)
 * [Market-Responsive Pricing](concepts/market-responsive-pricing.md)
 * [Firm Quote](concepts/firm-quote.md)
 * [Spot Margin](concepts/spot-margin.md)
 * [Auto LP](concepts/auto-lp.md)
-* [Deposit & Withdraw](concepts/deposit-and-withdraw.md)
-* [Swap Fees](concepts/swap-fees.md)
+* [Fees](concepts/swap-fees.md)
 * [Slippage](concepts/slippage.md)
 * [Risks](concepts/risks.md)
 
 ## Products
 
-* [Native Earn](products/native-earn/README.md)
+* [Native Earn Program](products/native-earn/README.md)
   * [Native Earn FAQ](products/native-earn/native-earn-faq.md)
 * [Native Liquidity Provisioning](products/native-liquidity-provisioning.md)
 

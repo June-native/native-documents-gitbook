@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # Market-Responsive Pricing
 
 Native pricing is **Market-Responsive**: market makers price each token accurately and promptly based on market risk, conditions, and inventory exposure. Because of this, quotes reflect liquidity sourced from on-chain DEXs, CEXs, and/or direct redemption channels — ultimately responding to the real market rather than a static curve.

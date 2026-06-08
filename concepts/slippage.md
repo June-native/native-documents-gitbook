@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # Slippage
 
 Slippage is the difference between the expected price of a swap and the price at which it actually executes. A slippage parameter sets the maximum tolerated difference before a swap is rejected.
