@@ -1,5 +1,5 @@
 ---
-description: Direct-Access for Professional Market Makers
+description: Connects Institutional Players to Native Core
 ---
 
 # Native Pro
