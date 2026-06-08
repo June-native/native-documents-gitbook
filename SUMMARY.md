@@ -119,6 +119,18 @@
   * [Transaction Signing](build-with-native/native-core/transaction-signing.md)
   * [Decimals Units](build-with-native/native-core/decimals-units.md)
 
+## Resources
+
+* [Addresses](resources/addresses.md)
+* [Networks](resources/networks.md)
+* [V1 Addresses](resources/v1-addresses.md)
+* [Audits](resources/audits.md)
+* [Github](https://github.com/Native-org)
+* [Analytics](resources/analytics.md)
+* [Business Source License](resources/business-source-license.md)
+* [Media Kit](resources/media-kit.md)
+* [Contact](resources/contact.md)
+
 ## Legacy (V2)
 
 * [About Native V2](legacy-v2/about-native-v2.md)
@@ -137,15 +149,3 @@
   * [Collateral Factor](legacy-v2/credit-based-swap/collateral-factor.md)
   * [PMM Credit](legacy-v2/credit-based-swap/pmm-credit.md)
   * [Settlement and Liquidation](legacy-v2/credit-based-swap/settlement-and-liquidation.md)
-
-## Resources
-
-* [Addresses](resources/addresses.md)
-* [Networks](resources/networks.md)
-* [V1 Addresses](resources/v1-addresses.md)
-* [Audits](resources/audits.md)
-* [Github](https://github.com/Native-org)
-* [Analytics](resources/analytics.md)
-* [Business Source License](resources/business-source-license.md)
-* [Media Kit](resources/media-kit.md)
-* [Contact](resources/contact.md)

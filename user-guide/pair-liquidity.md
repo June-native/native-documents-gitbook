@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # Pair Liquidity
 
 **To Add and Pair Liquidity on Native:**

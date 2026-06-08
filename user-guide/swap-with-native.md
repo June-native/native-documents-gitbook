@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # Swap with Native
 
 **To Swap on Native:**

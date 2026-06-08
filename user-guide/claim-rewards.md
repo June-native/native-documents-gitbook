@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # Claim Rewards
 
 **To Claim Rewards on Native:**

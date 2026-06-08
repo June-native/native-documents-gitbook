@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # Add Liquidity
 
 #### **To Add Single-Sided Liquidity on Native:**
