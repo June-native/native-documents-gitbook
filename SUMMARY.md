@@ -113,7 +113,7 @@
 * [Dashboards](build-with-native/dashboards/README.md)
   * [CoinGecko - Native V1](build-with-native/dashboards/coingecko-native-v1.md)
   * [CMC Exchange API - Native V1](build-with-native/dashboards/cmc-exchange-api-native-v1.md)
-* [Native Core (Market Makers)](build-with-native/native-core/README.md)
+* [Market Makers](build-with-native/native-core/README.md)
   * [POST /trade](build-with-native/native-core/post-trade.md)
   * [POST /info](build-with-native/native-core/post-info.md)
   * [Transaction Signing](build-with-native/native-core/transaction-signing.md)
