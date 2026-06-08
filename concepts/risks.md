@@ -10,7 +10,11 @@ Mitigation:
 * Additionally, we implement a bug bounty program to incentivize individuals to identify vulnerabilities in our live code, serving as an additional measure to filter out potential issues.
 * We meticulously evaluate any new tokens or utilities with which we choose to list and utilize, collaborating exclusively with those that have undergone auditing and demonstrated a proven track record of robust security.
 
-## Native Credit Pool market risk
+## Credit-pool liquidity market risk
+
+{% hint style="info" %}
+The risks in this section apply to the credit-pool / RFQ liquidity model, which is now delivered through [Native Relay](../modules/native-relay.md). For background on the underlying mechanics, see the [Legacy (V2)](../legacy/about-native-v2.md) section — including [Total Available Liquidity](../legacy/concepts/total-available-liquidity.md), [Health Ratio](../legacy/concepts/health-ratio.md), and [Base and Listed Assets](../legacy/concepts/base-and-listed-assets.md).
+{% endhint %}
 
 ### Extremely Pricing Volatility for Base and Listed Tokens
 

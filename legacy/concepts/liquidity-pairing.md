@@ -6,6 +6,6 @@ Additionally when adding liquidity for base assets, LPs also have the option to 
 
 Refer to this guide for details:
 
-{% content-ref url="../user-guide/pair-liquidity.md" %}
-[pair-liquidity.md](../user-guide/pair-liquidity.md)
+{% content-ref url="../../user-guide/pair-liquidity.md" %}
+[pair-liquidity.md](../../user-guide/pair-liquidity.md)
 {% endcontent-ref %}

@@ -33,7 +33,7 @@ Swappers can access the latest information by querying the orderbook endpoint an
 }
 ```
 
-For further details about the orderbook endpoint, refer to the following link: [Swap API](../build-with-native/swap-aggregators/firmquote-swap-apis/), [PMM API](../build-with-native/market-makers/native-market-makers-api/)
+For further details about the orderbook endpoint, refer to the following link: [Swap API](../../build-with-native/swap-aggregators/firmquote-swap-apis/), [PMM API](../../build-with-native/market-makers/native-market-makers-api/)
 
 **Note**: The price levels provided are non-cumulative. For example, to execute a trade of 30 ETH for USDT, the price would be calculated as:\
 `(0.0001 * 3213.12345 + 12.75786733219471 * 3210.15 + (30 - 0.0001 - 12.75786733219471) * 3210.12) / 30 = 3,210.13276787883`
