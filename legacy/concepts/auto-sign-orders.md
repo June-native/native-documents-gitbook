@@ -4,7 +4,7 @@ Native V2 introduces **auto sign orders**, providing lower latency and higher su
 
 ### **The Swap Process**
 
-<figure><img src="../.gitbook/assets/Auto Sign.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/Auto Sign.png" alt=""><figcaption></figcaption></figure>
 
 1. Swappers query the `/orderbook` endpoint to gather pricing and depth information.
 2. Swappers submit the swap order to the auto-sign endpoint with parameters such as the amount, token addresses, and the required `permit2` signature for the Native Swap Engine.

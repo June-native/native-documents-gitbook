@@ -6,7 +6,7 @@ The Swap API connects you with Native's Credit Pool liquidity and competitive qu
 
 Native V2 supports two types of orders:
 
-* [auto-sign-orders.md](../../concepts/auto-sign-orders.md "mention")
+* [auto-sign-orders.md](../../legacy/concepts/auto-sign-orders.md "mention")
 * [firm-quote.md](../../concepts/firm-quote.md "mention")
 
 Each order type will have their own corresponding Swap API endpoints.

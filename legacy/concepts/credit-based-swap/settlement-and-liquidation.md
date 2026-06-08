@@ -10,7 +10,7 @@ Assuming WETH price remain at 3600 USD, no credits from collateral is now requir
 
 #### Settlement
 
-<figure><img src="../../.gitbook/assets/PMM Settlement.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/PMM Settlement.png" alt=""><figcaption></figcaption></figure>
 
 1. **PMM** now wants to settle the short position
 2. 1 WETH repaid by the **PMM** to Credit Pool
@@ -21,11 +21,11 @@ Assuming WETH price remain at 3600 USD, no credits from collateral is now requir
 
 ### Liquidation
 
-<figure><img src="../../.gitbook/assets/PMM Liquidation.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../../.gitbook/assets/PMM Liquidation (1).png" alt=""><figcaption></figcaption></figure>
 
 1. Assume **PMM** did not settle the position and initially provided 100 USDC as collateral for 100 USD credit.
 2. The price of WETH suddenly increased from 3600 USD to 3700 USD.
 3. This creates a shortfall of 100 USD between the long and short positions, which is now no longer covered by the collateral, resulting in 0 credit.
 4. The liquidation process triggers, and a whitelisted liquidator will call the **Native Swap Engine** to request a liquidation with all the necessary information.
 5. Once the liquidation is approved and signed, the liquidator can execute the transaction on-chain.
-6. Liquidator will repay 1 WETH to settle the short position, while claiming 3600 USDC from the long position, along with 100 USDC from the **PMM** collateral.
+6. Liquidator will repay 1 WETH to settle the short position, while claiming 3600 USDC from the long position, along with 100 USDC from the **PMM** collateral.&#x20;
