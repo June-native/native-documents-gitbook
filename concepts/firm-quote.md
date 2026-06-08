@@ -1,6 +1,6 @@
 # Firm Quote
 
-A **firm quote** is a committed, executable price returned with signed calldata for on-chain execution. It is the basis of [Native Relay](../modules/native-relay.md)'s [RFQ integration mode](integration-modes.md): an integrator requests a quote via the `/firm-quote` endpoint and executes the returned calldata on-chain.
+One approach to execute a swap via Native is by using the `/firm-quote` endpoint, which provides a firm quote along with signed calldata for on-chain execution.
 
 For further details, refer to the following link:
 
