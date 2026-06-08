@@ -1,4 +1,4 @@
-# DEX Aggregators
+# Wallets, Aggregators & Solvers
 
 Click on the cards below for:
 
@@ -9,8 +9,4 @@ Click on the cards below for:
 {% content-ref url="crosschain-swap-api/" %}
 [crosschain-swap-api](crosschain-swap-api/)
 {% endcontent-ref %}
-
-{% hint style="success" %}
-Stay informed with real-time system status updates [here](https://native.betteruptime.com/) on performance, upgrades, and maintenance to ensure seamless and uninterrupted relaying operations.
-{% endhint %}
 
