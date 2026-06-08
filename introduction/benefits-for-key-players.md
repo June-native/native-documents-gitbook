@@ -7,7 +7,7 @@ coverY: 0
 
 {% tabs %}
 {% tab title="Traders" %}
-Get a CEX-grade experience with full on-chain visibilities, powered by **Native Core:**
+Get a CEX-grade experience with full on-chain visibilities:
 
 * **High-performance CLOB execution:** Real order-book trading with limit and market orders, deterministic order matching, and sub-second finality.
 * **On-chain transparency:** Every order, match, and balance update is publicly auditable — no opaque front-running.
@@ -23,14 +23,14 @@ Bootstrap real order-book liquidity and price discovery:
 {% endtab %}
 
 {% tab title="Market Makers" %}
-Plug directly into Native Core via direct API access, powered by **Native Pro:**
+Plug directly into Native Core via direct API access:
 
 * **Direct, exchange-grade access:** Get real-time bid/ask and place maker orders on the Native Core CLOB through the Native Pro direct-access API layer.
 * **Capital-efficient:** Onboard via credit margin — start making instantly without maintaining large, static inventories.
 {% endtab %}
 
 {% tab title="Wallets, Aggregators & Solvers" %}
-Connect your order flow to Native Core liquidity through **Native Relay**:
+Connect your order flow to Native Core liquidity:
 
 * **Backward-compatible distribution:** Integrate via mode RFQ or mode intent without forcing end users to change behavior.
 * **Best execution, high success rate:** Access Core prices, and route trades into deep, transparent liquidity with low latency.
