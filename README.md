@@ -26,7 +26,7 @@ layout:
 
 # What is Native
 
-**Native** is a **N**on-custodial, **A**utonomous **T**rading **I**nfrastructure for **V**alue **E**xchange.
+Native is a Non-custodial, Autonomous Trading Infrastructure for Value Exchange (NATIVE).
 
 It is the first vertically integrated liquidity stack that **decouples pricing logic from asset settlement**: a sovereign, on-chain matching engine provides high-performance price discovery and order matching, while permissionless vaults host assets for settlement across different chains.
 
