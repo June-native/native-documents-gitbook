@@ -4,18 +4,18 @@ description: Hosts Assets and Enforces Settlement
 
 # Native Pool
 
-Native Pool handles the custody of LP assets and enforces settlement across various public blockchains (EVM).
+Native Pool hosts LP assets and enforces settlement across various chains (EVM).
 
 It gives users a single, unified entry point to start earning trading fees or LPing with Native Core:
 
-* **Lend Based:** the pool model is designed so liquidity providers face minimal market risk while their capital is actively utilized. Assets are borrowed and returned exactly as deployed, along with accrued yield.
-* **Single Token LP:** with a single-sided LP model, liquidity providers are no longer constrained by pair-based deposits or exposed to impermanent loss.&#x20;
+* **Lend Based:** the pool model is designed so liquidity providers face minimal risk while their capital is actively utilized.
+* **Single Token LP:** with a single-sided LP model, liquidity providers are no longer constrained by pair-based deposits or exposed to impermanent loss.
 
-#### Currently Powering
+#### Use case
 
 Native Pool is currently powering:
 
-* "Native Earn Program" - flexible or fixed term, single token Earn product.
+* "Native Earn Program" - flexible and fixed term, single token Earn product.
 * "Native Liquidity Provisioning" - versatile LP model for asset issuers to bootstrap liquidity.
 
 {% content-ref url="../products/native-earn/" %}

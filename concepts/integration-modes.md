@@ -1,24 +1,26 @@
 # Liquidity Relaying
 
-Native Core liquidity is accessible through Native Relay in two integration modes, each suited to a different venue type and user flow. Both are **backward-compatible** with how existing partners already operate.
-
-#### Mode — Intent
-
-The user commits an intent on a **public network** — through the Native UI or an external intent entry point.
-
-* Native Relay (Intent adapter) detects the commitment, executes the trade on Native Core, and confirms.
-* The adapter then realizes and pays the user on the public network.
-* Used by meta-aggregators, intent platforms and solvers, and bridge UIs, where Native Core appears as a standalone provider or solver.
+Native Core liquidity is accessible through Native Relay in two integration modes, each suited to a different venue type and user flow. Both are compatible with how existing on-chain swap infrastructures operate.
 
 #### Mode — RFQ
 
-The user requests a **firm quote** on a public network.
+The user requests firm quotes on public networks.
 
-* Native Relay (RFQ adapter) generates firm-quote calldata based on latency-adjusted Native Core CLOB liquidity.
-* Once the user confirms and the trade settles on the public network, the adapter mirrors the trade on Native Core.
-* Lowest-friction path for existing DEX aggregators — no taker-side flow change. This is also where the previous V2 RFQ model lives.
+* Native Relay generates firm-quote calldata based on Native Core liquidity.
+* Lowest-friction for existing DEX aggregators, wallets, and solvers.
+
+#### Mode — Intent
+
+The user commits an intent on public networks.
+
+* Native Relay executes the trade on Native Core, and settles with the user on public network.
+* Ideal for meta-aggregators, intent platforms, and cross-chain UI.
+
+#### Mode — Direct
+
+* Users deposit and trade directly on Native Core.
+* Ideal for users who want full CLOB access with all the available order types. (limit, market)
 
 #### Choosing a Mode
 
-<table><thead><tr><th width="352.72265625">Partner type</th><th>Recommended mode</th></tr></thead><tbody><tr><td>DEX aggregators</td><td>Mode — RFQ</td></tr><tr><td>Intent / gasless / solver platforms</td><td>Mode — Intent</td></tr><tr><td>Surfaces wanting full CLOB access</td><td>Mode — Direct</td></tr></tbody></table>
-
+<table><thead><tr><th width="419.18359375">Partner type</th><th>Recommended mode</th></tr></thead><tbody><tr><td>DEX Aggregators / Wallets / Solvers</td><td>Mode — RFQ</td></tr><tr><td>Meta-Aggregator / Intent &#x26; Cross-chain Platforms</td><td>Mode — Intent</td></tr><tr><td>Venues wanting full CLOB access</td><td>Mode — Direct</td></tr></tbody></table>

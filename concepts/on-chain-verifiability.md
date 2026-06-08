@@ -1,6 +1,6 @@
 # On-chain Verifiability
 
-With Native Core, trading is **verifiable**: the sequence of every transaction, the result of every match, and every balance change are produced by consensus and published on-chain, so anyone can independently audit them.
+With Native Core, trading is verifiable: the sequence of every transaction, the result of every match, and every balance change are produced with consensus and published on-chain, so anyone can independently audit them.
 
 #### How Trust Is Established
 
