@@ -2,33 +2,33 @@
 
 ### Flexible Input Amount
 
-Since AMM swaps’ output amount is only fixed upon onchain execution, Native Relay RFQ is designed to handle flexible input (+10% or -50% of the original quoted input amount) to felicitate multi-hop routing with AMMs or other liquidity sources.
+Since AMM swaps’ output amount is only fixed upon onchain execution, Native Relay RFQ is designed to handle flexible input (+10% or -50% of the original quoted input amount) to facilitate multi-hop routing with AMMs or other liquidity sources.
 
-You may also use this feature to perform: over-quote then under-fill in some solving cases.
+You may also use this feature to perform over-quote then under-fill in some solving cases.
 
 To utilise this feature, there are two `uint256` in the final `tradeRFQT` interface:
 
 * `actualSellerAmount`
 * `actualMinOutputAmount`
 
-By default they are `0`. Meaning the Native Router will execute the order with the exact input amount quoted. If the balance in your caller address is lower, the call will revert due to insufficient balance. This is common when the previous hop is AMM and the output amount is impacted by slippage.
+By default, they are `0`, meaning the Native Router will execute the order with the exact input amount quoted. If the balance in your caller address is lower, the call will revert due to insufficient balance. This is common when the previous hop is an AMM and the output amount is impacted by slippage.
 
 To avoid this, simply override the `actualSellerAmount` in the contract logic when executing the call.
 
 You may choose to leave `actualMinOutputAmount` as 0. Native Router should automatically adapt based on the original quoted slippage control parameter.
 
 {% hint style="warning" %}
-Please note that in some rare cases, when the actual amount is greater than the original quoted amount, the Native Credit Pool may fail to facilitate the swap. As the actual amount is now larger than the original quote. Being unexpected by the Native quoting backend.
+Please note that in some rare cases, when the actual amount is greater than the original quoted amount, the Native Credit Pool may fail to facilitate the swap, as the actual amount is now larger than the original quote and is unexpected by the Native quoting backend.
 {% endhint %}
 
 ### Locate the Parameters
 
-To locate the parameters in calldata you may decode the call using the Native Router ABI (all are verified on explorers.) Or, using two fields in `/firm-quote` return:
+To locate the parameters in calldata, you may decode the call using the Native Router ABI (all are verified on explorers), or use two fields in the `/firm-quote` return:
 
 * `amountInOffset`
 * `amountOutMinimumOffset`
 
-They indicate the offset position (in bytes) of the `actualSellerAmount` and `actualMinOutputAmount` parameter within the returned calldata.
+They indicate the offset position (in bytes) of the `actualSellerAmount` and `actualMinOutputAmount` parameters within the returned calldata.
 
 ### Examples
 
@@ -53,4 +53,4 @@ From `/firm-quote` the `amountInOffset` is `36`.
 
 According to the offset value we may extract the encoded data from location 72 to 136 (64 characters), excluding the leading `0x`.
 
-The extracted value is `000000000000000000000000000000000000000000000003fe93272c67109000` which is representing the `actualSellerAmount` value `73684281000000000000`
+The extracted value is `000000000000000000000000000000000000000000000003fe93272c67109000` which represents the `actualSellerAmount` value `73684281000000000000`

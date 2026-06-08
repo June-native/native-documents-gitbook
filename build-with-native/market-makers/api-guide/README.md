@@ -10,7 +10,7 @@ Native requires the `api_key` header to be included in every request to authenti
 
 ## 2. Integration methods
 
-We offer market makers to integrate using [**REST API**](../mm-pricing-and-signing-api/)
+We allow market makers to integrate using [**REST API**](../mm-pricing-and-signing-api/)
 
 ## 3. Liquidity sources
 

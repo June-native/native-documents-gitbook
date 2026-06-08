@@ -2,11 +2,11 @@
 
 ### Overview
 
-Native LP Token contract is a yield-bearing vault that represent the shares and positions for all liquidity providers in Native.
+The Native LP Token contract is a yield-bearing vault that represents the shares and positions for all liquidity providers in Native.
 
-The contract also helps distribute yield from the funding interests, collected from private market makers, who utilise the liquidity to facilitate trading with Credit-Based swaps of the Native trading engine.
+The contract also helps distribute yield from the funding interest collected from private market makers, who utilise the liquidity to facilitate trading with Credit-Based swaps on the Native trading engine.
 
-Mind that the `balance` of the token directly represents the amount of underlying tokens in users' addresses. As well as the `totalSupply` number. To get shares, use `shares` and `totalShares` .
+Note that the `balance` of the token directly represents the amount of underlying tokens in users' addresses, as well as the `totalSupply` number. To get shares, use `shares` and `totalShares`.
 
 ### **Inherits**
 

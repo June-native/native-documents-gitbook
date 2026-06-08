@@ -4,7 +4,7 @@ description: Streams Prices and Liquidity to Existing Channels.
 
 # Native Relay
 
-**Native Relay** an integrator SDK/API that **streams Native Core prices and routes orders into Native** on behalf of wallets, aggregators, and solvers.&#x20;
+**Native Relay** is an integrator SDK/API that **streams Native Core prices and routes orders into Native** on behalf of wallets, aggregators, and solvers.&#x20;
 
 It lets existing distribution partners tap Native liquidity **without forcing their users to change behavior**.
 
@@ -21,7 +21,7 @@ Relay meets each partner where they already operate. See [Integration Modes](../
 * **Wallets & meta-aggregators** — Native Core appears as a standalone swap/bridge provider.
 * **Intent platforms & solvers** (e.g. UniswapX, CoW Protocol) — Native Core acts as a solver, filling winning intents and settling on the source chain.
 
-#### Compatibility with the Native V2
+#### Compatibility with Native V2
 
 Native's earlier Swap API product now lives inside **Native Relay's RFQ mode** — the same firm-quote, backward-compatible integration partners already use — while pricing, matching, and settlement move on-chain to Native Core and Native Pool.
 

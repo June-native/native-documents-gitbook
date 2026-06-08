@@ -10,7 +10,7 @@ Native requires the `api_key` header to be included in every request to authenti
 
 ## 2. Integration methods
 
-We offer market makers to integrate using **REST API**
+We allow market makers to integrate using **REST API**
 
 ## 3. **Native Credit Pools**
 

@@ -5,7 +5,7 @@ Native Relay API and Router support multihop between all trading pairs in `/orde
 To enable, add `allow_multihop=true` when requesting `/indicative-quote` or `/firm-quote`.
 
 {% hint style="info" %}
-Please note that `/orderbook` only return base trading pairs and does not return any virtual pairs enabled by multihop. To calculate price and depth, please combine two orderbooks locally.
+Please note that `/orderbook` only returns base trading pairs and does not return any virtual pairs enabled by multihop. To calculate price and depth, please combine two orderbooks locally.
 {% endhint %}
 
 ### Example
@@ -74,13 +74,13 @@ curl "https://v2.api.native.org/swap-api-v2/v1/firm-quote?from_address=0xbf381E1
 Tx: [https://www.tdly.co/shared/simulation/52280a28-72a7-41fb-a741-896101281cac](https://www.tdly.co/shared/simulation/52280a28-72a7-41fb-a741-896101281cac)
 
 {% hint style="warning" %}
-Please note that in multihop. The contract function that gets called is different. Normally, it should be `tradeRFQT`, but in multihop, it will be `multicall`.
+Please note that in multihop, the contract function that gets called is different. Normally, it should be `tradeRFQT`, but in multihop, it will be `multicall`.
 
-To track which function the swap tx is calling. Use version 4 or above and check `txRequest.function`.
+To track which function the swap tx is calling, use version 4 or above and check `txRequest.function`.
 {% endhint %}
 
 {% hint style="info" %}
-Multihop currently support only major tokens being the intermediate. Limited to:
+Multihop currently supports only major tokens as the intermediate. Limited to:
 
 USDT, USDC, WBNB, WETH, WBTC
 {% endhint %}

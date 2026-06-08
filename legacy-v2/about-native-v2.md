@@ -32,7 +32,7 @@ Native V2 introduces a scalable foundation of the [**Native Credit Pool**](nativ
 
 For Cheaper and Easier On-chain Liquidit&#x79;**:**
 
-* [**Single-Sided Liquidity Provision**](single-sided-liquidity-pools.md): Allows liquidity providers to supply single asset while earning yields from interests as well as trading fees. Without the need for rebalancing or adjusting.
+* [**Single-Sided Liquidity Provision**](single-sided-liquidity-pools.md): Allows liquidity providers to supply a single asset while earning yields from interest as well as trading fees, without the need for rebalancing or adjusting.
 * [**Liquidity Pairing Mechanism**](liquidity-pairing.md): Offers bootstrapping liquidity and smart pairing liquidity for listed tokens dynamically as needed.
 
 For Better and Faster Pricin&#x67;**:**

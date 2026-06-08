@@ -3,7 +3,7 @@
 ## Native Relay RFQ <a href="#ethereum-mainnet" id="ethereum-mainnet"></a>
 
 {% hint style="warning" %}
-NativeRouter V1 and V2 is deprecated and no longer recommended.
+NativeRouter V1 and V2 are deprecated and no longer recommended.
 {% endhint %}
 
 ### Ethereum Mainnet <a href="#ethereum-mainnet" id="ethereum-mainnet"></a>

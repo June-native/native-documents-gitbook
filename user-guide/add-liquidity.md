@@ -8,17 +8,17 @@ hidden: true
 
 There are two token lists on Credit Pool, Base Tokens and Listed Tokens.
 
-1. After connecting your wallet, choose network you want to use
+1. After connecting your wallet, choose the network you want to use
 
 <figure><img src="../.gitbook/assets/01.png" alt=""><figcaption></figcaption></figure>
 
 **\[Base Tokens]**
 
-2. Select token you want to deposit and click “Add” button
+2. Select the token you want to deposit and click the “Add” button
 
 <figure><img src="../.gitbook/assets/02.png" alt=""><figcaption></figcaption></figure>
 
-3. Type the amount that you want to deposit and click “Add” button
+3. Type the amount that you want to deposit and click the “Add” button
 
 <figure><img src="../.gitbook/assets/03.png" alt=""><figcaption></figcaption></figure>
 
@@ -26,10 +26,10 @@ There are two token lists on Credit Pool, Base Tokens and Listed Tokens.
 
 **\[Listed Tokens]**
 
-2. Select token you want to deposit and click “Add” button
+2. Select the token you want to deposit and click the “Add” button
 
 <figure><img src="../.gitbook/assets/19.png" alt=""><figcaption></figcaption></figure>
 
-3. Type the amount that you want to deposit and click “Add” button
+3. Type the amount that you want to deposit and click the “Add” button
 
 <figure><img src="../.gitbook/assets/4.png" alt=""><figcaption></figcaption></figure>

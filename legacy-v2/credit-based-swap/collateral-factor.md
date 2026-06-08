@@ -1,6 +1,6 @@
 # Collateral Factor
 
-It is important to note that credits are in USD, computed based on the number of balances and USD prices. Additionally, each asset will be assigned a collateral factor, which is also used in this calculation.
+It is important to note that credits are in USD, computed based on token balances and USD prices. Additionally, each asset will be assigned a collateral factor, which is also used in this calculation.
 
 Each collateral asset is associated with a distinct collateral factor, which indicates the proportion of USD value that collateral or long positions contribute to the credit. In the example above, this factor is set at 100% for simplicity.
 

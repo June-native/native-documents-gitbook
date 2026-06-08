@@ -6,7 +6,7 @@ The **Central Limit Order Book (CLOB)** is the matching mechanism at the heart o
 
 * **Order types:** limit orders (fill at a specified price or better) and market orders (fill at the best available price) are supported.
 * **On-chain order book:** the full order book state is stored on-chain. Every placement, cancellation, and fill is the result of an on-chain transaction.
-* **Auditable-ordering:** the order sequence is canonical, auditable, and resistant to opaque front-running.
+* **Auditable ordering:** the order sequence is canonical, auditable, and resistant to opaque front-running.
 
 ### Why It Matters
 

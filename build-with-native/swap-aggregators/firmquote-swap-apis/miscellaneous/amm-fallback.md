@@ -20,14 +20,14 @@ To use this feature:
 `/indicative-quote` and `/firm-quote` will automatically utilise AMM liquidity if the quoted pair is not available from Native's own liquidity. No adjustment is needed. All returned fields will work as expected.
 
 {% hint style="warning" %}
-Please note that in liquidity fallback. The contract function that gets called is different. Normally, it should be `tradeRFQT`, but in AMM fallback, it will be `externalSwap`.
+Please note that in liquidity fallback, the contract function that gets called is different. Normally, it should be `tradeRFQT`, but in AMM fallback, it will be `externalSwap`.
 
-To track which function the swap tx is calling. Check `txRequest.function`.
+To track which function the swap tx is calling, check `txRequest.function`.
 {% endhint %}
 
 ### Get Tradable Token
 
-AMM fallback enables trading for thousands of tokens, therefore it is impractical to show individual trading pairs in `/orderbook` endpoint. Instead, we offer a new endpoint to keep track of all the supported tokens.
+AMM fallback enables trading for thousands of tokens; therefore, it is impractical to show individual trading pairs in the `/orderbook` endpoint. Instead, we offer a new endpoint to keep track of all the supported tokens.
 
 Call `/widget-tokens?chains={chainName}` with your API key.
 

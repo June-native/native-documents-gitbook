@@ -1,6 +1,6 @@
 # GET /tx-status
 
-This endpoint returns the status of the bridge transaction, identified by `quoteId` that is returned from Native firm quote endpoint.
+This endpoint returns the status of the bridge transaction, identified by `quoteId` that is returned from the Native firm quote endpoint.
 
 **Bridge statuses**
 

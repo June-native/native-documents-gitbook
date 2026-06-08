@@ -2,7 +2,7 @@
 
 A [prime example](https://medium.com/@official_42951/pioneering-a-new-era-of-liquidity-stakestone-x-native-90d401002319) is Native's collaboration with StakeStone, where we successfully solved the liquidity issue for STONE.
 
-Together, Native Core, Relay and Pool ensures tokens like **STONE** achieve sufficient liquidity to be accepted by leading DeFi protocols including lending protocols, yield trading platform and oracles. By building robust on-chain liquidity through its credit pool model, Native unlocks the following benefits:
+Together, Native Core, Relay and Pool ensure tokens like **STONE** achieve sufficient liquidity to be accepted by leading DeFi protocols, including lending protocols, yield trading platforms and oracles. By building robust on-chain liquidity through its credit pool model, Native unlocks the following benefits:
 
 #### **Effective LP Incentives**
 
@@ -17,8 +17,8 @@ Together, Native Core, Relay and Pool ensures tokens like **STONE** achieve suff
 
 #### **Price Slippage**
 
-* With a contractual rate, PMM network on Native can ensure a customized pricing range for the listed asset.
-* Example: Tokens within **0.5% slippage** are more likely to meet the benchmarks of yield trading platform like **Pendle**.
+* With a contractual rate, the PMM network on Native can ensure a customized pricing range for the listed asset.
+* Example: Tokens within **0.5% slippage** are more likely to meet the benchmarks of yield trading platforms like **Pendle**.
 
 However, this is just one way to collaborate with Native — we're open to exploring other partnership opportunities as well.
 

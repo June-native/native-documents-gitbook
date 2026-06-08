@@ -6,7 +6,7 @@ hidden: true
 
 **Auto LP** is an automated, transparent market-making service that **bootstraps order-book depth** for tokens on [Native Core](../modules/native-core.md) from day one — solving the cold-start liquidity problem for new markets without requiring a dedicated market maker.
 
-It is conceptually similar to position managers like RangeProtocol or Uniswap V3 managers, but operating on a CLOB.
+It is conceptually similar to position managers like RangeProtocol or Uniswap V3 managers, but operates on a CLOB.
 
 ### Architecture: Offchain Service, On-Chain Config
 

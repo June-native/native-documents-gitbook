@@ -2,7 +2,7 @@
 
 This endpoint returns the final `amount_out` based on the source chain, source token, destination chain and destination token.
 
-Current, Native only supports ERC20 <> ERC20, and ERC20 <> Native token bridging. If you wish to bridge a native token to another token, you must first wrap it before calling the Native endpoint.
+Currently, Native only supports ERC20 <> ERC20, and ERC20 <> Native token bridging. If you wish to bridge a native token to another token, you must first wrap it before calling the Native endpoint.
 
 For native token convention, Native uses `0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE` to represent the token address of the native token.
 

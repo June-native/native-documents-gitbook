@@ -4,7 +4,7 @@
 
 * For partner integrations, reach out using the form:\
   [https://forms.gle/12LaH1JQyhZqBHqw9](https://forms.gle/12LaH1JQyhZqBHqw9)
-* For generic inquires, please reach out to:\
+* For general inquiries, please reach out to:\
   contact@native.org
 
 ### Retail

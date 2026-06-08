@@ -4,21 +4,21 @@ hidden: true
 
 # Deposit & Withdraw
 
-**Deposit & Withdraw** is the pipeline that helps user start trading directly on Native Core. It is enforced by Native Pool vault contracts together with an independent accounting service.
+**Deposit & Withdraw** is the pipeline that helps users start trading directly on Native Core. It is enforced by Native Pool vault contracts together with an independent accounting service.
 
 ### Key Components
 
 * **Vault contract (Public Networks):** accepts user deposits, locks assets in the vault, and releases them on withdrawal.
-* **Accounting service:** an independent, multi-node, distributed service to help processing the deposit and withdraws.
+* **Accounting service:** an independent, multi-node, distributed service to help process deposits and withdrawals.
 
 ### Deposit and Withdraw Flow
 
 1. The user deposits on a source chain.
-2. The accounting service credits user on Native Core.
+2. The accounting service credits the user on Native Core.
 
 ### Withdrawal Flow
 
-1. The user submits a withdraw request on Native Core; the balance is **locked atomically**.
+1. The user submits a withdrawal request on Native Core; the balance is **locked atomically**.
 2. After safe finality on Native Core, the signer network **co-signs** the release.
 3. The vault releases and redeems the underlying assets to the user on the destination chain.
 4. Once the release is confirmed, the service finalizes the **balance deduction**. If the release fails, the request is flagged for admin intervention (retry or revoke-and-unlock).

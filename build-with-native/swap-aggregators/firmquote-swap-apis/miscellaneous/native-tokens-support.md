@@ -1,6 +1,6 @@
 # Native Tokens Support
 
-Native Relay RFQ API and Router support swapping with native tokens for any trading pair involve wrapped-native token address (WETH9). For example, if you see WETH->USDT in `/orderbook` , you may quote and swap ETH->USDT directly.
+Native Relay RFQ API and Router support swapping with native tokens for any trading pair involving a wrapped-native token address (WETH9). For example, if you see WETH->USDT in `/orderbook` , you may quote and swap ETH->USDT directly.
 
 ### Quote
 

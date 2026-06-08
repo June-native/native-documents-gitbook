@@ -18,5 +18,5 @@ hidden: true
 }
 ```
 
-* **Note that for position updates:** A positive amount means you want to close short position by depositing money in, negative amount means you want to close long position by withdraw the money out.
-* Claim collateral amount is always positive meaning how much collateral amount you want to claim
+* **Note that for position updates:** A positive amount means you want to close a short position by depositing money in; a negative amount means you want to close a long position by withdrawing the money out.
+* The claim collateral amount is always positive, indicating how much collateral you want to claim.

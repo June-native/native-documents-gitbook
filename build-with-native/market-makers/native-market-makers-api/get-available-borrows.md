@@ -8,7 +8,7 @@ hidden: true
 [nativeLend.json](../../../.gitbook/assets/nativeLend.json)
 {% endopenapi %}
 
-Market makers can use this data to learn the max size they can quote to construct the orderbook. `inventoryBalance` indicates the actual balance available in the Vault. `baseShortLimit` is the conservative amount that MM can quote as short token assuming long token has collateral factor `0`. If the long token has higher collateral factor, the limit would be higher, the adjusted amount it `baseShortLimit/(1 - longTokenCollateralFactor)`. For more specific example, refer [here](/broken/pages/yizUTrKNKwplKBFC0jMB#how-to-know-the-largest-order-size-that-can-be-quoted).
+Market makers can use this data to learn the max size they can quote to construct the orderbook. `inventoryBalance` indicates the actual balance available in the Vault. `baseShortLimit` is the conservative amount that MM can quote as short token assuming long token has collateral factor `0`. If the long token has a higher collateral factor, the limit would be higher; the adjusted amount is `baseShortLimit/(1 - longTokenCollateralFactor)`. For a more specific example, refer [here](/broken/pages/yizUTrKNKwplKBFC0jMB#how-to-know-the-largest-order-size-that-can-be-quoted).
 
 The actual limit would be `Math.min(inventoryBalance, baseShortLimit/(1 - longTokenCollateralFactor)`)
 

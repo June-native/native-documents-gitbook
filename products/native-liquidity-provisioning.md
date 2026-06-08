@@ -2,11 +2,11 @@
 
 ### Background
 
-Yield-bearing assets offer diversified returns (DeFi, RWA, CeFi), yet exits liquidity remain constrained. Direct withdrawals often require whitelisting, mandatory waiting queue in days, while AMM liquidity is expensive and vulnerable to slippage and often incorrect pricing.
+Yield-bearing assets offer diversified returns (DeFi, RWA, CeFi), yet exit liquidity remains constrained. Direct withdrawals often require whitelisting and mandatory waiting queues lasting days, while AMM liquidity is expensive and vulnerable to slippage and often incorrect pricing.
 
-The key distinction between yield-bearing assets and other generic assets lies in its core pricing logic. Yield-bearing asset often has implied pricing based on underlying yield-generating assets, and often is the long term fair market pricing. AMMs are in nature not suitable to peg to this implied fair pricing.
+The key distinction between yield-bearing assets and other generic assets lies in their core pricing logic. A yield-bearing asset often has implied pricing based on underlying yield-generating assets, which is often the long-term fair market price. AMMs are by nature not suitable for pegging to this implied fair pricing.
 
-Native solves this with private market-making engine and credit pool liquidity combined, delivering instant liquidity and superior implied fair pricing. The result is a smoother user experience, higher capital efficiency, and lower liquidity costs for issuers.
+Native solves this by combining a private market-making engine with credit pool liquidity, delivering instant liquidity and superior implied fair pricing. The result is a smoother user experience, higher capital efficiency, and lower liquidity costs for issuers.
 
 With Native, liquidity moves efficiently, with better prices and lower cost.
 
@@ -25,7 +25,7 @@ For users, swapping is straightforward:
 * Optimized Pricing: Market makers quote based on mint/redeem values and real-time market data, ensuring executable, market-responsive prices.
 * Instant Settlement: Liquidity for swaps is drawn from the Native Credit Pool, which acts as the market maker’s inventory. LPs supply single-sided assets permissionlessly and earn yields.
 * Continuous Liquidity: Market makers periodically rebalance the pool, such as redeeming stETH for ETH or trading on secondary markets, to maintain readiness for future swaps.
-* Easy Access:Native’s pricing and liquidity are available directly through its Swap Engine API and integrated across major aggregators and gateways.
+* Easy Access: Native’s pricing and liquidity are available directly through its Swap Engine API and integrated across major aggregators and gateways.
 
 <figure><img src="../.gitbook/assets/Case Study - System - 1218.png" alt=""><figcaption></figcaption></figure>
 

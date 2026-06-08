@@ -4,9 +4,9 @@ With each credit-based swap, **PMM** will result in multiple long or short posit
 
 ### Example Flow
 
-**PMM** faciliated a swap between 3600 USDC and 1 WETH. Now PMM has a short position of 1 WETH and a long position of 3600 USDC.
+**PMM** facilitated a swap between 3600 USDC and 1 WETH. Now PMM has a short position of 1 WETH and a long position of 3600 USDC.
 
-Assuming WETH price remain at 3600 USD, no credits from collateral is now required or consumed.
+Assuming WETH price remains at 3600 USD, no credit from collateral is now required or consumed.
 
 #### Settlement
 

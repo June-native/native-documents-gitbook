@@ -1,6 +1,6 @@
 # Minimum Bridge To Amount
 
-To avoid excessive gas spent eating into the bridging order value. There is a minimum amount set to:
+To avoid excessive gas costs eating into the bridging order value, there is a minimum amount set for:
 
 * bridge to amount for any bridge order.
 * bridge from amount for any bridge order sent from Ethereum mainnet.

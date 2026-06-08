@@ -12,11 +12,11 @@ The available credits for the PMM will be computed using:
 
 `Credit = longPositionUsd - shortPositionUsd + collateralUsd`
 
-**Note:** `longPositionUsd` and `collateralUsd` are subject to collateral factors which varies between tokens. More details [here](collateral-factor.md).
+**Note:** `longPositionUsd` and `collateralUsd` are subject to collateral factors which vary between tokens. More details [here](collateral-factor.md).
 
 ### Collaterals
 
-**PMM**s contribute liquidity in the form of base tokens to the Native credit pools, such as USDC, USDT, WETH, and WBTC. Upon the locking the Liquidity Provider (**LP**) tokens, these liquid asset deposits are transformed into collateral which subsequently contributes to the total available credits.
+**PMM**s contribute liquidity in the form of base tokens to the Native credit pools, such as USDC, USDT, WETH, and WBTC. Upon locking the Liquidity Provider (**LP**) tokens, these liquid asset deposits are transformed into collateral which subsequently contributes to the total available credits.
 
 For instance, a **PMM** may deposit and secure 1 USDT in the Credit Pools, with the collateral factor of 90% resulting in 0.9 USD being added to the pool of available credits.
 

@@ -4,7 +4,7 @@ To protect LP, malicious arbitrage that puts Native liquidity at risk will be pr
 
 To avoid producing additional errors during the /firm-quote stage, any quotes submitted with `from_address` or `beneficiary_address` being blacklisted will be subject to a 50bps added spread due to increased risk.
 
-We recommend that all upstreams query and cache a copy of the latest blacklisted address and apply pre-processing and filtering.
+We recommend that all upstreams query and cache a copy of the latest blacklisted addresses and apply pre-processing and filtering.
 
 #### /blacklist Endpoint
 
@@ -35,7 +35,7 @@ Normal return:
 }
 ```
 
-Upstream must contact the Native team with the existing communication channel to request permission for this endpoint.
+Upstream must contact the Native team through the existing communication channel to request permission for this endpoint.
 
 No permission return:
 

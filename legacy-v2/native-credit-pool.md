@@ -8,7 +8,7 @@ description: A Liquidity Pool Where LP-supplied Capital Fuels Credit-based Tradi
 
 ### Single-Sided Liquidity Provision
 
-With a [single-sided liquidity](single-sided-liquidity-pools.md) model, liquidity providers are no longer constrained by pair-based deposits and suffer the impermanent loss. Assets are borrowed and returned exactly as deployed, along with accrued credit interest.
+With a [single-sided liquidity](single-sided-liquidity-pools.md) model, liquidity providers are no longer constrained by pair-based deposits, nor do they suffer impermanent loss. Assets are borrowed and returned exactly as deployed, along with accrued credit interest.
 
 <figure><img src="../.gitbook/assets/Single-Sided Liquidity Provision.png" alt=""><figcaption></figcaption></figure>
 

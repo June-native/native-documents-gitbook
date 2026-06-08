@@ -13,11 +13,11 @@ Native offers LPs a permissionless way to tap into best-in-class yield opportuni
 
 ### Fixed-Term Earn Product
 
-The Fixed-Term Earn product distributes a fixed annual percentage yield (Fixed APY) over a specified period (from \[Start Time] to \[End Time]). LP’s liquidity will be contributed to the Native Credit Pool and receive a predetermined APY for the term, regardless of the actual fluctuating yield in the pool. This provides an optimal experience for users seeking yield certainty.
+The Fixed-Term Earn product distributes a fixed annual percentage yield (Fixed APY) over a specified period (from \[Start Time] to \[End Time]). An LP’s liquidity will be contributed to the Native Credit Pool and will receive a predetermined APY for the term, regardless of the actual fluctuating yield in the pool. This provides an optimal experience for users seeking yield certainty.
 
 #### How the Fixed-Term Earn Product Works
 
-During the open deposit period, users can supply liquidity in major base tokens, for example, single-asset USDT or USDC, into the Native Fixed-Term Earn Product. User supplied funds flow into the Native Credit Pool, where the liquidity engages in trading activities.
+During the open deposit period, users can supply liquidity in major base tokens, for example, single-asset USDT or USDC, into the Native Fixed-Term Earn Product. User-supplied funds flow into the Native Credit Pool, where the liquidity engages in trading activities.
 
 From the Start Time to the End Time, liquidity providers earn the fixed APY, independent of the actual flexible yield rate generated in the Credit Pool. Upon successful deposit, users continue to receive the same fixed rate until the product’s maturity.
 

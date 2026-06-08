@@ -41,7 +41,7 @@ Native introduces a **high-frequency, auto-sign orderbook** that seamlessly alig
 
 * (**T-1:** Josh entered a swap intent to the aggregator. The aggregator checks the latest price and depth from Native orderbook endpoint)
 * **T0**: Josh submits a swap intent through the aggregator.
-* **T1**: Native Swap Engine receives the intent. PMM1 offers a **quote of 3600 USDC** using the Native Credit Pool as inventory, by leveraging its **$100 credit**. Even though it doesn’t hold USDC in its wallet.
+* **T1**: Native Swap Engine receives the intent. PMM1 offers a **quote of 3600 USDC** using the Native Credit Pool as inventory, by leveraging its **$100 credit**, even though it doesn’t hold USDC in its wallet.
 * **T2**: Josh signs and approves the transaction to swap **1 WETH for 3600 USDC**.
 * **T3**:
   * Native Credit Pool pays **Josh 3600 USDC** and receives **1 WETH**.
@@ -56,7 +56,7 @@ Native introduces a **high-frequency, auto-sign orderbook** that seamlessly alig
 {% hint style="info" %}
 **What if Price Moves?**
 
-* If the price of WETH drops to **$3598**, **$2** being cut from PMM credit
+* If the price of WETH drops to **$3598**, **$2** is cut from PMM credit
 * If the price of WETH stays **above $3500**, PMM1’s credit covers its position. The 100 USD collateral is used to cover the gap.
 * If the price drops **below $3500**, the 100 USDC collateral **and** the 1 WETH would be **subject to liquidation**.
 {% endhint %}

@@ -1,6 +1,6 @@
 # Guide
 
-The Native Relay API connects you with Native Core's industry-grade liquidity and pricing, via familiar RFQ format, powered by Native Relay — Mode RFQ.
+The Native Relay API connects you with Native Core's industry-grade liquidity and pricing, via a familiar RFQ format, powered by Native Relay — Mode RFQ.
 
 ## Set up a Swap using Native Relay APIs
 

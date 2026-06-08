@@ -5,5 +5,5 @@
 {% endopenapi-operation %}
 
 {% hint style="info" %}
-Only quotes actually executed on source chain can be queried from status endpoint.
+Only quotes actually executed on the source chain can be queried from the status endpoint.
 {% endhint %}

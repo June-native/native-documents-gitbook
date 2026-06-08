@@ -5,5 +5,5 @@
 {% endopenapi-operation %}
 
 {% hint style="info" %}
-Only quotes actually executed on source chain will display in history.
+Only quotes actually executed on the source chain will appear in the history.
 {% endhint %}
