@@ -7,8 +7,8 @@ Native V2 ensures tokens like **STONE** achieve sufficient liquidity to be accep
 #### **Effective LP Incentives**
 
 * By leveraging liquidity in the credit pool, Native V2 boosts **TVL**, demonstrating a token’s viability and security.
-* With [Liquidity Paring](../../concepts/liquidity-pairing.md) mechanism and [single-sided LP](../../concepts/single-sided-liquidity-pools.md) provision, asset issuers save half of the cost of AMM LP incentives on Native.
-* Example: Tokens with **$10M+** [**Total Available Liquidity**](../../concepts/total-available-liquidity.md) are more likely to meet benchmarks of lending protocols like **Morpho**.
+* With [Liquidity Paring](../../legacy-v2/liquidity-pairing.md) mechanism and [single-sided LP](../../legacy-v2/single-sided-liquidity-pools.md) provision, asset issuers save half of the cost of AMM LP incentives on Native.
+* Example: Tokens with **$10M+** [**Total Available Liquidity**](../../legacy-v2/total-available-liquidity.md) are more likely to meet benchmarks of lending protocols like **Morpho**.
 
 #### **Trading Volume**
 

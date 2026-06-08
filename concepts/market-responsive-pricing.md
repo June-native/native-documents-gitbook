@@ -1,17 +1,13 @@
 # Market-Responsive Pricing
 
-**Native Swap Engine** is powered by Market-Responsive Pricing from the private market makers. PMMs acturately and promptly price each token on market risk, conditions and inventory exposures. Due to the nature of this pricing mechanism, it sources liquidity from various onchain DEXs, CEXs and/or direct redemption channels, ultimately responding to the real market.
+Native pricing is **Market-Responsive**: market makers price each token accurately and promptly based on market risk, conditions, and inventory exposure. Because of this, quotes reflect liquidity sourced from on-chain DEXs, CEXs, and/or direct redemption channels — ultimately responding to the real market rather than a static curve.
 
-There are two ways to fetch pricing from **Native Swap Engine**:
+On [Native Core](../modules/native-core.md), this pricing is expressed directly as maker orders on the [CLOB](central-limit-orderbook.md), where professional market makers connect through [Native Pro](../modules/native-pro.md) to post real-time bid/ask. Integrators reach the same liquidity through [Native Relay](../modules/native-relay.md):
 
-#### Orderbook with auto-sign
+#### On-chain order book
 
-An orderbook endpoint is provided to return the best pricing for each swap pairs. The levels are representing the amount of available liquidity at different price levels.
+The Native Core order book returns the best pricing for each pair, with levels representing the available liquidity at each price. Orders match deterministically by price-time priority.
 
-Some orderbooks offer additional fields for auto-sign orders, allowing swappers to submit swap orders which will be signed, and executed in a **low latency**, **high success** rate manner.
+#### Firm quote (RFQ)
 
-#### Quote Request
-
-A backend API call is also provided to return a quote, along with a signed, executable calldata for any given swap orders.
-
-If the quote is favourable, simple take the calldata and execute before the expiration timestamp to complete the swap.
+For integrators using [RFQ mode](integration-modes.md), [Native Relay](../modules/native-relay.md) returns a [firm quote](firm-quote.md) with signed, executable calldata for a given swap. If the quote is favourable, the calldata is executed before its expiration to complete the swap.

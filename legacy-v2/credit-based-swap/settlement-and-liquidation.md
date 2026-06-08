@@ -21,8 +21,6 @@ Assuming WETH price remain at 3600 USD, no credits from collateral is now requir
 
 ### Liquidation
 
-<figure><img src="../../.gitbook/assets/PMM Liquidation.png" alt=""><figcaption></figcaption></figure>
-
 1. Assume **PMM** did not settle the position and initially provided 100 USDC as collateral for 100 USD credit.
 2. The price of WETH suddenly increased from 3600 USD to 3700 USD.
 3. This creates a shortfall of 100 USD between the long and short positions, which is now no longer covered by the collateral, resulting in 0 credit.

@@ -8,13 +8,13 @@ description: A Liquidity Pool Where LP-supplied Capital Fuels Credit-based Tradi
 
 ### Single-Sided Liquidity Provision
 
-With a [single-sided liquidity](../concepts/single-sided-liquidity-pools.md) model, liquidity providers are no longer constrained by pair-based deposits and suffer the impermanent loss. Assets are borrowed and returned exactly as deployed, along with accrued credit interest.
+With a [single-sided liquidity](single-sided-liquidity-pools.md) model, liquidity providers are no longer constrained by pair-based deposits and suffer the impermanent loss. Assets are borrowed and returned exactly as deployed, along with accrued credit interest.
 
 <figure><img src="../.gitbook/assets/Single-Sided Liquidity Provision.png" alt=""><figcaption></figcaption></figure>
 
 ### Liquidity Pairing Mechanism
 
-Native introduces a [**Liquidity Pairing**](../concepts/liquidity-pairing.md) mechanism that dynamically allocates liquidity as needed to optimize capital efficiency, yield, and risk management.
+Native introduces a [**Liquidity Pairing**](liquidity-pairing.md) mechanism that dynamically allocates liquidity as needed to optimize capital efficiency, yield, and risk management.
 
 <figure><img src="../.gitbook/assets/Liquidity Paring Mechanism.png" alt=""><figcaption></figcaption></figure>
 
@@ -34,5 +34,5 @@ Assets added to the **Native Credit Pool** are categorized into **three distinct
 
 ### Related Concepts
 
-* [Total Available Liquidity](../concepts/total-available-liquidity.md)
-* [Health Ratio](../concepts/health-ratio.md)
+* [Total Available Liquidity](total-available-liquidity.md)
+* [Health Ratio](health-ratio.md)

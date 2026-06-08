@@ -6,8 +6,8 @@ This approach enables higher capital efficiency for PMMs while offering liquidit
 
 Check out this example for how the credit-based swap works:
 
-{% content-ref url="../../modules/native-swap-engine.md" %}
-[native-swap-engine.md](../../modules/native-swap-engine.md)
+{% content-ref url="../native-swap-engine.md" %}
+[native-swap-engine.md](../native-swap-engine.md)
 {% endcontent-ref %}
 
 Learn more about PMM collateral and credits:

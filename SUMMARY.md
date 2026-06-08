@@ -3,41 +3,35 @@
 ## introduction
 
 * [What is Native](README.md)
-* [About Native V2](introduction/about-native-v2.md)
 * [Benefits for Key Players](introduction/benefits-for-key-players.md)
 * [Welcome](introduction/welcome.md)
 
 ## MODULES
 
-* [Native Credit Pool](modules/native-credit-pool.md)
-* [Native Swap Engine](modules/native-swap-engine.md)
+* [Native Core](modules/native-core.md)
+* [Native Pool](modules/native-pool.md)
+* [Native Pro](modules/native-pro.md)
+* [Native Relay](modules/native-relay.md)
+
+## CONCEPTS
+
+* [Central Limit Order Book](concepts/central-limit-orderbook.md)
+* [Unified Balance](concepts/unified-balance.md)
+* [Integration Modes](concepts/integration-modes.md)
+* [Market-Responsive Pricing](concepts/market-responsive-pricing.md)
+* [Firm Quote](concepts/firm-quote.md)
+* [Spot Margin](concepts/spot-margin.md)
+* [Auto LP](concepts/auto-lp.md)
+* [Deposit & Withdraw](concepts/deposit-and-withdraw.md)
+* [Swap Fees](concepts/swap-fees.md)
+* [Slippage](concepts/slippage.md)
+* [Risks](concepts/risks.md)
 
 ## Products
 
 * [Native Earn](products/native-earn/README.md)
   * [Native Earn FAQ](products/native-earn/native-earn-faq.md)
 * [Native Liquidity Provisioning](products/native-liquidity-provisioning.md)
-
-## CONCEPTS
-
-* [Orderbook](concepts/orderbook.md)
-* [Firm Quote](concepts/firm-quote.md)
-* [Auto Sign Orders](concepts/auto-sign-orders.md)
-* [Swap Fees](concepts/swap-fees.md)
-* [Slippage](concepts/slippage.md)
-* [Base and Listed Assets](concepts/base-and-listed-assets.md)
-* [Single-Sided Liquidity Pools](concepts/single-sided-liquidity-pools.md)
-* [Total Available Liquidity](concepts/total-available-liquidity.md)
-* [Liquidity Pairing](concepts/liquidity-pairing.md)
-* [Liquidity Bootstrapping](concepts/liquidity-bootstrapping.md)
-* [Health Ratio](concepts/health-ratio.md)
-* [Earning Fees and Incentives](concepts/earning-fees-and-incentives.md)
-* [Credit-Based Swap](concepts/credit-based-swap/README.md)
-  * [Collateral Factor](concepts/credit-based-swap/collateral-factor.md)
-  * [PMM Credit](concepts/credit-based-swap/pmm-credit.md)
-  * [Settlement and Liquidation](concepts/credit-based-swap/settlement-and-liquidation.md)
-* [Market-Responsive Pricing](concepts/market-responsive-pricing.md)
-* [Risks](concepts/risks.md)
 
 ## USER GUIDE
 
@@ -124,6 +118,25 @@
   * [POST /info](build-with-native/native-core/post-info.md)
   * [Transaction Signing](build-with-native/native-core/transaction-signing.md)
   * [Decimals Units](build-with-native/native-core/decimals-units.md)
+
+## Legacy (V2)
+
+* [About Native V2](legacy-v2/about-native-v2.md)
+* [Native Credit Pool](legacy-v2/native-credit-pool.md)
+* [Native Swap Engine](legacy-v2/native-swap-engine.md)
+* [Orderbook](legacy-v2/orderbook.md)
+* [Auto Sign Orders](legacy-v2/auto-sign-orders.md)
+* [Base and Listed Assets](legacy-v2/base-and-listed-assets.md)
+* [Single-Sided Liquidity Pools](legacy-v2/single-sided-liquidity-pools.md)
+* [Total Available Liquidity](legacy-v2/total-available-liquidity.md)
+* [Liquidity Pairing](legacy-v2/liquidity-pairing.md)
+* [Liquidity Bootstrapping](legacy-v2/liquidity-bootstrapping.md)
+* [Health Ratio](legacy-v2/health-ratio.md)
+* [Earning Fees and Incentives](legacy-v2/earning-fees-and-incentives.md)
+* [Credit-Based Swap](legacy-v2/credit-based-swap/README.md)
+  * [Collateral Factor](legacy-v2/credit-based-swap/collateral-factor.md)
+  * [PMM Credit](legacy-v2/credit-based-swap/pmm-credit.md)
+  * [Settlement and Liquidation](legacy-v2/credit-based-swap/settlement-and-liquidation.md)
 
 ## Resources
 

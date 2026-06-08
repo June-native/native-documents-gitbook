@@ -62,5 +62,5 @@ Native introduces a **high-frequency, auto-sign orderbook** that seamlessly alig
 {% endhint %}
 
 {% hint style="info" %}
-The above example assumes the [collateral factors](../concepts/credit-based-swap/collateral-factor.md) for all the assets are set to 100%. [Learn more](../concepts/credit-based-swap/collateral-factor.md)
+The above example assumes the [collateral factors](credit-based-swap/collateral-factor.md) for all the assets are set to 100%. [Learn more](credit-based-swap/collateral-factor.md)
 {% endhint %}
