@@ -43,7 +43,3 @@ Native is built to close that gap: an on-chain price discovery and execution sys
 Native is an on-chain price discovery and execution system: Native Core finalizes pricing logic and order matching on-chain, while Native Pool anchors asset custody and settlement on EVM Chains — with Native Pro and Native Code connecting professional market makers and distribution partners end-to-end.
 
 <table data-card-size="large" data-view="cards"><thead><tr><th></th><th></th></tr></thead><tbody><tr><td><strong>Native Core</strong></td><td>The on-chain sovereign state machine where pricing logic and order matching are finalized.</td></tr><tr><td><strong>Native Pool</strong></td><td>Distributed smart-contract vaults across various chains that custody assets and enforce settlement.</td></tr><tr><td><strong>Native Pro</strong></td><td>The MM integration module that exposes Core’s matching engine via direct, exchange-grade interfaces.</td></tr><tr><td><strong>Native Relay</strong></td><td>The trade integrator SDK/API that streams Core prices and routes orders from wallets, aggregators, and solvers into Native.</td></tr></tbody></table>
-
-{% hint style="info" %}
-Looking for the previous credit-pool and RFQ-based design? It now lives under [**Native Relay**](modules/native-relay.md), with detailed references preserved in the [Legacy (V2)](legacy-v2/about-native-v2.md) section.
-{% endhint %}
