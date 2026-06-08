@@ -1,0 +1,1670 @@
+{
+    "openapi": "3.0.0",
+    "paths":
+    {
+        "/v1/indicative-quote":
+        {
+            "get":
+            {
+                "operationId": "IndicativeQuoteController_getIndicativeQuote",
+                "summary": "Get amount out for selling a ERC20 / native token.",
+                "parameters":
+                [
+                    {
+                        "name": "from_address",
+                        "required": true,
+                        "in": "query",
+                        "description": "Effectively `recipient`. This is the **pay out** address of the final swapped tokens. Funding address will always be the address calls Native Router.",
+                        "schema":
+                        {
+                            "pattern": "^0x[a-fA-F0-9]{40}$",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "src_chain",
+                        "required": true,
+                        "in": "query",
+                        "description": "Blockchain name, eg: ethereum, arbitrum, ...",
+                        "schema":
+                        {
+                            "enum":
+                            [
+                                "ethereum",
+                                "arbitrum"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "dst_chain",
+                        "required": true,
+                        "in": "query",
+                        "description": "Blockchain name, eg: ethereum, arbitrum, ...",
+                        "schema":
+                        {
+                            "enum":
+                            [
+                                "ethereum",
+                                "arbitrum"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "token_in",
+                        "required": true,
+                        "in": "query",
+                        "example": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+                        "description": "Token address for the token to be sold.",
+                        "schema":
+                        {
+                            "pattern": "^0x[a-fA-F0-9]{40}$",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "token_out",
+                        "required": true,
+                        "in": "query",
+                        "example": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+                        "description": "Token address for the token to be bought.",
+                        "schema":
+                        {
+                            "pattern": "^0x[a-fA-F0-9]{40}$",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "amount",
+                        "required": false,
+                        "in": "query",
+                        "description": "Amount of token to be sold, in ether unit.",
+                        "schema":
+                        {
+                            "default": 0,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "amount_wei",
+                        "required": false,
+                        "in": "query",
+                        "description": "Amount of token to be sold, in wei unit.",
+                        "schema":
+                        {
+                            "default": "0",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "expiry_time",
+                        "required": false,
+                        "in": "query",
+                        "description": "The expiry time of the quote, in seconds.",
+                        "schema":
+                        {
+                            "default": 0,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "timeout_millis",
+                        "required": false,
+                        "in": "query",
+                        "description": "Timeout in milliseconds",
+                        "schema":
+                        {
+                            "default": 2000,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "apiKey",
+                        "in": "header",
+                        "description": "The API key that was assigned to you by Native",
+                        "required": true,
+                        "schema":
+                        {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses":
+                {
+                    "200":
+                    {
+                        "description": "Success",
+                        "content":
+                        {
+                            "application/json":
+                            {
+                                "schema":
+                                {
+                                    "type": "array",
+                                    "items":
+                                    {
+                                        "$ref": "#/components/schemas/IndicativeQuoteRes"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500":
+                    {
+                        "description": "There was an exception with the server"
+                    }
+                },
+                "tags":
+                [
+                    "IndicativeQuote"
+                ]
+            }
+        },
+        "/v1/firm-quote":
+        {
+            "get":
+            {
+                "operationId": "FirmQuoteController_getFirmQuote",
+                "summary": "Get signed order data for selling a ERC20 / native token. Submit the return data to Native router to execute swap.",
+                "parameters":
+                [
+                    {
+                        "name": "from_address",
+                        "required": true,
+                        "in": "query",
+                        "description": "Effectively `recipient`. This is the **pay out** address of the final swapped tokens. Funding address will always be the address calls Native Router.",
+                        "schema":
+                        {
+                            "pattern": "^0x[a-fA-F0-9]{40}$",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "beneficiary_address",
+                        "required": false,
+                        "in": "query",
+                        "description": "Address of the end user that initiated the swap request. This is REQUIRED if you are an aggregator/widget/wallet. Optional for solvers.",
+                        "schema":
+                        {
+                            "pattern": "^0x[a-fA-F0-9]{40}$",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "src_chain",
+                        "required": true,
+                        "in": "query",
+                        "description": "Blockchain name, eg: ethereum, arbitrum, ... (refer to network name reference)",
+                        "schema":
+                        {
+                            "enum":
+                            [
+                                "ethereum",
+                                "arbitrum"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "dst_chain",
+                        "required": true,
+                        "in": "query",
+                        "description": "Blockchain name, eg: ethereum, arbitrum, ... (refer to network name reference)",
+                        "schema":
+                        {
+                            "enum":
+                            [
+                                "ethereum",
+                                "arbitrum"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "token_in",
+                        "required": true,
+                        "in": "query",
+                        "description": "Address of the token to be sold",
+                        "schema":
+                        {
+                            "pattern": "^0x[a-fA-F0-9]{40}$",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "token_out",
+                        "required": true,
+                        "in": "query",
+                        "description": "Address of the token to be bought",
+                        "schema":
+                        {
+                            "pattern": "^0x[a-fA-F0-9]{40}$",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "amount",
+                        "required": false,
+                        "in": "query",
+                        "description": "Amount of token to be sold, in ether unit. (Skip if already passing `amount_wei`)",
+                        "schema":
+                        {
+                            "default": 0,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "amount_wei",
+                        "required": false,
+                        "in": "query",
+                        "description": "Amount of token to be sold, in wei unit. (Skip if already passing `amount`)",
+                        "schema":
+                        {
+                            "default": "0",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "expiry_time",
+                        "required": false,
+                        "in": "query",
+                        "description": "The expiry time of the quote, in seconds. Recommand 60 for all networks to avoid quoting errors.",
+                        "schema":
+                        {
+                            "default": 0,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "slippage",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number in percent. For example, passing the value 5 means 5%, 0.1 means 0.1% slippage tolerance. Recommend keeping default 0.5",
+                        "schema":
+                        {
+                            "default": 0.5,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "timeout_millis",
+                        "required": false,
+                        "in": "query",
+                        "description": "Timeout in milliseconds for the API request, useful in latency-sensitive applications.",
+                        "schema":
+                        {
+                            "default": 2000,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "version",
+                        "required": false,
+                        "in": "query",
+                        "description": "The swap router version. Suggest using the latest 4",
+                        "schema":
+                        {
+                            "default": 3,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "allow_multihop",
+                        "required": false,
+                        "in": "query",
+                        "description": "Whether to use multihop within all Native supported pairs for quoting. Recommanded true for wallets/widgets.",
+                        "schema":
+                        {
+                            "default": "false",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "apiKey",
+                        "in": "header",
+                        "description": "The API key that was assigned to you by Native",
+                        "required": true,
+                        "schema":
+                        {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses":
+                {
+                    "200":
+                    {
+                        "description": "Success",
+                        "content":
+                        {
+                            "application/json":
+                            {
+                                "schema":
+                                {
+                                    "$ref": "#/components/schemas/FirmQuoteResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500":
+                    {
+                        "description": "There was an exception with the server"
+                    }
+                },
+                "tags":
+                [
+                    "FirmQuote"
+                ]
+            }
+        },
+        "/v1/firm-quote/calldata":
+        {
+            "get":
+            {
+                "operationId": "FirmQuoteController_getCalldata",
+                "summary": "Similar to `/firm-quote`. Just that response is raw calldata that can be submitted on-chain directly.",
+                "parameters":
+                [
+                    {
+                        "name": "from_address",
+                        "required": true,
+                        "in": "query",
+                        "description": "Effectively `recipient`. This is the **pay out** address of the final swapped tokens. Funding address will always be the address calls Native Router.",
+                        "schema":
+                        {
+                            "pattern": "^0x[a-fA-F0-9]{40}$",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "beneficiary_address",
+                        "required": false,
+                        "in": "query",
+                        "description": "Address of the end user that initiated the swap request.",
+                        "schema":
+                        {
+                            "pattern": "^0x[a-fA-F0-9]{40}$",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "src_chain",
+                        "required": true,
+                        "in": "query",
+                        "description": "Blockchain name, eg: ethereum, bsc, ...",
+                        "schema":
+                        {
+                            "enum":
+                            [
+                                "ethereum",
+                                "bsc",
+                                "bsc_testnet",
+                                "sepolia",
+                                "polygon",
+                                "mumbai",
+                                "arbitrum",
+                                "avalanche",
+                                "mantle",
+                                "zetachain_athens3",
+                                "base",
+                                "manta",
+                                "scroll",
+                                "zetachain",
+                                "linea",
+                                "zklink",
+                                "morph_testnet",
+                                "morph_holesky_testnet",
+                                "mantle_sepolia_testnet",
+                                "polygon_amoy_testnet",
+                                "avalanche_fuji_testnet",
+                                "berachain_bartio_testnet",
+                                "optimism",
+                                "zircuit"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "dst_chain",
+                        "required": true,
+                        "in": "query",
+                        "description": "Blockchain name, eg: ethereum, bsc, ...",
+                        "schema":
+                        {
+                            "enum":
+                            [
+                                "ethereum",
+                                "bsc",
+                                "bsc_testnet",
+                                "sepolia",
+                                "polygon",
+                                "mumbai",
+                                "arbitrum",
+                                "avalanche",
+                                "mantle",
+                                "zetachain_athens3",
+                                "base",
+                                "manta",
+                                "scroll",
+                                "zetachain",
+                                "linea",
+                                "zklink",
+                                "morph_testnet",
+                                "morph_holesky_testnet",
+                                "mantle_sepolia_testnet",
+                                "polygon_amoy_testnet",
+                                "avalanche_fuji_testnet",
+                                "berachain_bartio_testnet",
+                                "optimism",
+                                "zircuit"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "token_in",
+                        "required": true,
+                        "in": "query",
+                        "description": "Address of the token to be sold",
+                        "schema":
+                        {
+                            "pattern": "^0x[a-fA-F0-9]{40}$",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "token_out",
+                        "required": true,
+                        "in": "query",
+                        "description": "Address of the token to be bought",
+                        "schema":
+                        {
+                            "pattern": "^0x[a-fA-F0-9]{40}$",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "amount",
+                        "required": false,
+                        "in": "query",
+                        "description": "Amount of token to be sold, in ether unit.",
+                        "schema":
+                        {
+                            "default": 0,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "amount_wei",
+                        "required": false,
+                        "in": "query",
+                        "description": "Amount of token to be sold, in wei unit.",
+                        "schema":
+                        {
+                            "default": "0",
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "expiry_time",
+                        "required": false,
+                        "in": "query",
+                        "description": "The expiry time of the quote, in seconds.",
+                        "schema":
+                        {
+                            "default": 0,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "slippage",
+                        "required": false,
+                        "in": "query",
+                        "description": "Number in percent. For example, passing the value 5 means 5%, 0.1 means 0.1% slippage tolerance. By default it's 0.",
+                        "schema":
+                        {
+                            "default": 0,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "timeout_millis",
+                        "required": false,
+                        "in": "query",
+                        "description": "Timeout in milliseconds",
+                        "schema":
+                        {
+                            "default": 2000,
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "apiKey",
+                        "in": "header",
+                        "description": "The API key that was assigned to you by Native",
+                        "required": true,
+                        "schema":
+                        {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses":
+                {
+                    "200":
+                    {
+                        "description": "Success",
+                        "content":
+                        {
+                            "application/json":
+                            {
+                                "schema":
+                                {
+                                    "$ref": "#/components/schemas/FirmQuoteCalldataResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500":
+                    {
+                        "description": "There was an exception with the server"
+                    }
+                },
+                "tags":
+                [
+                    "FirmQuote"
+                ]
+            }
+        },
+        "/v1/widget-tokens":
+        {
+            "get":
+            {
+                "operationId": "GeneralController_getWidgetTokens",
+                "summary": "Get all the tokens supported by Native",
+                "parameters":
+                [
+                    {
+                        "name": "chain",
+                        "required": true,
+                        "in": "query",
+                        "description": "Blockchain name, eg: ethereum, bsc, ...",
+                        "schema":
+                        {
+                            "enum":
+                            [
+                                "ethereum",
+                                "bsc",
+                                "bsc_testnet",
+                                "sepolia",
+                                "polygon",
+                                "mumbai",
+                                "arbitrum",
+                                "avalanche",
+                                "mantle",
+                                "zetachain_athens3",
+                                "base",
+                                "manta",
+                                "scroll",
+                                "zetachain",
+                                "linea",
+                                "zklink",
+                                "morph_testnet",
+                                "morph_holesky_testnet",
+                                "mantle_sepolia_testnet",
+                                "polygon_amoy_testnet",
+                                "avalanche_fuji_testnet",
+                                "berachain_bartio_testnet",
+                                "optimism",
+                                "zircuit"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "chains",
+                        "required": true,
+                        "in": "query",
+                        "description": "Comma-separated blockchains. Exactly one of [chain, chains] is required",
+                        "example": "ethereum",
+                        "schema":
+                        {
+                            "enum":
+                            [
+                                "ethereum",
+                                "bsc",
+                                "bsc_testnet",
+                                "sepolia",
+                                "polygon",
+                                "mumbai",
+                                "arbitrum",
+                                "avalanche",
+                                "mantle",
+                                "zetachain_athens3",
+                                "base",
+                                "manta",
+                                "scroll",
+                                "zetachain",
+                                "linea",
+                                "zklink",
+                                "morph_testnet",
+                                "morph_holesky_testnet",
+                                "mantle_sepolia_testnet",
+                                "polygon_amoy_testnet",
+                                "avalanche_fuji_testnet",
+                                "berachain_bartio_testnet",
+                                "optimism",
+                                "zircuit"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "apiKey",
+                        "in": "header",
+                        "description": "The API key that was assigned to you by Native",
+                        "required": true,
+                        "schema":
+                        {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses":
+                {
+                    "200":
+                    {
+                        "description": "Success",
+                        "content":
+                        {
+                            "application/json":
+                            {
+                                "schema":
+                                {
+                                    "type": "array",
+                                    "items":
+                                    {
+                                        "$ref": "#/components/schemas/TokenDto"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500":
+                    {
+                        "description": "There was an exception with the server"
+                    }
+                },
+                "tags":
+                [
+                    "General"
+                ]
+            }
+        },
+        "/v1/chains":
+        {
+            "get":
+            {
+                "operationId": "GeneralController_getSupportedChains",
+                "summary": "Get all the chains supported by Native",
+                "parameters":
+                [
+                    {
+                        "name": "apiKey",
+                        "in": "header",
+                        "description": "The API key that was assigned to you by Native",
+                        "required": true,
+                        "schema":
+                        {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses":
+                {
+                    "200":
+                    {
+                        "description": "Success",
+                        "content":
+                        {
+                            "application/json":
+                            {
+                                "schema":
+                                {
+                                    "type": "array",
+                                    "items":
+                                    {
+                                        "$ref": "#/components/schemas/GetChainResponse"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500":
+                    {
+                        "description": "There was an exception with the server"
+                    }
+                },
+                "tags":
+                [
+                    "General"
+                ]
+            }
+        },
+        "/v1/orderbook":
+        {
+            "get":
+            {
+                "operationId": "OrderbookController_getOrderbook",
+                "summary": "Get price levels for all supported pair in a chain",
+                "parameters":
+                [
+                    {
+                        "name": "chain",
+                        "required": true,
+                        "in": "query",
+                        "description": "Blockchain name, eg: ethereum, arbitrum, ...",
+                        "schema":
+                        {
+                            "enum":
+                            [
+                                "ethereum",
+                                "arbitrum"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "apiKey",
+                        "in": "header",
+                        "description": "The API key that was assigned to you by Native",
+                        "required": true,
+                        "schema":
+                        {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses":
+                {
+                    "200":
+                    {
+                        "description": "Success",
+                        "content":
+                        {
+                            "application/json":
+                            {
+                                "schema":
+                                {
+                                    "type": "array",
+                                    "items":
+                                    {
+                                        "$ref": "#/components/schemas/PmmOrderbookItem"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500":
+                    {
+                        "description": "There was an exception with the server"
+                    }
+                },
+                "tags":
+                [
+                    "Orderbook"
+                ]
+            }
+        },
+        "/v1/instruments":
+        {
+            "get":
+            {
+                "operationId": "InstrumentsController_getInstruments",
+                "summary": "",
+                "deprecated": true,
+                "parameters":
+                [
+                    {
+                        "name": "chain",
+                        "required": true,
+                        "in": "query",
+                        "description": "Blockchain name, eg: ethereum, bsc, ...",
+                        "schema":
+                        {
+                            "enum":
+                            [
+                                "ethereum",
+                                "bsc",
+                                "bsc_testnet",
+                                "sepolia",
+                                "polygon",
+                                "mumbai",
+                                "arbitrum",
+                                "avalanche",
+                                "mantle",
+                                "zetachain_athens3",
+                                "base",
+                                "manta",
+                                "scroll",
+                                "zetachain",
+                                "linea",
+                                "zklink",
+                                "morph_testnet",
+                                "morph_holesky_testnet",
+                                "mantle_sepolia_testnet",
+                                "polygon_amoy_testnet",
+                                "avalanche_fuji_testnet",
+                                "berachain_bartio_testnet",
+                                "optimism",
+                                "zircuit"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "chains",
+                        "required": true,
+                        "in": "query",
+                        "description": "Comma-separated blockchains. Exactly one of [chain, chains] is required",
+                        "example": "ethereum",
+                        "schema":
+                        {
+                            "enum":
+                            [
+                                "ethereum",
+                                "bsc",
+                                "bsc_testnet",
+                                "sepolia",
+                                "polygon",
+                                "mumbai",
+                                "arbitrum",
+                                "avalanche",
+                                "mantle",
+                                "zetachain_athens3",
+                                "base",
+                                "manta",
+                                "scroll",
+                                "zetachain",
+                                "linea",
+                                "zklink",
+                                "morph_testnet",
+                                "morph_holesky_testnet",
+                                "mantle_sepolia_testnet",
+                                "polygon_amoy_testnet",
+                                "avalanche_fuji_testnet",
+                                "berachain_bartio_testnet",
+                                "optimism",
+                                "zircuit"
+                            ],
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "apiKey",
+                        "in": "header",
+                        "description": "The API key that was assigned to you by Native",
+                        "required": true,
+                        "schema":
+                        {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses":
+                {
+                    "200":
+                    {
+                        "description": ""
+                    }
+                },
+                "tags":
+                [
+                    "instruments"
+                ]
+            }
+        }
+    },
+    "info":
+    {
+        "title": "Native API",
+        "description": "Public endpoints for Native API.",
+        "version": "1.0",
+        "contact":
+        {}
+    },
+    "tags":
+    [],
+    "servers":
+    [
+        {
+            "url": "https://v2.api.native.org/swap-api-v2"
+        }
+    ],
+    "components":
+    {
+        "schemas":
+        {
+            "IndicativeQuoteRes":
+            {
+                "type": "object",
+                "properties":
+                {
+                    "success":
+                    {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "buyerToken":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "sellerToken":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "buyerTokenAmount":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    },
+                    "buyerTokenAmountWei":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "sellerTokenAmount":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    },
+                    "sellerTokenAmountWei":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "price":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    },
+                    "widgetFeeUsd":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    },
+                    "liquidityProviderFeeUsd":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    },
+                    "totalFeeUsd":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    },
+                    "routes":
+                    {
+                        "readOnly": true,
+                        "type": "array",
+                        "items":
+                        {
+                            "type": "string"
+                        }
+                    },
+                    "source":
+                    {
+                        "type": "string",
+                        "enum":
+                        [
+                            "p0",
+                            "p1",
+                            "p1.1",
+                            "p1.2",
+                            "p1.3",
+                            "p1.4",
+                            "p1.5",
+                            "p1.6",
+                            "p1.7",
+                            "p1.100",
+                            "p2",
+                            "p3",
+                            "p4",
+                            "p5",
+                            "p6",
+                            "p7",
+                            "p8"
+                        ],
+                        "description": "Quote source name"
+                    },
+                    "bridge":
+                    {
+                        "type": "object",
+                        "readOnly": true
+                    }
+                },
+                "required":
+                [
+                    "success",
+                    "buyerToken",
+                    "sellerToken",
+                    "buyerTokenAmount",
+                    "buyerTokenAmountWei",
+                    "sellerTokenAmount",
+                    "sellerTokenAmountWei",
+                    "price",
+                    "widgetFeeUsd",
+                    "liquidityProviderFeeUsd",
+                    "totalFeeUsd",
+                    "routes",
+                    "source",
+                    "bridge"
+                ]
+            },
+            "WidgetFee":
+            {
+                "type": "object",
+                "properties":
+                {
+                    "signer":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "feeRecipient":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "feeRate":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    }
+                },
+                "required":
+                [
+                    "signer",
+                    "feeRecipient",
+                    "feeRate"
+                ]
+            },
+            "OrderRFQT":
+            {
+                "type": "object",
+                "properties":
+                {
+                    "pool":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "signer":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "recipient":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "sellerToken":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "buyerToken":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "effectiveSellerTokenAmount":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "sellerTokenAmount":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "buyerTokenAmount":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "deadlineTimestamp":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    },
+                    "nonce":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    },
+                    "quoteId":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "multiHop":
+                    {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "signature":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "externalSwapCalldata":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "amountOutMinimum":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "widgetFee":
+                    {
+                        "readOnly": true,
+                        "allOf":
+                        [
+                            {
+                                "$ref": "#/components/schemas/WidgetFee"
+                            }
+                        ]
+                    },
+                    "widgetFeeSignature":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    }
+                },
+                "required":
+                [
+                    "pool",
+                    "signer",
+                    "recipient",
+                    "sellerToken",
+                    "buyerToken",
+                    "effectiveSellerTokenAmount",
+                    "sellerTokenAmount",
+                    "buyerTokenAmount",
+                    "deadlineTimestamp",
+                    "nonce",
+                    "quoteId",
+                    "multiHop",
+                    "signature",
+                    "externalSwapCalldata",
+                    "amountOutMinimum",
+                    "widgetFee",
+                    "widgetFeeSignature"
+                ]
+            },
+            "TxRequestDto":
+            {
+                "type": "object",
+                "properties":
+                {
+                    "target":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "calldata":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "value":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    }
+                },
+                "required":
+                [
+                    "target",
+                    "calldata",
+                    "value"
+                ]
+            },
+            "FirmQuoteResponse":
+            {
+                "type": "object",
+                "properties":
+                {
+                    "success":
+                    {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "orders":
+                    {
+                        "readOnly": true,
+                        "type": "array",
+                        "items":
+                        {
+                            "$ref": "#/components/schemas/OrderRFQT"
+                        }
+                    },
+                    "functionCall":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "widgetFee":
+                    {
+                        "readOnly": true,
+                        "allOf":
+                        [
+                            {
+                                "$ref": "#/components/schemas/WidgetFee"
+                            }
+                        ]
+                    },
+                    "widgetFeeSignature":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "recipient":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "calldata":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "amountIn":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "amountOut":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "toWrap":
+                    {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "toUnwrap":
+                    {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "fallbackSwapDataArray":
+                    {
+                        "readOnly": true,
+                        "type": "array",
+                        "items":
+                        {
+                            "type": "string"
+                        }
+                    },
+                    "tokenTransferFeeOnPercent":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    },
+                    "txRequest":
+                    {
+                        "readOnly": true,
+                        "allOf":
+                        [
+                            {
+                                "$ref": "#/components/schemas/TxRequestDto"
+                            }
+                        ]
+                    },
+                    "source":
+                    {
+                        "type": "string",
+                        "enum":
+                        [
+                            "p0",
+                            "p1",
+                            "p1.1",
+                            "p1.2",
+                            "p1.3",
+                            "p1.4",
+                            "p1.5",
+                            "p1.6",
+                            "p1.7",
+                            "p1.100",
+                            "p2",
+                            "p3",
+                            "p4",
+                            "p5",
+                            "p6",
+                            "p7",
+                            "p8"
+                        ],
+                        "description": "Quote source name"
+                    },
+                    "errorMessage":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "router_version":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "gasCostUsd":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    },
+                    "estimateDuration":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    },
+                    "bridge":
+                    {
+                        "type": "object",
+                        "readOnly": true
+                    },
+                    "amountInOffset":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    },
+                    "amountOutMinimumOffset":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    }
+                },
+                "required":
+                [
+                    "success",
+                    "orders",
+                    "functionCall",
+                    "widgetFee",
+                    "widgetFeeSignature",
+                    "recipient",
+                    "calldata",
+                    "amountIn",
+                    "amountOut",
+                    "toWrap",
+                    "toUnwrap",
+                    "fallbackSwapDataArray",
+                    "tokenTransferFeeOnPercent",
+                    "txRequest",
+                    "source",
+                    "errorMessage",
+                    "router_version",
+                    "gasCostUsd",
+                    "estimateDuration",
+                    "bridge",
+                    "amountInOffset",
+                    "amountOutMinimumOffset"
+                ]
+            },
+            "FirmQuoteCalldataResponse":
+            {
+                "type": "object",
+                "properties":
+                {
+                    "from":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "to":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "calldata":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "value":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "amountInOffset":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    },
+                    "amountOutMinimumOffset":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    }
+                },
+                "required":
+                [
+                    "from",
+                    "to",
+                    "calldata",
+                    "value",
+                    "amountInOffset",
+                    "amountOutMinimumOffset"
+                ]
+            },
+            "TokenDto":
+            {
+                "type": "object",
+                "properties":
+                {
+                    "chain":
+                    {
+                        "type": "string",
+                        "enum":
+                        [
+                            "ethereum",
+                            "bsc",
+                            "bsc_testnet",
+                            "sepolia",
+                            "polygon",
+                            "mumbai",
+                            "arbitrum",
+                            "avalanche",
+                            "mantle",
+                            "zetachain_athens3",
+                            "base",
+                            "manta",
+                            "scroll",
+                            "zetachain",
+                            "linea",
+                            "zklink",
+                            "morph_testnet",
+                            "morph_holesky_testnet",
+                            "mantle_sepolia_testnet",
+                            "polygon_amoy_testnet",
+                            "avalanche_fuji_testnet",
+                            "berachain_bartio_testnet",
+                            "optimism",
+                            "zircuit"
+                        ],
+                        "description": "Blockchain name, eg: ethereum, bsc, ..."
+                    },
+                    "address":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "symbol":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "decimals":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    },
+                    "name":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "logo":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "desc":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "isFeatured":
+                    {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "isSupported":
+                    {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "isStablecoin":
+                    {
+                        "type": "boolean",
+                        "readOnly": true
+                    }
+                },
+                "required":
+                [
+                    "chain",
+                    "address",
+                    "symbol",
+                    "decimals",
+                    "name",
+                    "logo",
+                    "desc",
+                    "isFeatured",
+                    "isSupported",
+                    "isStablecoin"
+                ]
+            },
+            "GetChainResponse":
+            {
+                "type": "object",
+                "properties":
+                {
+                    "chainId":
+                    {
+                        "type": "number",
+                        "description": "Id of the chain",
+                        "example": 1
+                    },
+                    "chain":
+                    {
+                        "type": "string",
+                        "description": "Native blockchain name, eg: ethereum, bsc, etc",
+                        "example": "ethereum"
+                    },
+                    "label":
+                    {
+                        "type": "string",
+                        "description": "Label of token",
+                        "example": "major"
+                    },
+                    "token":
+                    {
+                        "type": "string",
+                        "description": "Symbol of the native token for the chain",
+                        "example": "ETH"
+                    },
+                    "isMainnet":
+                    {
+                        "type": "boolean",
+                        "description": "Specify if token is on mainnet"
+                    }
+                },
+                "required":
+                [
+                    "chainId",
+                    "chain",
+                    "label",
+                    "token",
+                    "isMainnet"
+                ]
+            },
+            "PmmOrderbookItem":
+            {
+                "type": "object",
+                "properties":
+                {
+                    "base_address":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "quote_address":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "base_symbol":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "quote_symbol":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "levels":
+                    {
+                        "readOnly": true,
+                        "type": "array",
+                        "items":
+                        {
+                            "type": "string"
+                        }
+                    },
+                    "side":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "minimum_in_base":
+                    {
+                        "type": "number",
+                        "readOnly": true
+                    }
+                },
+                "required":
+                [
+                    "base_address",
+                    "quote_address",
+                    "base_symbol",
+                    "quote_symbol",
+                    "levels",
+                    "side",
+                    "minimum_in_base"
+                ]
+            }
+        }
+    },
+    "externalDocs":
+    {
+        "description": "Official Native API Docs",
+        "url": "https://docs.native.org/native-dev/integration/native-api"
+    }
+}

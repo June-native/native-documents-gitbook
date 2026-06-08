@@ -1,0 +1,64 @@
+# POST Settlement status
+
+{% openapi src="../../../.gitbook/assets/nativeLend.json" path="/v1/lend/settlement-status" method="post" %}
+[nativeLend.json](../../../.gitbook/assets/nativeLend.json)
+{% endopenapi %}
+
+#### During time delay
+
+```json
+{
+    "status": "pending",
+    "readyAt": "2024-01-31T07:12:26.976Z",
+    "expiresAt": "2024-01-31T07:13:26.976Z"
+}
+```
+
+#### **Ready**
+
+```json
+{
+    "status": "ready",
+    "readyAt": "2024-01-08T02:03:15.635Z",
+    "expiresAt": "2024-01-08T02:04:15.636Z",
+    "data": {
+        "request": {
+            "nonce": 2136417542436379,
+            "deadline": 1704679455,
+            "positionUpdates": [
+                {
+                    "tokenAddress": "0x2A5Bf6854cA6c236D190b7cfE206457B8d46506C",
+                    "amount": "200000000000000000000"
+                }
+            ]
+        },
+        "signature": "0x4ea3518372d87cebd8dc869062648b717aac4ba49766967afe4747023d619ce626eefe7be09ab5866b3977e1654af355c2bf80550386d82de4d123d0c70291a31b",
+        "recipient": "0x9B85B4A413Efe69684290816a3E814B4aA1EFf63",
+        "txRequest": {
+            "to": "0xC71a906A4B0721E58fC36314474334FdB2bAB937",
+            "value": "0",
+            "calldata": "0x4339a57d000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001200000000000000000000000009b85b4a413efe69684290816a3e814b4aa1eff630000000000000000000000000000000000000000000000000007970f78b5761b00000000000000000000000000000000000000000000000000000000659b581f000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000010000000000000000000000002a5bf6854ca6c236d190b7cfe206457b8d46506c00000000000000000000000000000000000000000000000ad78ebc5ac620000000000000000000000000000000000000000000000000000000000000000000414ea3518372d87cebd8dc869062648b717aac4ba49766967afe4747023d619ce626eefe7be09ab5866b3977e1654af355c2bf80550386d82de4d123d0c70291a31b00000000000000000000000000000000000000000000000000000000000000"
+        }
+    }
+}
+```
+
+#### **Expired**
+
+```json
+{
+    "status": "expired",
+    "readyAt": "2024-01-31T07:12:26.976Z",
+    "expiresAt": "2024-01-31T07:13:26.976Z"
+}
+```
+
+#### Error
+
+```json
+{
+    "statusCode": 400,
+    "message": "No request has been made",
+    "error": "Bad Request"
+}
+```

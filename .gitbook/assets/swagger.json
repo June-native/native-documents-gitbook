@@ -1,0 +1,386 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for retrieving DEX market data and historical trades",
+        "title": "DEX Market API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/historical_trades": {
+            "get": {
+                "description": "Retrieves historical trades for a specific trading pair identified by ticker_id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "trades"
+                ],
+                "summary": "Get historical trades for a trading pair",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Ticker ID in format baseAddress-quoteAddress",
+                        "name": "ticker_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of trades to return (default: 500)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/market.TransactionLog"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/orderbook": {
+            "get": {
+                "description": "Returns the current orderbook state for a specific trading pair, including bids and asks",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "market"
+                ],
+                "summary": "Get orderbook for a trading pair",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trading pair identifier in format 'baseAddress_quoteAddress'",
+                        "name": "ticker_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of orders to return per side (default: all orders)",
+                        "name": "depth",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.OrderbookResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/tickers": {
+            "get": {
+                "description": "Returns a list of all trading pairs with their current market data including prices, volumes, and ranges. Each ticker_id is in the format \"baseAddress_quoteAddress\"",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "market"
+                ],
+                "summary": "Get all trading pairs with their market data",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Number of items to return (default: 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items to skip (default: 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/processor.TickerData"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "handlers.OrderbookResponse": {
+            "type": "object",
+            "properties": {
+                "asks": {
+                    "description": "List of ask orders, each containing [price, amount]\nexample: [[1851.00,0.8],[1851.50,2.0]]",
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        }
+                    }
+                },
+                "bids": {
+                    "description": "List of bid orders, each containing [price, amount]\nexample: [[1850.50,0.5],[1850.25,1.2]]",
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        }
+                    }
+                },
+                "ticker_id": {
+                    "description": "Trading pair identifier in format \"baseAddress_quoteAddress\"\nexample: \"0x2170ed0880ac9a755fd29b2688956bd959f933f8_0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c\"",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "Unix timestamp in milliseconds\nexample: 1676534400000",
+                    "type": "integer"
+                }
+            }
+        },
+        "market.TransactionLog": {
+            "type": "object",
+            "properties": {
+                "aggregator_fee_bips": {
+                    "description": "Aggregator fee in basis points\nexample: 10",
+                    "type": "number"
+                },
+                "amount_in": {
+                    "description": "Amount of input token\nexample: 1.5",
+                    "type": "number"
+                },
+                "amount_in_usd_value": {
+                    "description": "USD value of input amount\nexample: 1500.50",
+                    "type": "number"
+                },
+                "amount_out": {
+                    "description": "Amount of output token\nexample: 2500.75",
+                    "type": "number"
+                },
+                "amount_out_usd_value": {
+                    "description": "USD value of output amount\nexample: 1498.75",
+                    "type": "number"
+                },
+                "api_id": {
+                    "description": "API identifier",
+                    "type": "integer"
+                },
+                "chain": {
+                    "description": "Blockchain network identifier\nexample: \"ethereum\"",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp\nexample: \"2024-02-16T08:00:00Z\"",
+                    "type": "string"
+                },
+                "event_emitter": {
+                    "description": "Address of the event emitter\nexample: \"RfqTrade\"",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Unique identifier for the transaction log\nexample: \"123e4567-e89b-12d3-a456-426614174000\"",
+                    "type": "string"
+                },
+                "is_pmm": {
+                    "description": "Whether this is a PMM transaction\nexample: false",
+                    "type": "boolean"
+                },
+                "is_valid": {
+                    "description": "Whether the transaction is valid\nexample: true",
+                    "type": "boolean"
+                },
+                "liquidity_provider": {
+                    "description": "Liquidity provider identifier",
+                    "type": "integer"
+                },
+                "native_fee_bips": {
+                    "description": "Native fee in basis points\nexample: 30",
+                    "type": "number"
+                },
+                "pool_address": {
+                    "description": "Address of the liquidity pool\nexample: \"0x1234567890abcdef\"",
+                    "type": "string"
+                },
+                "pool_fee_amount": {
+                    "description": "Pool fee amount\nexample: 0.003",
+                    "type": "number"
+                },
+                "quote_id": {
+                    "description": "Quote identifier\nexample: \"ETH-USDC\"",
+                    "type": "string"
+                },
+                "recipient": {
+                    "description": "Address of the transaction recipient\nexample: \"0x1234567890abcdef\"",
+                    "type": "string"
+                },
+                "sender": {
+                    "description": "Address of the transaction sender\nexample: \"0x1234567890abcdef\"",
+                    "type": "string"
+                },
+                "signer": {
+                    "description": "Signer address\nexample: \"0x1234567890abcdef\"",
+                    "type": "string"
+                },
+                "source": {
+                    "description": "Source of the transaction",
+                    "type": "string"
+                },
+                "swap_fee_bips": {
+                    "description": "Swap fee in basis points\nexample: 30",
+                    "type": "number"
+                },
+                "token_in": {
+                    "description": "Address of the input token\nexample: \"0x1234567890abcdef\"",
+                    "type": "string"
+                },
+                "token_in_usd_value": {
+                    "description": "USD value of input token\nexample: 1500.50",
+                    "type": "number"
+                },
+                "token_out": {
+                    "description": "Address of the output token\nexample: \"0x1234567890abcdef\"",
+                    "type": "string"
+                },
+                "token_out_usd_value": {
+                    "description": "USD value of output token\nexample: 1498.75",
+                    "type": "number"
+                },
+                "tx_block_number": {
+                    "description": "Block number of the transaction\nexample: 12345678",
+                    "type": "integer"
+                },
+                "tx_block_time": {
+                    "description": "Block timestamp of the transaction\nexample: \"2024-02-16T08:00:00Z\"",
+                    "type": "string"
+                },
+                "tx_hash": {
+                    "description": "Hash of the transaction\nexample: \"0x1234567890abcdef\"",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp\nexample: \"2024-02-16T08:00:00Z\"",
+                    "type": "string"
+                }
+            }
+        },
+        "processor.TickerData": {
+            "type": "object",
+            "properties": {
+                "ask": {
+                    "description": "Lowest ask price\nexample: 1851.00",
+                    "type": "number"
+                },
+                "base_currency": {
+                    "description": "Ethereum address of the base token\nexample: \"0x2170ed0880ac9a755fd29b2688956bd959f933f8\"",
+                    "type": "string"
+                },
+                "base_volume": {
+                    "description": "Trading volume in base currency\nexample: 150.5",
+                    "type": "number"
+                },
+                "bid": {
+                    "description": "Highest bid price\nexample: 1850.50",
+                    "type": "number"
+                },
+                "high": {
+                    "description": "Highest price in the last 24 hours\nexample: 1875.25",
+                    "type": "number"
+                },
+                "last_price": {
+                    "description": "Last traded price\nexample: 1850.75",
+                    "type": "number"
+                },
+                "low": {
+                    "description": "Lowest price in the last 24 hours\nexample: 1825.75",
+                    "type": "number"
+                },
+                "pool_id": {
+                    "description": "Unique identifier for the liquidity pool\nexample: \"0xabcdef1234567890\"",
+                    "type": "string"
+                },
+                "target_currency": {
+                    "description": "Ethereum address of the target token\nexample: \"0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c\"",
+                    "type": "string"
+                },
+                "target_volume": {
+                    "description": "Trading volume in target currency\nexample: 278551.25",
+                    "type": "number"
+                },
+                "ticker_id": {
+                    "description": "Unique identifier for the trading pair in format \"baseAddress_quoteAddress\"\nexample: \"0x2170ed0880ac9a755fd29b2688956bd959f933f8_0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c\"",
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

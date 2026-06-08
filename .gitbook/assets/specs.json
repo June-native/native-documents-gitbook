@@ -1,0 +1,1145 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/v1/aqua/mm-positions": {
+      "get": {
+        "operationId": "AquaController_getAquaMMPosition",
+        "summary": "Gets the market maker's current positions for the specific chain. \n    Note that there will be a time delay of 1 minute to 2 minute before Market Maker position is updated.",
+        "parameters": [
+          {
+            "name": "address",
+            "required": true,
+            "in": "query",
+            "description": "The address of the market maker",
+            "schema": {
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "chain",
+            "required": true,
+            "in": "query",
+            "description": "Native blockchain name, eg: ethereum, bsc, etc",
+            "example": "ethereum",
+            "schema": {
+              "enum": [
+                "ethereum",
+                "bsc",
+                "bsc_testnet",
+                "sepolia",
+                "polygon",
+                "mumbai",
+                "arbitrum",
+                "avalanche",
+                "mantle",
+                "zetachain_athens3",
+                "base",
+                "manta",
+                "scroll",
+                "zetachain",
+                "linea",
+                "zklink",
+                "morph_testnet",
+                "morph_holesky_testnet",
+                "mantle_sepolia_testnet"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "500": {
+            "description": "There was an exception with the server"
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/vault-balance": {
+      "get": {
+        "operationId": "AquaController_getAquaVauldBalance",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/mm-settings": {
+      "get": {
+        "operationId": "AquaController_getAquaMMSettings",
+        "summary": "Gets market maker settings data that includes information such as additional credit limit, pause status, and liquidation factor.",
+        "parameters": [
+          {
+            "name": "address",
+            "required": true,
+            "in": "query",
+            "description": "The address of the market maker",
+            "schema": {
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "chain",
+            "required": true,
+            "in": "query",
+            "description": "Native blockchain name, eg: ethereum, bsc, etc",
+            "example": "ethereum",
+            "schema": {
+              "enum": [
+                "ethereum",
+                "bsc",
+                "bsc_testnet",
+                "sepolia",
+                "polygon",
+                "mumbai",
+                "arbitrum",
+                "avalanche",
+                "mantle",
+                "zetachain_athens3",
+                "base",
+                "manta",
+                "scroll",
+                "zetachain",
+                "linea",
+                "zklink",
+                "morph_testnet",
+                "morph_holesky_testnet",
+                "mantle_sepolia_testnet"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "500": {
+            "description": "There was an exception with the server"
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/token-settings": {
+      "get": {
+        "operationId": "AquaController_getAquaTokenSettings",
+        "summary": "Get aqua related token settings such as short fee, long fee, and collateral factor.",
+        "parameters": [
+          {
+            "name": "chains",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "500": {
+            "description": "There was an exception with the server"
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/all-mm-settings": {
+      "get": {
+        "operationId": "AquaController_getAllMmSettings",
+        "summary": "Gets all market maker address and the chain they are in.",
+        "parameters": [
+          {
+            "name": "liquidator",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "500": {
+            "description": "There was an exception with the server"
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/mm-available-borrow": {
+      "get": {
+        "operationId": "AquaController_getMMAvailableBorrow",
+        "summary": "Gets all borrowable token and max token amount that MM is able to borrow from aqua. The token amount depends on the collateral amount, max leverage, and available token in aqua vault.",
+        "parameters": [
+          {
+            "name": "address",
+            "required": true,
+            "in": "query",
+            "description": "The address of the market maker",
+            "schema": {
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "chain",
+            "required": true,
+            "in": "query",
+            "description": "Native blockchain name, eg: ethereum, bsc, etc",
+            "example": "ethereum",
+            "schema": {
+              "enum": [
+                "ethereum",
+                "bsc",
+                "bsc_testnet",
+                "sepolia",
+                "polygon",
+                "mumbai",
+                "arbitrum",
+                "avalanche",
+                "mantle",
+                "zetachain_athens3",
+                "base",
+                "manta",
+                "scroll",
+                "zetachain",
+                "linea",
+                "zklink",
+                "morph_testnet",
+                "morph_holesky_testnet",
+                "mantle_sepolia_testnet"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "500": {
+            "description": "There was an exception with the server"
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/liquidation": {
+      "post": {
+        "operationId": "AquaController_requestLiquidation",
+        "summary": "Whitelisted liquidator can request for Marker Maker liquidation by specifying what position they want to close and how much collateral they want to claim. Liquidator can do partial liquidation as long as the Market Maker credit health is increasing.",
+        "parameters": [
+          {
+            "name": "apiKey",
+            "in": "header",
+            "description": "The API key that was assigned to you by Native",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LiquidationRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "500": {
+            "description": "There was an exception with the server"
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/verify-settlement": {
+      "post": {
+        "operationId": "AquaController_verifySettlement",
+        "summary": "Validates your settlement request and returns the result if valid.",
+        "parameters": [
+          {
+            "name": "apiKey",
+            "in": "header",
+            "description": "The API key that was assigned to you by Native",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlementRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "500": {
+            "description": "There was an exception with the server"
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/request-settlement": {
+      "post": {
+        "operationId": "AquaController_requestSettlement",
+        "summary": "Creates a settlement request and starts the time delay. Note that Market Maker will be paused from other activities at this point.",
+        "parameters": [
+          {
+            "name": "apiKey",
+            "in": "header",
+            "description": "The API key that was assigned to you by Native",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlementRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "500": {
+            "description": "There was an exception with the server"
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/cancel-settlement": {
+      "post": {
+        "operationId": "AquaController_cancelSettlementRemoval",
+        "summary": "Cancels the settlement request and unpause the market maker's trading activities.",
+        "parameters": [
+          {
+            "name": "apiKey",
+            "in": "header",
+            "description": "The API key that was assigned to you by Native",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlementRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "500": {
+            "description": "There was an exception with the server"
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/settlement-status": {
+      "post": {
+        "operationId": "AquaController_getSettlementStatus",
+        "summary": "Checks the status of the time delay and get the signature calldata if the time delay has been passed.",
+        "parameters": [
+          {
+            "name": "apiKey",
+            "in": "header",
+            "description": "The API key that was assigned to you by Native",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettlementRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "500": {
+            "description": "There was an exception with the server"
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/verify-collateral-removal": {
+      "post": {
+        "operationId": "AquaController_verifyCollateralRemoval",
+        "summary": "Validates if the market maker's collateral removal request is valid.",
+        "parameters": [
+          {
+            "name": "apiKey",
+            "in": "header",
+            "description": "The API key that was assigned to you by Native",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollateralRemovalRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "500": {
+            "description": "There was an exception with the server"
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/request-collateral-removal": {
+      "post": {
+        "operationId": "AquaController_requestCollateralRemoval",
+        "summary": "Creates a collateral removal request and start the time delay. Note that Market Maker will be paused at this point from other activities.",
+        "parameters": [
+          {
+            "name": "apiKey",
+            "in": "header",
+            "description": "The API key that was assigned to you by Native",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollateralRemovalRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "500": {
+            "description": "There was an exception with the server"
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/cancel-collateral-removal": {
+      "post": {
+        "operationId": "AquaController_cancelCollateralRemoval",
+        "summary": "Cancels the settlement request and unpause trading activities.",
+        "parameters": [
+          {
+            "name": "apiKey",
+            "in": "header",
+            "description": "The API key that was assigned to you by Native",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollateralRemovalRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "500": {
+            "description": "There was an exception with the server"
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/collateral-removal-status": {
+      "post": {
+        "operationId": "AquaController_getCollateralRemovalStatus",
+        "summary": "Checks the status of the time delay and get the signature calldata if the time delay has been passed.",
+        "parameters": [
+          {
+            "name": "apiKey",
+            "in": "header",
+            "description": "The API key that was assigned to you by Native",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollateralRemovalRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "500": {
+            "description": "There was an exception with the server"
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/aqua-tx-history": {
+      "get": {
+        "operationId": "AquaController_getAquaTxHistory",
+        "parameters": [
+          {
+            "name": "address",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/ctoken-stats": {
+      "get": {
+        "operationId": "AquaController_getAquaCTokenStats",
+        "parameters": [
+          {
+            "name": "cToken",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/ctoken-metrics": {
+      "get": {
+        "operationId": "AquaController_getAquaCTokenHourlyMetrics",
+        "parameters": [
+          {
+            "name": "cToken",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "count",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/protocol-stats": {
+      "get": {
+        "operationId": "AquaController_getAquaProtocolStats",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/protocol-metrics": {
+      "get": {
+        "operationId": "AquaController_getAquaProtocolMetrics",
+        "parameters": [
+          {
+            "name": "count",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/aqua-list-assets": {
+      "get": {
+        "operationId": "AquaController_getAquaListAssets",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/aqua-tokens": {
+      "get": {
+        "operationId": "AquaController_getAquaTokens",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/account-stats": {
+      "get": {
+        "operationId": "AquaController_getAquaAccountStats",
+        "parameters": [
+          {
+            "name": "account",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/set-apy-for-chain": {
+      "get": {
+        "operationId": "AquaController_setApyForChain",
+        "parameters": [
+          {
+            "name": "supplyApy",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "borrowApy",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionApy",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "boostApy",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/set-apy-for-multiple-assets": {
+      "get": {
+        "operationId": "AquaController_setApyForMultipleAssets",
+        "parameters": [
+          {
+            "name": "lpTokenAddress",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "supplyApy",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "borrowApy",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionApy",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "boostApy",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/set-apy-for-asset": {
+      "get": {
+        "operationId": "AquaController_setApyForAsset",
+        "parameters": [
+          {
+            "name": "lpTokenAddress",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "supplyApy",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "borrowApy",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transactionApy",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "boostApy",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    },
+    "/v1/aqua/aqua-users": {
+      "get": {
+        "operationId": "AquaController_getAllAquaUsers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Aqua"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Lend API",
+    "description": "Public endpoints for Lend API.",
+    "version": "1.0",
+    "contact": {
+
+    }
+  },
+  "tags": [],
+  "servers": [
+    {
+      "url": "https://newapi.native.org/swap-api"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "TokenAmount": {
+        "type": "object",
+        "properties": {
+          "tokenAddress": {
+            "type": "string",
+            "description": "The address of the traded token",
+            "pattern": "^0x[a-fA-F0-9]{40}$"
+          },
+          "amount": {
+            "type": "string",
+            "description": "Amount of token in wei unit",
+            "pattern": "^0x[a-fA-F0-9]{40}$"
+          }
+        },
+        "required": [
+          "tokenAddress",
+          "amount"
+        ]
+      },
+      "LiquidationRequestDto": {
+        "type": "object",
+        "properties": {
+          "trader": {
+            "type": "string",
+            "description": "The address of the trader",
+            "pattern": "^0x[a-fA-F0-9]{40}$"
+          },
+          "recipient": {
+            "type": "string",
+            "description": "The address of the market maker or the settler",
+            "pattern": "^0x[a-fA-F0-9]{40}$"
+          },
+          "chain": {
+            "type": "string",
+            "enum": [
+              "ethereum",
+              "bsc",
+              "bsc_testnet",
+              "sepolia",
+              "polygon",
+              "mumbai",
+              "arbitrum",
+              "avalanche",
+              "mantle",
+              "zetachain_athens3",
+              "base",
+              "manta",
+              "scroll",
+              "zetachain",
+              "linea",
+              "zklink",
+              "morph_testnet",
+              "morph_holesky_testnet",
+              "mantle_sepolia_testnet"
+            ],
+            "description": "Native blockchain name, eg: ethereum, bsc, etc",
+            "example": "ethereum"
+          },
+          "positionUpdates": {
+            "description": "The market maker position(s) that you want to close",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TokenAmount"
+            }
+          },
+          "claimCollaterals": {
+            "description": "How much collateral you want to claim from the market maker",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TokenAmount"
+            }
+          }
+        },
+        "required": [
+          "trader",
+          "recipient",
+          "chain",
+          "positionUpdates",
+          "claimCollaterals"
+        ]
+      },
+      "SettlementRequestDto": {
+        "type": "object",
+        "properties": {
+          "chain": {
+            "type": "string",
+            "enum": [
+              "ethereum",
+              "bsc",
+              "bsc_testnet",
+              "sepolia",
+              "polygon",
+              "mumbai",
+              "arbitrum",
+              "avalanche",
+              "mantle",
+              "zetachain_athens3",
+              "base",
+              "manta",
+              "scroll",
+              "zetachain",
+              "linea",
+              "zklink",
+              "morph_testnet",
+              "morph_holesky_testnet",
+              "mantle_sepolia_testnet"
+            ],
+            "description": "Native blockchain name, eg: ethereum, bsc, etc",
+            "example": "ethereum"
+          },
+          "recipient": {
+            "type": "string",
+            "description": "The address of the market maker or the settler",
+            "pattern": "^0x[a-fA-F0-9]{40}$"
+          },
+          "positionUpdates": {
+            "description": "The position updates for the settlement",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TokenAmount"
+            }
+          },
+          "trader": {
+            "type": "string",
+            "description": "The address of the trader",
+            "pattern": "^0x[a-fA-F0-9]{40}$"
+          }
+        },
+        "required": [
+          "chain",
+          "recipient",
+          "positionUpdates",
+          "trader"
+        ]
+      },
+      "CollateralRemovalRequestDto": {
+        "type": "object",
+        "properties": {
+          "recipient": {
+            "type": "string",
+            "description": "The address of the market maker or the settler",
+            "pattern": "^0x[a-fA-F0-9]{40}$"
+          },
+          "chain": {
+            "type": "string",
+            "enum": [
+              "ethereum",
+              "bsc",
+              "bsc_testnet",
+              "sepolia",
+              "polygon",
+              "mumbai",
+              "arbitrum",
+              "avalanche",
+              "mantle",
+              "zetachain_athens3",
+              "base",
+              "manta",
+              "scroll",
+              "zetachain",
+              "linea",
+              "zklink",
+              "morph_testnet",
+              "morph_holesky_testnet",
+              "mantle_sepolia_testnet"
+            ],
+            "description": "Native blockchain name, eg: ethereum, bsc, etc",
+            "example": "ethereum"
+          },
+          "tokens": {
+            "description": "The tokens to be removed as collateral",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TokenAmount"
+            }
+          },
+          "trader": {
+            "type": "string",
+            "description": "The address of the trader",
+            "pattern": "^0x[a-fA-F0-9]{40}$"
+          }
+        },
+        "required": [
+          "recipient",
+          "chain",
+          "tokens",
+          "trader"
+        ]
+      }
+    }
+  }
+}

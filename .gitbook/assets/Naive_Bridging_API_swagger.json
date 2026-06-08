@@ -1,0 +1,813 @@
+{
+  "info": {
+    "title": "Native Brdige API",
+    "description": "",
+    "version": "1.0.0"
+  },
+  "host": "v2.api.native.org",
+  "schemes": [
+    "https"
+  ],
+  "tags": [],
+  "paths": {
+    "/swap-api-v2/v1/bridge/firm-quote": {
+      "get": {
+        "summary": "/bridge/firm-quote",
+        "deprecated": false,
+        "description": "Request executable calldata for initiating a bridging request",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "from_address",
+            "in": "query",
+            "description": "Effectively recipient. This is the pay out address of the final swapped tokens. Funding address will always be the address calls Native Bridge Contract.",
+            "required": true,
+            "type": "string",
+            "schema": {
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "type": "string"
+            },
+            "x-example": "0xbf381E1cBfdb0D02F3800010e490130D3dC73118"
+          },
+          {
+            "name": "src_chain",
+            "in": "query",
+            "description": "Blockchain name of the chain to initiate bridging, eg: ethereum, arbitrum, ... (refer to network name reference)",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "ethereum",
+              "bsc",
+              "arbitrum",
+              "base"
+            ],
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ethereum",
+                "bsc",
+                "arbitrum",
+                "base"
+              ]
+            },
+            "x-example": "bsc"
+          },
+          {
+            "name": "dst_chain",
+            "in": "query",
+            "description": "Blockchain name of the chain to receive bridged tokens, eg: ethereum, arbitrum, ... (refer to network name reference)",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "ethereum",
+              "bsc",
+              "arbitrum",
+              "base"
+            ],
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ethereum",
+                "bsc",
+                "arbitrum",
+                "base"
+              ]
+            },
+            "x-example": "ethereum"
+          },
+          {
+            "name": "token_in",
+            "in": "query",
+            "description": "Address of the token to be sold/bridge-out",
+            "required": true,
+            "type": "string",
+            "schema": {
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "type": "string"
+            },
+            "x-example": "0x55d398326f99059fF775485246999027B3197955"
+          },
+          {
+            "name": "token_out",
+            "in": "query",
+            "description": "Address of the token to be bought/bridge-in",
+            "required": true,
+            "type": "string",
+            "schema": {
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "type": "string"
+            },
+            "x-example": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+          },
+          {
+            "name": "amount",
+            "in": "query",
+            "description": "The amount of `token_in` token to pay/sell/bridge-out",
+            "required": true,
+            "type": "string",
+            "x-example": "1000"
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "description": "The version of Native Swap Router (if bridging includes token swaps). Leave empty or use 4 (latest)",
+            "required": false,
+            "type": "string",
+            "x-example": "4"
+          },
+          {
+            "name": "api_key",
+            "in": "header",
+            "description": "The API key that was assigned to you by Native",
+            "required": true,
+            "type": "string",
+            "x-example": ""
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response containing executable calldata for initiating a bridging request",
+            "headers": {},
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "description": "Indicates whether the request was successful"
+                },
+                "orders": {
+                  "type": "array",
+                  "description": "Array of order objects containing swap details",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "pool": {
+                        "type": "string",
+                        "pattern": "^0x[a-fA-F0-9]{40}$",
+                        "description": "Address of the rfq swap pool"
+                      },
+                      "signer": {
+                        "type": "string",
+                        "pattern": "^0x[a-fA-F0-9]{40}$",
+                        "description": "Address of the signer"
+                      },
+                      "recipient": {
+                        "type": "string",
+                        "pattern": "^0x[a-fA-F0-9]{40}$",
+                        "description": "Address that will receive the swapped tokens"
+                      },
+                      "sellerToken": {
+                        "type": "string",
+                        "pattern": "^0x[a-fA-F0-9]{40}$",
+                        "description": "Address of the token being sold"
+                      },
+                      "buyerToken": {
+                        "type": "string",
+                        "pattern": "^0x[a-fA-F0-9]{40}$",
+                        "description": "Address of the token being bought"
+                      },
+                      "effectiveSellerTokenAmount": {
+                        "type": "string",
+                        "description": "Effective amount of seller token (in wei)"
+                      },
+                      "sellerTokenAmount": {
+                        "type": "string",
+                        "description": "Amount of seller token (in wei)"
+                      },
+                      "buyerTokenAmount": {
+                        "type": "string",
+                        "description": "Amount of buyer token (in wei)"
+                      },
+                      "deadlineTimestamp": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "Unix timestamp after which the quote expires. Bridge init tx must execute before this timestamp."
+                      },
+                      "nonce": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "Nonce for the quote"
+                      },
+                      "quoteId": {
+                        "type": "string",
+                        "description": "Unique identifier for the quote"
+                      },
+                      "multiHop": {
+                        "type": "boolean",
+                        "description": "Whether there are subsequent multihop swaps."
+                      },
+                      "signature": {
+                        "type": "string",
+                        "description": "Signature for the order"
+                      },
+                      "externalSwapCalldata": {
+                        "type": "string",
+                        "description": "Calldata for external swap operations"
+                      },
+                      "amountOutMinimum": {
+                        "type": "string",
+                        "description": "Minimum amount out expected (in wei)"
+                      },
+                      "widgetFee": {
+                        "type": "object",
+                        "description": "Fee configuration for frontend",
+                        "properties": {
+                          "signer": {
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$",
+                            "description": "Address of the fee signer"
+                          },
+                          "feeRecipient": {
+                            "type": "string",
+                            "pattern": "^0x[a-fA-F0-9]{40}$",
+                            "description": "Address that receives the fee"
+                          },
+                          "feeRate": {
+                            "type": "number",
+                            "format": "double",
+                            "description": "Fee rate in bps"
+                          }
+                        }
+                      },
+                      "widgetFeeSignature": {
+                        "type": "string",
+                        "description": "Signature for the widget fee"
+                      },
+                      "confidenceExtractedValueT": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "Confidence extracted value T"
+                      },
+                      "confidenceExtractedValueE": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Confidence extracted value E"
+                      },
+                      "confidenceExtractedValueM": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Confidence extracted value M"
+                      },
+                      "confidenceExtractedValueN": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "Confidence extracted value N"
+                      }
+                    }
+                  }
+                },
+                "widgetFee": {
+                  "type": "object",
+                  "description": "Overall widget fee configuration",
+                  "properties": {
+                    "signer": {
+                      "type": "string",
+                      "pattern": "^0x[a-fA-F0-9]{40}$",
+                      "description": "Address of the fee signer"
+                    },
+                    "feeRecipient": {
+                      "type": "string",
+                      "pattern": "^0x[a-fA-F0-9]{40}$",
+                      "description": "Address that receives the fee"
+                    },
+                    "feeRate": {
+                      "type": "number",
+                      "format": "double",
+                      "description": "Fee rate in bps"
+                    }
+                  }
+                },
+                "widgetFeeSignature": {
+                  "type": "string",
+                  "description": "Overall widget fee signature"
+                },
+                "recipient": {
+                  "type": "string",
+                  "pattern": "^0x[a-fA-F0-9]{40}$",
+                  "description": "Address that will receive the final tokens"
+                },
+                "amountIn": {
+                  "type": "string",
+                  "description": "Total input amount (in wei)"
+                },
+                "amountOut": {
+                  "type": "string",
+                  "description": "Total output amount after fees (in wei)"
+                },
+                "amountOutBeforeFee": {
+                  "type": "string",
+                  "description": "Output amount before fees are deducted (in wei)"
+                },
+                "fallbackSwapDataArray": {
+                  "type": "array",
+                  "description": "Fallback swap data array for alternative swap paths",
+                  "items": {
+                    "type": "object"
+                  },
+                  "x-nullable": true
+                },
+                "tokenTransferFeeOnPercent": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Token transfer fee as a percentage"
+                },
+                "txRequest": {
+                  "type": "object",
+                  "description": "Transaction request data to execute the bridge",
+                  "properties": {
+                    "target": {
+                      "type": "string",
+                      "pattern": "^0x[a-fA-F0-9]{40}$",
+                      "description": "Target contract address to call"
+                    },
+                    "calldata": {
+                      "type": "string",
+                      "description": "Encoded function call data"
+                    },
+                    "value": {
+                      "type": "string",
+                      "description": "ETH value to send with the transaction (in wei)"
+                    },
+                    "function": {
+                      "type": "string",
+                      "description": "Function name to call on the target contract"
+                    }
+                  }
+                },
+                "source": {
+                  "type": "array",
+                  "description": "Source identifiers for the quote",
+                  "items": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                },
+                "quoteSource": {
+                  "type": "array",
+                  "description": "Quote source identifiers",
+                  "items": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "x-nullable": true
+                },
+                "errorMessage": {
+                  "type": "string",
+                  "description": "Error message if any issues occurred"
+                },
+                "router_version": {
+                  "type": "string",
+                  "description": "Version of the router used"
+                },
+                "toWrap": {
+                  "type": "boolean",
+                  "description": "Whether the operation involves wrapping tokens"
+                },
+                "toUnwrap": {
+                  "type": "boolean",
+                  "description": "Whether the operation involves unwrapping tokens"
+                },
+                "amountInOffset": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Offset for amountIn in calldata"
+                },
+                "amountOutMinimumOffset": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Offset for amountOutMinimum in calldata"
+                },
+                "priority": {
+                  "type": "string",
+                  "description": "Transaction priority level (e.g., 'fast')",
+                  "enum": ["fast", "standard", "slow"]
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "produces": [
+          "application/json"
+        ]
+      }
+    },
+    "/swap-api-v2/v1/bridge/refund": {
+      "get": {
+        "summary": "/bridge/refund",
+        "deprecated": false,
+        "description": "Request refund for a bridging request",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "from_address",
+            "in": "query",
+            "description": "Address of the user requesting the refund",
+            "required": true,
+            "type": "string",
+            "schema": {
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "type": "string"
+            },
+            "x-example": "0x59274e1eedfb26e2aacec4d3ddcc6bf4168b457a"
+          },
+          {
+            "name": "bridge_quote_id",
+            "in": "query",
+            "description": "Unique identifier for the bridging request. This should match the quoteId in the response of /bridge/firm-quote.",
+            "required": true,
+            "type": "string",
+            "schema": {
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "type": "string"
+            },
+            "x-example": "0d40b0fb992b45019d234a3c7cf4381d"
+          },
+          {
+            "name": "api_key",
+            "in": "header",
+            "description": "The API key that was assigned to you by Native",
+            "required": true,
+            "type": "string",
+            "x-example": ""
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response containing refund details",
+            "headers": {},
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          }
+        },
+        "security": [],
+        "produces": [
+          "application/json"
+        ]
+      }
+    },
+    "/swap-api-v2/v1/bridge/tx-history": {
+      "get": {
+        "summary": "/bridge/tx-history",
+        "deprecated": false,
+        "description": "Retrieve transaction history for a user",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "from_address",
+            "in": "query",
+            "description": "Address of the user requesting the transaction history",
+            "required": true,
+            "type": "string",
+            "schema": {
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "type": "string"
+            },
+            "x-example": "0x0B85A5cbFf605789A3F5c56F1582dDB63687BC5F"
+          },
+          {
+            "name": "src_chain_id",
+            "in": "query",
+            "description": "Chain ID of the source/bridge-out chain. Note this is different from the src_chain parameter in /bridge/firm-quote which is the network name.",
+            "required": true,
+            "type": "string",
+            "schema": {
+              "type": "string"
+            },
+            "x-example": "56"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Pagination offset. Default is 0.",
+            "required": false,
+            "type": "string",
+            "x-example": "0"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "Number of transactions to return per page.",
+            "required": false,
+            "type": "string",
+            "x-example": "2"
+          },
+          {
+            "name": "api_key",
+            "in": "header",
+            "description": "The API key that was assigned to you by Native",
+            "required": true,
+            "type": "string",
+            "x-example": ""
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response containing transaction history",
+            "headers": {},
+            "schema": {
+              "type": "object",
+              "properties": {
+                "tx_history": {
+                  "type": "array",
+                  "description": "Array of transaction history entries",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "bridge_quote_id": {
+                        "type": "string",
+                        "description": "Unique identifier for the bridging request"
+                      },
+                      "create_time": {
+                        "type": "string",
+                        "description": "Unix timestamp when the transaction was created"
+                      }
+                    }
+                  }
+                },
+                "has_more": {
+                  "type": "boolean",
+                  "description": "Indicates whether there are more transactions available"
+                },
+                "next_offset": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "Offset to use for the next page of results"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "produces": [
+          "application/json"
+        ]
+      }
+    },
+    "/swap-api-v2/v1/bridge/tx-status": {
+      "get": {
+        "summary": "/bridge/tx-status",
+        "deprecated": false,
+        "description": "Check the status of a bridging request",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "bridge_quote_id",
+            "in": "query",
+            "description": "Unique identifier for the bridging request. This should match the quoteId in the response of /bridge/firm-quote.",
+            "required": true,
+            "type": "string",
+            "x-example": "a7031397e37444ea924f8ed7a1ffb1a6"
+          },
+          {
+            "name": "api_key",
+            "in": "header",
+            "description": "The API key that was assigned to you by Native",
+            "required": true,
+            "type": "string",
+            "x-example": ""
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response containing the status of the bridging request",
+            "headers": {},
+            "schema": {
+              "type": "object",
+              "properties": {
+                "tx_status": {
+                  "type": "string",
+                  "description": "Status of the bridging transaction. USER_REQUESTED: Requested Firm-Quote but not submitted. USER_COMMITTED: Order inited on source chain. MM_FAILED: Failed to fill order on destination chain. MM_FILLED: Order filled on destination chain. CLAIMED: Order wrapped up on source chain. REFUNDED: Order refunded on source chain.",
+                  "enum": [
+                    "USER_REQUESTED",
+                    "USER_COMMITTED",
+                    "MM_FAILED",
+                    "MM_FILLED",
+                    "CLAIMED",
+                    "REFUNDED"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "produces": [
+          "application/json"
+        ]
+      }
+    },
+    "/swap-api-v2/v1/bridge/indicative-quote": {
+      "get": {
+        "summary": "/bridge/indicative-quote",
+        "deprecated": false,
+        "description": "Request fast, indicative quote for a bridging request without the calldata.",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "from_address",
+            "in": "query",
+            "description": "Address of the user requesting the indicative quote",
+            "required": false,
+            "type": "string",
+            "schema": {
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "type": "string"
+            },
+            "x-example": "0xbf381E1cBfdb0D02F3800010e490130D3dC73118"
+          },
+          {
+            "name": "src_chain",
+            "in": "query",
+            "description": "Blockchain name of the chain to initiate bridging, eg: ethereum, arbitrum, ... (refer to network name reference)",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "ethereum",
+              "bsc",
+              "arbitrum",
+              "base"
+            ],
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ethereum",
+                "bsc",
+                "arbitrum",
+                "base"
+              ]
+            },
+            "x-example": "bsc"
+          },
+          {
+            "name": "dst_chain",
+            "in": "query",
+            "description": "Blockchain name of the chain to receive bridged tokens, eg: ethereum, arbitrum, ... (refer to network name reference)",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "ethereum",
+              "bsc",
+              "arbitrum",
+              "base"
+            ],
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ethereum",
+                "bsc",
+                "arbitrum",
+                "base"
+              ]
+            },
+            "x-example": "ethereum"
+          },
+          {
+            "name": "token_in",
+            "in": "query",
+            "description": "Address of the token to be sold/bridge-out",
+            "required": true,
+            "type": "string",
+            "schema": {
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "type": "string"
+            },
+            "x-example": "0x55d398326f99059fF775485246999027B3197955"
+          },
+          {
+            "name": "token_out",
+            "in": "query",
+            "description": "Address of the token to be bought/bridge-in",
+            "required": true,
+            "type": "string",
+            "schema": {
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "type": "string"
+            },
+            "x-example": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+          },
+          {
+            "name": "amount",
+            "in": "query",
+            "description": "The amount of `token_in` token to pay/sell/bridge-out",
+            "required": true,
+            "type": "string",
+            "x-example": "1000"
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "description": "The version of Native Swap Router (if bridging includes token swaps). Leave empty or use 4 (latest)",
+            "required": false,
+            "type": "string",
+            "x-example": "3"
+          },
+          {
+            "name": "api_key",
+            "in": "header",
+            "description": "The API key that was assigned to you by Native",
+            "required": true,
+            "type": "string",
+            "x-example": ""
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response containing indicative quote for a bridging request",
+            "headers": {},
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "description": "Indicates whether the request was successful"
+                },
+                "buyerToken": {
+                  "type": "string",
+                  "pattern": "^0x[a-fA-F0-9]{40}$",
+                  "description": "Address of the token being bought/bridge-in"
+                },
+                "sellerToken": {
+                  "type": "string",
+                  "pattern": "^0x[a-fA-F0-9]{40}$",
+                  "description": "Address of the token being sold/bridge-out"
+                },
+                "buyerTokenAmount": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Amount of buyer token (in token units)"
+                },
+                "buyerTokenAmountWei": {
+                  "type": "string",
+                  "description": "Amount of buyer token (in wei)"
+                },
+                "sellerTokenAmount": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Amount of seller token (in token units)"
+                },
+                "sellerTokenAmountWei": {
+                  "type": "string",
+                  "description": "Amount of seller token (in wei)"
+                },
+                "price": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Price of the quote"
+                },
+                "widgetFeeUsd": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Widget fee in USD"
+                },
+                "liquidityProviderFeeUsd": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Liquidity provider fee in USD"
+                },
+                "totalFeeUsd": {
+                  "type": "number",
+                  "format": "double",
+                  "description": "Total fee in USD"
+                },
+                "routes": {
+                  "type": "array",
+                  "description": "Array of route token symbols",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "source": {
+                  "type": "array",
+                  "description": "Source identifiers for the quote",
+                  "items": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                },
+                "priority": {
+                  "type": "string",
+                  "description": "Bridging confirm speed. Fast orders will be confirmed in no longer than 10 seconds. Slow orders can take up to 3 mins.",
+                  "enum": ["fast", "slow"]
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "produces": [
+          "application/json"
+        ]
+      }
+    }
+  },
+  "security": [],
+  "swagger": "2.0",
+  "definitions": {},
+  "securityDefinitions": {},
+  "x-components": {
+    "responses": {}
+  }
+}
