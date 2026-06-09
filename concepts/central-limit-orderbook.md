@@ -10,4 +10,4 @@ The **Central Limit Order Book (CLOB)** is the matching mechanism at the heart o
 
 ### Why It Matters
 
-A CLOB gives traders the familiar order types and price precision of a centralized exchange, while keeping execution fully transparent. Combined with a dedicated app chain, it delivers professional-grade execution without the MEV and slippage characteristic of AMMs.
+A CLOB gives traders the familiar order types and price precision of other liquidity venues, while keeping execution fully transparent. Combined with a dedicated app chain, it delivers professional-grade execution without the MEV and slippage characteristic of AMMs.

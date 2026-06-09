@@ -1,26 +1,20 @@
-# For Pegged Assets
+# For RWA Issuers
 
-A [prime example](https://medium.com/@official_42951/pioneering-a-new-era-of-liquidity-stakestone-x-native-90d401002319) is Native's collaboration with StakeStone, where we successfully solved the liquidity issue for STONE.
+24/7 Secondary market
 
-Together, Native Core, Relay and Pool ensure tokens like **STONE** achieve sufficient liquidity to be accepted by leading DeFi protocols, including lending protocols, yield trading platforms and oracles. By building robust on-chain liquidity through its credit pool model, Native unlocks the following benefits:
+Most onchain users still access primary-market liquidity, with pricing pulled from TradFi and liquidity appearing only when a trade is triggered. That puts the asset onchain, but not the market.
 
-#### **Effective LP Incentives**
+Native is built for secondary-market liquidity. Instead of pulling liquidity from TradFi only when a trade happens, Native enables issuers and LPs to provide inventory while market makers proactively quote on orderbooks. That allows pricing to continue during off-market hours and makes real onchain price discovery possible.
 
-* By leveraging liquidity in the credit pool, Native boosts **TVL**, demonstrating a token’s viability and security.
-* With single-sided LP provision, asset issuers save half of the cost of AMM LP incentives on Native.
-* Example: Tokens with **$10M+** **Total Available Liquidity** are more likely to meet benchmarks of lending protocols like **Morpho**.
+Among onchain liquidity models, AMMs are not capital-efficient for tokenized stocks, while RFQ + CLOB is the structure that can support an orderbook-based secondary market. Native is the first onchain spot liquidity DEX to combine RFQ + CLOB for this market.
 
-#### **Trading Volume**
+### Institutional liquidity infrastructure for RWA markets
 
-* Enabled liquidity facilitates significant trading volume, ensuring strong market activity and price stability.
-* Example: Tokens achieving **$5M+ daily trading volume** are far more likely to meet benchmarks of oracles like **Chainlink**.
+Native Core is the onchain orderbook where market makers quote proactively and price discovery happens continuously. Native Relay distributes that liquidity into wallets, aggregators, and trading interfaces.
 
-#### **Price Slippage**
+Behind the market, Native Pool allows issuers and LPs to supply liquidity that can be loaned to market makers. Through cross-margin access, market makers can quote tighter spreads and support deeper books, while LPs participate through single-sided liquidity with no impermanent loss. This is what makes real 24/7 onchain trading possible.
 
-* With a contractual rate, the PMM network on Native can ensure a customized pricing range for the listed asset.
-* Example: Tokens within **0.5% slippage** are more likely to meet the benchmarks of yield trading platforms like **Pendle**.
 
-However, this is just one way to collaborate with Native — we're open to exploring other partnership opportunities as well.
 
 {% hint style="info" %}
 Fill out this [form](https://docs.google.com/forms/d/e/1FAIpQLSdyOZGlRzB9A31qh-ryrqdHlSpJDPz-lTDqZ8t40e19WHQyTw/viewform), and the Native team will be in touch.

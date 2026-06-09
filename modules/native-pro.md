@@ -4,7 +4,7 @@ description: Connects Institutional Players to Native Core
 
 # Native Pro
 
-Native Pro is the access layer that exposes Native Core's to professional market makers through direct, exchange-grade interfaces.&#x20;
+Native Pro is the institutional integration module that exposes Native Core’s matching engine via direct, high speed and low latency interfaces.
 
 It is the on-chain equivalent of an institutional market-making connection: real-time data, deterministic matching, and full order management — settled transparently on Native Core.
 

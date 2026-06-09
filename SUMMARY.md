@@ -82,7 +82,7 @@
   * [LP Tokens Contract](build-with-native/liquidity-providers/lp-tokens-contract.md)
   * [LP Pairing Contract](build-with-native/liquidity-providers/lp-pairing-contract.md)
 * [Asset Issuers](build-with-native/asset-issuers/README.md)
-  * [For Pegged Assets](build-with-native/asset-issuers/for-pegged-assets.md)
+  * [For RWA Issuers](build-with-native/asset-issuers/for-pegged-assets.md)
   * [For General Assets](build-with-native/asset-issuers/for-general-assets.md)
 * [Market Makers](build-with-native/market-makers/README.md)
   * [MM Pricing and Signing API](build-with-native/market-makers/mm-pricing-and-signing-api/README.md)

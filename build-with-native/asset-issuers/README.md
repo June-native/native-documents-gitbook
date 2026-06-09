@@ -1,11 +1,18 @@
 # Asset Issuers
 
-AMMs face fundamental inefficiencies:
 
-* Locked capital sits idle
-* Liquidity fragments across multiple pools
-* Asset issuers bear pair-based incentive costs
 
-This creates a critical challenge: bootstrapping sustainable liquidity while maintaining capital productivity.
+**Transparency**: every deposit/withdraw and buy/sell is transparent, traceable and verifiable onchain, giving you full insight into your asset holders and distribution
 
-Native V2 empowers asset issuers to build efficient liquidity with half the cost of LP incentives compared to AMMs, while delivering flexible and reliable pricing.
+**Efficient Liquidity**: you can build liquidity using a wide range of PMMs already onboarded with Native, or employ our Native core internal proAMM (built-in with consensus) for initial bootstraping. Your deployed capital will be efficiently and transparently utilized. No more trust assumptions with your designated market makers.
+
+**Broad Distribution**: Native Relay exports your asset liquidity to all working upstream partners including all major wallets, aggregators, intent protocols, etc.
+
+
+
+
+
+
+
+
+
