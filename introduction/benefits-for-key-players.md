@@ -7,7 +7,7 @@ coverY: 0
 
 {% tabs %}
 {% tab title="Traders" %}
-Get a CEX-grade experience with full on-chain visibility:
+Get an institutional-grade experience with full on-chain visibility:
 
 * **High-performance CLOB execution:** Real order-book trading with limit and market orders, deterministic order matching, and sub-second finality.
 * **On-chain transparency:** Every order, match, and balance update is publicly auditable.
