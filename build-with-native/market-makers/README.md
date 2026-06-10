@@ -1,5 +1,6 @@
 ---
 hidden: true
+noIndex: true
 ---
 
 # Market Makers
@@ -11,3 +12,4 @@ hidden: true
 {% content-ref url="native-market-makers-api/" %}
 [native-market-makers-api](native-market-makers-api/)
 {% endcontent-ref %}
+

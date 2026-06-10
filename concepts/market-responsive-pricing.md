@@ -1,5 +1,6 @@
 ---
 hidden: true
+noIndex: true
 ---
 
 # Market-Responsive Pricing
