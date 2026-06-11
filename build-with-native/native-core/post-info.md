@@ -18,12 +18,13 @@ Unsupported or malformed query bodies return:
 ```sh
 curl -sS -X POST "$API_URL/info" \
   -H 'content-type: application/json' \
+  -H 'x-trace-id: client-trace-002' \
   -d '{"type":"assets"}'
 ```
 
 Response:
 
-See [Decimal Units](decimals-units.md) for raw/display conversion and validation rules.
+See [Decimal Units](decimals-units.md) for raw/display conversion and validation rules. The gateway may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background gateway task.
 
 ```json
 {
@@ -34,19 +35,43 @@ See [Decimal Units](decimals-units.md) for raw/display conversion and validation
       "asset_id": 0,
       "symbol": "USDC",
       "balance_decimals": 8,
+      "withdraw_fee": "0",
+      "withdraw_fee_atoms": "0",
       "issuer": "0x0000000000000000000000000000000000000000"
     },
     {
       "asset_id": 6,
       "symbol": "SOL",
       "balance_decimals": 8,
+      "withdraw_fee": "0.01",
+      "withdraw_fee_atoms": "1000000",
       "issuer": "0xabcdef0123456789abcdef0123456789abcdef01"
     }
   ]
 }
 ```
 
-`issuer` is the owner account bound to an asset by the operator `addAssetWithIssuer` action. Genesis assets and assets created by the legacy operator `addAsset` action surface as the zero address. The issuer is a per-asset binding only — it is **not** an admin signer and confers no privileges beyond the recorded mapping. The `assets` response does not include `cloid`; client operation ids are only observable via `txStatusByCloid` while a transaction is in the recent query window.
+`issuer` is the owner account bound to an asset by operator-managed metadata. Assets without an issuer binding surface as the zero address. The issuer is a per-asset binding only and confers no privileges beyond the recorded mapping. The `assets` response does not include `cloid`; client operation ids are only observable via `txStatusByCloid` while a transaction is in the recent query window. `withdraw_fee_atoms` is canonical asset metadata in asset-local atoms; `withdraw_fee` is formatted from atoms using `balance_decimals`. On a [withdraw](post-trade.md#withdraw) this fee is recorded (in the event and `/info withdraws`) but is **not** deducted from the balance.
+
+### queryStatus
+
+```json
+{ "type": "queryStatus" }
+```
+
+Returns public query-view metadata and the retained recent-height window. This is the public way to discover the height bounds to pass to windowed reads such as [userFills](#userfills). Node role, writable/readable state, control-plane status, and other operational fields remain internal-only.
+
+```json
+{
+  "query_height": 180000,
+  "app_hash": "0x...",
+  "oldest_available_height": 170001,
+  "latest_available_height": 180000,
+  "recent_query_window_blocks": 10000
+}
+```
+
+When no query view is available yet, all fields are `null`.
 
 ### quoteAssets
 
@@ -54,7 +79,7 @@ See [Decimal Units](decimals-units.md) for raw/display conversion and validation
 { "type": "quoteAssets" }
 ```
 
-Returns the current canonical quote-asset allowlist sorted by `asset_id`. `min_quantity` is the human-readable minimum order notional in the quote token; `min_quantity_atoms` is the raw integer atom quantity encoded as a decimal string for JavaScript safety.
+Returns the current canonical quote-asset allowlist sorted by `asset_id`. `min_quantity` is the human-readable minimum order notional in the quote token; `min_quantity_atoms` is the raw integer atom quantity encoded as a decimal string for JavaScript safety. The gateway may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background gateway task.
 
 ```json
 {
@@ -72,13 +97,38 @@ Returns the current canonical quote-asset allowlist sorted by `asset_id`. `min_q
 }
 ```
 
+### accountingWithdrawTokens
+
+```json
+{ "type": "accountingWithdrawTokens" }
+```
+
+Returns accounting withdraw-token rows sorted by `(chain_id, asset_id)`. `min_withdraw_atoms` is the canonical raw atom amount encoded as a decimal string; `min_withdraw_amt` is formatted using the asset's `balance_decimals`.
+
+```json
+{
+  "query_height": 180000,
+  "app_hash": "0x...",
+  "accounting_withdraw_tokens": [
+    {
+      "chain_id": 1,
+      "asset_id": 1,
+      "symbol": "USDC",
+      "balance_decimals": 8,
+      "min_withdraw_amt": "1.25",
+      "min_withdraw_atoms": "125000000"
+    }
+  ]
+}
+```
+
 ### markets
 
 ```json
 { "type": "markets" }
 ```
 
-Response field `markets` is sorted by `market_id`. `price_decimals` and `max_price_sig_figs` are market metadata, as is `base_quantity_decimals`. `quote_balance_decimals` is derived from the quote asset and included as a convenience field for raw notional conversion. See [Decimal Units](decimals-units.md).
+Response field `markets` is sorted by `market_id`. `price_decimals` and `max_price_sig_figs` are market metadata, as is `base_quantity_decimals`. `quote_balance_decimals` is derived from the quote asset and included as a convenience field for raw notional conversion. See [Decimal Units](decimals-units.md). The gateway may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background gateway task.
 
 ```json
 {
@@ -125,6 +175,36 @@ Response field `markets` is sorted by `market_id`. `price_decimals` and `max_pri
     { "price": "10", "quantity": "1.5", "order_count": 2 }
   ],
   "asks": []
+}
+```
+
+### withdraws
+
+Per-user retained withdraw records (3-day window), sorted by `(block_height, tx_index, withdraw_nonce)`. Requires `user`. Each record adds `withdraw_fee_atoms` (recorded, not deducted).
+
+```json
+{ "type": "withdraws", "user": "0x0000000000000000000000000000000000000001" }
+```
+
+```json
+{
+  "query_height": 180000,
+  "app_hash": "0x...",
+  "user": "0x0000000000000000000000000000000000000001",
+  "withdraws": [
+    {
+      "tx_hash": "0x...",
+      "block_height": 179999,
+      "tx_index": 2,
+      "block_timestamp_ms": 1717000000500,
+      "asset_id": 1,
+      "amount_atoms": "500000",
+      "withdraw_fee_atoms": "1000",
+      "dst_chain_id": 1,
+      "dst_address": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "withdraw_nonce": "7"
+    }
+  ]
 }
 ```
 
@@ -353,6 +433,8 @@ Each fill reports only the **querying owner's side** fee (chosen by `role`). `fe
 * **Pre-activation / no-fee fill** (below the network's fee activation height): `"fee_asset_id": null, "fee": "0", "fee_mode": null`.
 * **Fee-active fill whose fee floored to zero**: non-null `fee_asset_id` and `fee_mode` with `"fee": "0"` — so clients can tell the fee regime is live.
 
+The response shape is unchanged, but the `fee` amount may reflect code-defined per-market and per-account fee overrides (the effective rate is the minimum of the global rate and any matching market/account override). A fully waived market appears as a fee-active fill with `"fee": "0"` (the second null case above).
+
 ### orderStatus
 
 Query by server order id:
@@ -382,12 +464,78 @@ The cloid lookup additionally surfaces:
 * **Pending response (live overlay)**: when `/trade` returned `accepted` for a cloid-bearing tx but the queryView has not yet published the result, `orderStatus` by `cloid` returns a synthetic pending response (see below). The pending entry retires automatically when queryView publishes a result for the same accepted `tx_hash`; a queryView result whose `tx_hash` matches replaces the pending response with the real result on the next query.
 * **Null-OID early-failure rows**: when an accepted cloid-bearing tx fails before execution can assign an `OrderId` (`BadNonce`, `ExpiredTx`, agent/owner authorization failure, missing modify target, batch-item-level pre-OID failures, etc.), the published row carries `"oid": null` and a lower-case canonical status string. The row remains visible only while the live process is up — it is not regenerated by WAL replay on restart.
 
-Admin/operator transaction status by `cloid` uses the admin signer address as the `user` namespace and does not require a market id:
+### batchOrderStatus
+
+Batch form of [orderStatus](#orderstatus), capped at 20 lookups per request. Each item supports the same lookup forms as `orderStatus`: `{ "oid": "..." }` or `{ "user": "...", "market_id": "...", "cloid": "..." }`. A parseable `oid` takes precedence for that item. Results are returned in the same order as the input array.
+
+```json
+{
+  "type": "batchOrderStatus",
+  "orders": [
+    { "oid": "773094113280001" },
+    {
+      "user": "0x0000000000000000000000000000000000000001",
+      "market_id": "0",
+      "cloid": "0x11111111111111111111111111111111"
+    }
+  ]
+}
+```
+
+```json
+{
+  "results": [
+    {
+      "found": true,
+      "query_height": 180000,
+      "app_hash": "0x...",
+      "status": "open",
+      "order": { "status": "open", "oid": 773094113280001 }
+    },
+    {
+      "found": false,
+      "query_height": 180000,
+      "app_hash": "0x...",
+      "owner": "0x0000000000000000000000000000000000000001",
+      "market_id": 0,
+      "cloid": "0x11111111111111111111111111111111"
+    }
+  ]
+}
+```
+
+Malformed items do not prevent valid items from being queried; the malformed slot contains an item-local error:
+
+```json
+{
+  "results": [
+    {
+      "error": {
+        "code": "InvalidOrderStatusQuery",
+        "message": "orderStatus requires either oid or user + market_id + cloid"
+      }
+    }
+  ]
+}
+```
+
+If `orders` is not an array the gateway returns HTTP 400 `InvalidOrderStatusBatch`. If more than 20 items are supplied, the gateway returns HTTP 400:
+
+```json
+{
+  "error": {
+    "code": "TooManyOrderStatusQueries",
+    "message": "batchOrderStatus supports at most 20 orders"
+  }
+}
+```
+
+Transaction status by `cloid` uses the transaction authority as the `user` namespace and does not require a market id. For `withdraw`, `settle`, and `repay`, `user` is the recovered signer authority.
 
 ```json
 {
   "type": "txStatusByCloid",
-  "user": "0xADMIN_SIGNER_AS_OWNER",
+  "user": "0x00ee41b8f0dd58806f14b30fb11994673769b25c",
   "cloid": "0x11111111111111111111111111111111"
 }
 ```
@@ -397,14 +545,34 @@ Admin/operator transaction status by `cloid` uses the admin signer address as th
   "found": true,
   "query_height": 180000,
   "app_hash": "0x...",
-  "owner": "0xADMIN_SIGNER_AS_OWNER",
+  "owner": "0x00ee41b8f0dd58806f14b30fb11994673769b25c",
   "cloid": "0x11111111111111111111111111111111",
   "tx_hash": "0x...",
   "tx_index": 1,
   "status": "success",
-  "action_type": "adminCreditAdd"
+  "action_type": "settle"
 }
 ```
+
+Failed retained tx responses use the lower-case committed execution error code as `status`, matching the `orderStatus` style where terminal failures are reported through the status string:
+
+```json
+{
+  "found": true,
+  "query_height": 180000,
+  "app_hash": "0x...",
+  "owner": "0x00ee41b8f0dd58806f14b30fb11994673769b25c",
+  "cloid": "0x11111111111111111111111111111111",
+  "tx_hash": "0x...",
+  "tx_index": 1,
+  "status": "invalidsettle",
+  "action_type": "settle"
+}
+```
+
+If a failed retained tx has no single committed error code in its payload, `status` remains `"failed"`.
+
+The public `settle`/`repay` actions also surface here, with `action_type` `"settle"` / `"repay"`. Their `user` namespace is the **recovered signer** (settle → margin owner; repay → cash owner), so a counterparty named in the action body cannot find the tx. This window is the only `cloid`-keyed lookup for settle/repay: there is no idempotency, only recent-window visibility bounded by `max_recent_txs`. The same `cloid` resubmitted under a new envelope `nonce` is a separate tx; a lookup returns the latest retained one, and once a tx ages out of the window the response is `found: false`. A failed settle/repay is retained the same way and reports `status` `"invalidsettle"` / `"invalidrepay"` (or another lower-case committed error code).
 
 Open order response:
 

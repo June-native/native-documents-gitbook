@@ -1,6 +1,6 @@
 # Decimals Units
 
-Native Core executes on integers only. Public order and modify payloads accept human decimal strings for `price` and `quantity`; the write path converts them to the raw integer atoms encoded in the signed transaction bytes. Integer-only fields such as ids, timestamps, and nonces remain decimal integer strings. `adminCreditAdd` and `adminCreditUpdate` accept human USD decimal strings in `creditUsd`; the write path converts them to `usd_atoms` with `USD_SCALE = 10^8`. Internal admin/operator actions may also carry an optional 16-byte `cloid` for recent transaction-status lookup. Public query responses use asset and market decimal metadata to return human-readable display strings where that is useful.
+Native Core executes on integers only. Public order and modify payloads accept human decimal strings for `price` and `quantity`; the write path converts them to the raw integer atoms encoded in the signed transaction bytes. Integer-only fields such as ids, timestamps, nonces, and accounting amounts remain decimal integer strings. Public query responses use asset and market decimal metadata to return human-readable display strings where that is useful.
 
 ### Decimal Units
 
@@ -107,7 +107,7 @@ Market metadata validation:
 * A base/quote pair may be opened only once.
 * Market ids are unique.
 
-The checked-in testnet/mainnet genesis quote allowlist is USDC asset `1` with `min_quantity="10"`, USDT asset `2` with `min_quantity="10"`, ETH asset `3` with `min_quantity="0.01"`, and BNB asset `4` with `min_quantity="0.02"`. Admins can add or override a quote asset minimum through the internal `setQuoteAssetMinQuantity` action documented in `docs/internal-api.md`.
+The checked-in testnet/mainnet genesis quote allowlist is USDC asset `1` with `min_quantity="10"`, USDT asset `2` with `min_quantity="10"`, ETH asset `3` with `min_quantity="0.01"`, and BNB asset `4` with `min_quantity="0.02"`. Operators manage quote-asset minimums through the internal API documented in `docs/internal-api.md`.
 
 ### Write-Time Numeric Validation
 

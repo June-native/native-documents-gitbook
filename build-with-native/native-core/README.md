@@ -22,10 +22,10 @@ layout:
 # Native Core (Market Makers)
 
 {% hint style="info" %}
-_Last updated: 2026-05-30 (_&#x76;0.&#x34;_)_
+_Last updated: 2026-06-11 (_&#x76;0.&#x35;_)_
 {% endhint %}
 
-This document describes the Native Core business API. Clients submit signed trading actions with `POST /trade` and read business state with `POST /info`.
+This document describes the Native Core business API. Clients submit signed business actions with `POST /trade` and read business state with `POST /info`.
 
 Operational, recovery, and node-private interfaces are intentionally not part of this contract.
 
@@ -35,7 +35,8 @@ Operational, recovery, and node-private interfaces are intentionally not part of
 * Hex values are `0x`-prefixed lowercase strings unless noted otherwise.
 * Protocol numeric fields in signed actions are decimal strings.
 * Business query responses include `query_height` and `app_hash` when a query view is available. `query_height` is the execution height represented by the published read view.
-* `POST /trade` returns admission success or rejection. Public clients confirm effects through business queries such as `orderStatus`, `openOrders`, `userFills`, `userBalances`, `spotCreditPositions`, `spotCreditAccount`, `quoteAssets`, `oracleStatus`, and `markPrices`.
+* `POST /trade` and `POST /info` accept an optional `x-trace-id` HTTP header for request correlation. When the header is absent or invalid, the gateway generates one. The response always includes the trace id in `x-trace-id`.
+* `POST /trade` returns admission success or rejection. Public clients confirm effects through business queries such as `orderStatus`, `openOrders`, `userFills`, `userBalances`, `spotCreditPositions`, `spotCreditAccount`, `batchOrderStatus`, `quoteAssets`, `accountingWithdrawTokens`, `withdraws`, `queryStatus`, `oracleStatus`, and `markPrices`.
 
 ## Transaction Signing
 
@@ -68,6 +69,7 @@ Native Core executes on integers only. Read more:
 ## Changelog
 
 ```
+2026-06-11: v0.5 - add withdraw/settle/repay actions with EIP-712 signing, x-trace-id, queryStatus/accountingWithdrawTokens/withdraws/batchOrderStatus info queries, assets withdraw fees, and revised /trade error codes.
 2026-05-30: v0.4 - add cancelAll action, trading-fee fields on userFills, orderStatus pending/null-OID overlay, assets.issuer, expanded /trade error codes, and signing example refresh.
 2026-05-13: v0.3 - admission precheck and margin controls, migrate quantity precision to markets, and add quote-asset minimum/allowlist admin and query APIs (plus related fixes).
 2026-05-13: v0.2 - add decimals related, put sections into subpages
