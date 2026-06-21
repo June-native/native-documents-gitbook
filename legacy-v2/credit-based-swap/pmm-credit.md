@@ -4,7 +4,7 @@
 
 Credit is required when private market makers facilitate credit-based swaps within the **Native Swap Engine**. For each token swap, a Private Market Maker (**PMM**) is effectively longing the input token that the user provides while simultaneously shorting the output token that is borrowed from **Native Credit Pool** and subsequently distributed to users.
 
-Consequently, in this process, credit is required to bridge the gap between the long and short positions. For instance, if a PMM is longing 3,000 USDC while shorting 1 WETH, with the price of WETH at 3600 USD, the PMM must maintain an additional 600 USD in collateral to ensure that the credit remains positive.
+Consequently, in this process, credit is required to fill the gap between the long and short positions. For instance, if a PMM is longing 3,000 USDC while shorting 1 WETH, with the price of WETH at 3600 USD, the PMM must maintain an additional 600 USD in collateral to ensure that the credit remains positive.
 
 ### How to calculate credit?
 
