@@ -134,6 +134,7 @@
 * [Business Source License](resources/business-source-license.md)
 * [Media Kit](resources/media-kit.md)
 * [Contact](resources/contact.md)
+* [Support Pairs](resources/support-pairs.md)
 
 ## Legacy (V2)
 
