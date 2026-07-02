@@ -13,6 +13,6 @@ It is the on-chain equivalent of an institutional market-making connection: real
 
 #### Build with Native Pro
 
-{% content-ref url="../build-with-native/market-makers/" %}
-[market-makers](../build-with-native/market-makers/)
+{% content-ref url="../build-with-native/native-core/" %}
+[native-core](../build-with-native/native-core/)
 {% endcontent-ref %}
