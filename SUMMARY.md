@@ -127,6 +127,7 @@
 
 * [Addresses](resources/addresses.md)
 * [V1 Addresses](resources/v1-addresses.md)
+* [Support Pairs](resources/support-pairs.md)
 * [Networks](resources/networks.md)
 * [Audits](resources/audits.md)
 * [Github](https://github.com/Native-org)
@@ -134,7 +135,6 @@
 * [Business Source License](resources/business-source-license.md)
 * [Media Kit](resources/media-kit.md)
 * [Contact](resources/contact.md)
-* [Support Pairs](resources/support-pairs.md)
 
 ## Legacy (V2)
 
