@@ -30,6 +30,10 @@ NativeRouter V1 and V2 are deprecated and no longer recommended.
 
 <table><thead><tr><th width="257">Contract</th><th>Address</th></tr></thead><tbody><tr><td>NativeRouter V4</td><td>0x45F4D4AED68A04E9a48EED69E1C8b15d7875d25F</td></tr><tr><td>NativeRouter V3</td><td>0xFF12771C74A9394477C2ce53F82b67C93d5D7B82</td></tr><tr><td>CreditVault</td><td>0x4Df7557734B382EB542BEa6c74786D398DF4CC19</td></tr></tbody></table>
 
+### Robinhood
+
+<table><thead><tr><th width="257">Contract</th><th>Address</th></tr></thead><tbody><tr><td>NativeRouter V4</td><td>0xa5ec1f0aC784C3620fFDcdf2A7DbcEF9DA658ea4</td></tr><tr><td>CreditVault</td><td>0x57B8f68ef57Af2dB70BC9aAc891836661CA4cB51</td></tr></tbody></table>
+
 ### Morph
 
 <table><thead><tr><th width="257">Contract</th><th>Address</th></tr></thead><tbody><tr><td>NativeRouter V4</td><td>0x45F4D4AED68A04E9a48EED69E1C8b15d7875d25F</td></tr><tr><td>CreditVault</td><td>0x4Df7557734B382EB542BEa6c74786D398DF4CC19</td></tr></tbody></table>
