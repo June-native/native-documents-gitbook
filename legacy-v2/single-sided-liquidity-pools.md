@@ -1,3 +1,7 @@
+---
+noIndex: true
+---
+
 # Single-Sided Liquidity Pools
 
 The **Native Credit Pool** allows single-token liquidity provision, offering:

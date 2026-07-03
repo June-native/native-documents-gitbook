@@ -1,3 +1,7 @@
+---
+noIndex: true
+---
+
 # Auto Sign Orders
 
 Native V2 introduces **auto sign orders**, providing lower latency and higher success rates for swaps.

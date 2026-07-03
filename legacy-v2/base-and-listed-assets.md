@@ -1,3 +1,7 @@
+---
+noIndex: true
+---
+
 # Base and Listed Assets
 
 Assets are categorized as:

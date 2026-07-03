@@ -1,3 +1,7 @@
+---
+noIndex: true
+---
+
 # Orderbook
 
 The Orderbook provides real-time pricing and detailed data from private market makers, aggregated through the Native Swap Engine.

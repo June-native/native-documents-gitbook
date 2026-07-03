@@ -1,3 +1,7 @@
+---
+noIndex: true
+---
+
 # Liquidity Bootstrapping
 
 When private market makers collaborate with Native and seek to utilize the inventory in **Native Credit Pool** to facilitate swaps, they are obligated to deposit collateral in order to obtain credits. This collateral is in the form of **Native Credit Pool** base tokens.

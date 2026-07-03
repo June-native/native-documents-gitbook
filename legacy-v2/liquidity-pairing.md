@@ -1,3 +1,7 @@
+---
+noIndex: true
+---
+
 # Liquidity Pairing
 
 By default, adding liquidity is conducted through "Smart Pairing," which signifies that the liquidity will be paired with all the assets in the Native Credit Pool dynamically and as needed, being utilised in the most efficient manner possible.

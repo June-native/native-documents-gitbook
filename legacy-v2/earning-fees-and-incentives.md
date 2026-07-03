@@ -1,3 +1,7 @@
+---
+noIndex: true
+---
+
 # Earning Fees and Incentives
 
 Adding liquidity to the **Native Credit Pool** offers **LPs** the opportunity to earn up to three distinct types of yields and rewards:

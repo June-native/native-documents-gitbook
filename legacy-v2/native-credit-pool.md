@@ -1,5 +1,6 @@
 ---
 description: A Liquidity Pool Where LP-supplied Capital Fuels Credit-based Trading
+noIndex: true
 ---
 
 # Native Credit Pool

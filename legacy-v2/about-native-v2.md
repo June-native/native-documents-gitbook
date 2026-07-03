@@ -1,4 +1,5 @@
 ---
+noIndex: true
 cover: ../.gitbook/assets/Frame 5.png
 coverY: 0
 layout:

@@ -1,3 +1,7 @@
+---
+noIndex: true
+---
+
 # Health Ratio
 
 ### Health Ratio

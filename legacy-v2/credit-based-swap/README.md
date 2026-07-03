@@ -1,3 +1,7 @@
+---
+noIndex: true
+---
+
 # Credit-Based Swap
 
 Credit-based Swap is a unique design from **Native Swap Engine** that provides the opportunity for private market makers (PMMs) to execute swaps using the **Native Credit Pool** as their inventory. In this process, PMMs are required to lock on-chain collateral to gain credits.

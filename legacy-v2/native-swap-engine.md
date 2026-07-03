@@ -1,5 +1,6 @@
 ---
 description: Enabling PMM Pricing and Atomic Swaps with On-Chain Credit Management
+noIndex: true
 layout:
   width: default
   title:
