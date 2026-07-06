@@ -79,6 +79,7 @@
       * [Error Handling](build-with-native/swap-aggregators/crosschain-swap-api/miscellaneous/error-handling.md)
       * [Minimum Bridge To Amount](build-with-native/swap-aggregators/crosschain-swap-api/miscellaneous/minimum-bridge-to-amount.md)
 * [Asset Issuers](build-with-native/asset-issuers/README.md)
+  * [wNLP](build-with-native/asset-issuers/wnlp.md)
   * [For RWA Issuers](build-with-native/asset-issuers/for-pegged-assets.md)
   * [For General Assets](build-with-native/asset-issuers/for-general-assets.md)
 * [Market Makers](build-with-native/native-core/README.md)
