@@ -20,7 +20,3 @@ Below is a list of all contract audits to date:
 {% file src="../.gitbook/assets/2025.06.18 - Final - Native Private Bug Bounty.pdf" %}
 
 {% file src="../.gitbook/assets/Native_PendleNativeLPSY_Audit_Report_by_WatchPug.pdf" %}
-
-## Bug bounty
-
-{% embed url="https://immunefi.com/bug-bounty/native/information/" %}
