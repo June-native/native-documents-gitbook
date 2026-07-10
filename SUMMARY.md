@@ -8,30 +8,28 @@
 
 ## MODULES
 
-* [Protocol Modules](modules/README.md)
-  * [Native Core](modules/native-core.md)
-  * [Native Pool](modules/native-pool.md)
-  * [Native Pro](modules/native-pro.md)
-  * [Native Relay](modules/native-relay.md)
+* [Native Core](modules/native-core.md)
+* [Native Pool](modules/native-pool.md)
+* [Native Pro](modules/native-pro.md)
+* [Native Relay](modules/native-relay.md)
 
 ## CONCEPTS
 
-* [Concepts](concepts/README.md)
-  * [CLOB](concepts/central-limit-orderbook.md)
-  * [Liquidity Relaying](concepts/integration-modes.md)
-  * [Non-custodial Accounts](concepts/agents-and-accounts.md)
-  * [On-chain Verifiability](concepts/on-chain-verifiability.md)
-  * [Order Types](concepts/order-types-and-time-in-force.md)
-  * [Markets, Assets & Decimals](concepts/markets-and-assets.md)
-  * [Unified Balance](concepts/unified-balance.md)
-  * [Deposit & Withdraw](concepts/deposit-and-withdraw.md)
-  * [Market-Responsive Pricing](concepts/market-responsive-pricing.md)
-  * [Firm Quote](concepts/firm-quote.md)
-  * [Spot Margin](concepts/spot-margin.md)
-  * [Auto LP](concepts/auto-lp.md)
-  * [Fees](concepts/swap-fees.md)
-  * [Slippage](concepts/slippage.md)
-  * [Risks](concepts/risks.md)
+* [CLOB](concepts/central-limit-orderbook.md)
+* [Liquidity Relaying](concepts/integration-modes.md)
+* [Non-custodial Accounts](concepts/agents-and-accounts.md)
+* [On-chain Verifiability](concepts/on-chain-verifiability.md)
+* [Order Types](concepts/order-types-and-time-in-force.md)
+* [Markets, Assets & Decimals](concepts/markets-and-assets.md)
+* [Unified Balance](concepts/unified-balance.md)
+* [Deposit & Withdraw](concepts/deposit-and-withdraw.md)
+* [Market-Responsive Pricing](concepts/market-responsive-pricing.md)
+* [Firm Quote](concepts/firm-quote.md)
+* [Spot Margin](concepts/spot-margin.md)
+* [Auto LP](concepts/auto-lp.md)
+* [Fees](concepts/swap-fees.md)
+* [Slippage](concepts/slippage.md)
+* [Risks](concepts/risks.md)
 
 ## Products
 
