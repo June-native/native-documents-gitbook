@@ -1,15 +1,21 @@
 # Table of contents
 
-## Overview
+## introduction
 
 * [What is Native](README.md)
 * [Benefits for Key Players](introduction/benefits-for-key-players.md)
 * [Welcome](introduction/welcome.md)
+
+## MODULES
+
 * [Protocol Modules](modules/README.md)
   * [Native Core](modules/native-core.md)
   * [Native Pool](modules/native-pool.md)
   * [Native Pro](modules/native-pro.md)
   * [Native Relay](modules/native-relay.md)
+
+## CONCEPTS
+
 * [Concepts](concepts/README.md)
   * [CLOB](concepts/central-limit-orderbook.md)
   * [Liquidity Relaying](concepts/integration-modes.md)
@@ -27,17 +33,20 @@
   * [Slippage](concepts/slippage.md)
   * [Risks](concepts/risks.md)
 
-## For Users
+## Products
 
-* [Swap with Native](user-guide/swap-with-native.md)
-* [Add Liquidity](user-guide/add-liquidity.md)
-* [Pair Liquidity](user-guide/pair-liquidity.md)
-* [Claim Rewards](user-guide/claim-rewards.md)
 * [Native Earn Program](products/native-earn/README.md)
   * [Native Earn FAQ](products/native-earn/native-earn-faq.md)
 * [Native Liquidity Provisioning](products/native-liquidity-provisioning.md)
 
-## For Developers
+## USER GUIDE
+
+* [Add Liquidity](user-guide/add-liquidity.md)
+* [Pair Liquidity](user-guide/pair-liquidity.md)
+* [Claim Rewards](user-guide/claim-rewards.md)
+* [Swap with Native](user-guide/swap-with-native.md)
+
+## Build with Native
 
 * [Native Core Gateway](build-with-native/native-core/README.md)
   * [Gateway API Access](build-with-native/native-core/api-access.md)
@@ -125,18 +134,18 @@
   * [CoinGecko - Native V1](build-with-native/dashboards/coingecko-native-v1.md)
   * [CMC Exchange API - Native V1](build-with-native/dashboards/cmc-exchange-api-native-v1.md)
 
-## Reference
+## Resources
 
 * [Addresses](resources/addresses.md)
 * [V1 Addresses](resources/v1-addresses.md)
 * [Support Pairs](resources/support-pairs.md)
 * [Networks](resources/networks.md)
 * [Audits](resources/audits.md)
+* [Github](https://github.com/Native-org)
 * [Analytics](resources/analytics.md)
 * [Business Source License](resources/business-source-license.md)
 * [Media Kit](resources/media-kit.md)
 * [Contact](resources/contact.md)
-* [Github](https://github.com/Native-org)
 
 ## Legacy (V2)
 
