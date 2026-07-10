@@ -19,15 +19,31 @@ layout:
     visible: true
 ---
 
-# Native Core (Market Makers)
+# Native Core Gateway
 
 {% hint style="info" %}
 _Last updated: 2026-06-11 (_&#x76;0.&#x35;_)_
 {% endhint %}
 
-This document describes the Native Core business API. Clients submit signed business actions with `POST /trade` and read business state with `POST /info`.
+The Native Core Gateway is the direct integration surface for the Native Core on-chain CLOB. Clients submit signed business actions with `POST /trade` and read business state with `POST /info`. It serves market makers, trading bots, AI agents, and anyone integrating directly with Native Core.
 
 Operational, recovery, and node-private interfaces are intentionally not part of this contract.
+
+## Gateway API Access
+
+New to Native Core? Start here for environments, the API-wallet access model, and how to send your first request:
+
+{% content-ref url="api-access.md" %}
+[api-access.md](api-access.md)
+{% endcontent-ref %}
+
+## Python SDK
+
+The official Python SDK wraps `POST /trade` and `POST /info`, handles signing, and ships an MCP server for AI agents:
+
+{% content-ref url="python-sdk/" %}
+[python-sdk](python-sdk/)
+{% endcontent-ref %}
 
 ## Conventions
 
