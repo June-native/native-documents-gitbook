@@ -1,51 +1,57 @@
 # Table of contents
 
-## introduction
+## Overview
 
 * [What is Native](README.md)
 * [Benefits for Key Players](introduction/benefits-for-key-players.md)
 * [Welcome](introduction/welcome.md)
+* [Protocol Modules](modules/README.md)
+  * [Native Core](modules/native-core.md)
+  * [Native Pool](modules/native-pool.md)
+  * [Native Pro](modules/native-pro.md)
+  * [Native Relay](modules/native-relay.md)
+* [Concepts](concepts/README.md)
+  * [CLOB](concepts/central-limit-orderbook.md)
+  * [Liquidity Relaying](concepts/integration-modes.md)
+  * [Non-custodial Accounts](concepts/agents-and-accounts.md)
+  * [On-chain Verifiability](concepts/on-chain-verifiability.md)
+  * [Order Types](concepts/order-types-and-time-in-force.md)
+  * [Markets, Assets & Decimals](concepts/markets-and-assets.md)
+  * [Unified Balance](concepts/unified-balance.md)
+  * [Deposit & Withdraw](concepts/deposit-and-withdraw.md)
+  * [Market-Responsive Pricing](concepts/market-responsive-pricing.md)
+  * [Firm Quote](concepts/firm-quote.md)
+  * [Spot Margin](concepts/spot-margin.md)
+  * [Auto LP](concepts/auto-lp.md)
+  * [Fees](concepts/swap-fees.md)
+  * [Slippage](concepts/slippage.md)
+  * [Risks](concepts/risks.md)
 
-## MODULES
+## For Users
 
-* [Native Core](modules/native-core.md)
-* [Native Pool](modules/native-pool.md)
-* [Native Pro](modules/native-pro.md)
-* [Native Relay](modules/native-relay.md)
-
-## CONCEPTS
-
-* [CLOB](concepts/central-limit-orderbook.md)
-* [Liquidity Relaying](concepts/integration-modes.md)
-* [Non-custodial Accounts](concepts/agents-and-accounts.md)
-* [On-chain Verifiability](concepts/on-chain-verifiability.md)
-* [Order Types](concepts/order-types-and-time-in-force.md)
-* [Markets, Assets & Decimals](concepts/markets-and-assets.md)
-* [Unified Balance](concepts/unified-balance.md)
-* [Deposit & Withdraw](concepts/deposit-and-withdraw.md)
-* [Market-Responsive Pricing](concepts/market-responsive-pricing.md)
-* [Firm Quote](concepts/firm-quote.md)
-* [Spot Margin](concepts/spot-margin.md)
-* [Auto LP](concepts/auto-lp.md)
-* [Fees](concepts/swap-fees.md)
-* [Slippage](concepts/slippage.md)
-* [Risks](concepts/risks.md)
-
-## Products
-
+* [Swap with Native](user-guide/swap-with-native.md)
+* [Add Liquidity](user-guide/add-liquidity.md)
+* [Pair Liquidity](user-guide/pair-liquidity.md)
+* [Claim Rewards](user-guide/claim-rewards.md)
 * [Native Earn Program](products/native-earn/README.md)
   * [Native Earn FAQ](products/native-earn/native-earn-faq.md)
 * [Native Liquidity Provisioning](products/native-liquidity-provisioning.md)
 
-## USER GUIDE
+## For Developers
 
-* [Add Liquidity](user-guide/add-liquidity.md)
-* [Pair Liquidity](user-guide/pair-liquidity.md)
-* [Claim Rewards](user-guide/claim-rewards.md)
-* [Swap with Native](user-guide/swap-with-native.md)
-
-## Build with Native
-
+* [Native Core Gateway](build-with-native/native-core/README.md)
+  * [Gateway API Access](build-with-native/native-core/api-access.md)
+  * [POST /trade](build-with-native/native-core/post-trade.md)
+  * [POST /info](build-with-native/native-core/post-info.md)
+  * [Transaction Signing](build-with-native/native-core/transaction-signing.md)
+  * [Decimals Units](build-with-native/native-core/decimals-units.md)
+  * [Python SDK](build-with-native/native-core/python-sdk/README.md)
+    * [Getting Started](build-with-native/native-core/python-sdk/getting-started.md)
+    * [Core Concepts](build-with-native/native-core/python-sdk/core-concepts.md)
+    * [API Reference](build-with-native/native-core/python-sdk/api-reference.md)
+    * [AI Agents & MCP](build-with-native/native-core/python-sdk/ai-agents-and-mcp.md)
+    * [Examples](build-with-native/native-core/python-sdk/examples.md)
+    * [Troubleshooting](build-with-native/native-core/python-sdk/troubleshooting.md)
 * [Wallets, Aggregators & Solvers](build-with-native/swap-aggregators/README.md)
   * [Guide](build-with-native/swap-aggregators/guide.md)
   * [FirmQuote Swap APIs](build-with-native/swap-aggregators/firmquote-swap-apis/README.md)
@@ -82,19 +88,6 @@
   * [wNLP](build-with-native/asset-issuers/wnlp.md)
   * [For RWA Issuers](build-with-native/asset-issuers/for-pegged-assets.md)
   * [For General Assets](build-with-native/asset-issuers/for-general-assets.md)
-* [Native Core Gateway](build-with-native/native-core/README.md)
-  * [Gateway API Access](build-with-native/native-core/api-access.md)
-  * [POST /trade](build-with-native/native-core/post-trade.md)
-  * [POST /info](build-with-native/native-core/post-info.md)
-  * [Transaction Signing](build-with-native/native-core/transaction-signing.md)
-  * [Decimals Units](build-with-native/native-core/decimals-units.md)
-  * [Python SDK](build-with-native/native-core/python-sdk/README.md)
-    * [Getting Started](build-with-native/native-core/python-sdk/getting-started.md)
-    * [Core Concepts](build-with-native/native-core/python-sdk/core-concepts.md)
-    * [API Reference](build-with-native/native-core/python-sdk/api-reference.md)
-    * [AI Agents & MCP](build-with-native/native-core/python-sdk/ai-agents-and-mcp.md)
-    * [Examples](build-with-native/native-core/python-sdk/examples.md)
-    * [Troubleshooting](build-with-native/native-core/python-sdk/troubleshooting.md)
 * [Market Makers](build-with-native/market-makers/README.md)
   * [MM Pricing and Signing API](build-with-native/market-makers/mm-pricing-and-signing-api/README.md)
     * [Orderbook](build-with-native/market-makers/mm-pricing-and-signing-api/orderbook.md)
@@ -132,18 +125,18 @@
   * [CoinGecko - Native V1](build-with-native/dashboards/coingecko-native-v1.md)
   * [CMC Exchange API - Native V1](build-with-native/dashboards/cmc-exchange-api-native-v1.md)
 
-## Resources
+## Reference
 
 * [Addresses](resources/addresses.md)
 * [V1 Addresses](resources/v1-addresses.md)
 * [Support Pairs](resources/support-pairs.md)
 * [Networks](resources/networks.md)
 * [Audits](resources/audits.md)
-* [Github](https://github.com/Native-org)
 * [Analytics](resources/analytics.md)
 * [Business Source License](resources/business-source-license.md)
 * [Media Kit](resources/media-kit.md)
 * [Contact](resources/contact.md)
+* [Github](https://github.com/Native-org)
 
 ## Legacy (V2)
 
