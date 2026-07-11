@@ -26,6 +26,7 @@
 | Pair      | Token 0 Address                              | Token 1 Address                              |
 | --------- | -------------------------------------------- | -------------------------------------------- |
 | PAXG-USDT | `0x45804880De22913dAFE09f4980848ECE6EcbAf78` | `0xdac17f958d2ee523a2206206994597c13d831ec7` |
+| tGLD-USDC | `0x6a547b25534234bb79CE6961a23Db13DE154b6F4` | `0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48` |
 | XAUt-USDT | `0x68749665FF8D2d112Fa859AA293F07A622782F38` | `0xdac17f958d2ee523a2206206994597c13d831ec7` |
 
 #### Ondo Tokenized Stocks
@@ -183,3 +184,16 @@
 | Pair      | Token 0 Address                              | Token 1 Address                              |
 | --------- | -------------------------------------------- | -------------------------------------------- |
 | WETH-USDG | `0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73` | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` |
+
+#### Tokenized Stocks
+
+| Pair      | Token 0 Address                              | Token 1 Address                              |
+| --------- | -------------------------------------------- | -------------------------------------------- |
+| AMD-USDG  | `0x86923f96303D656E4aa86D9d42D1e57ad2023fdC` | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` |
+| CRCL-USDG | `0xdF0992E440dD0be65BD8439b609d6D4366bf1CB5` | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` |
+| MSFT-USDG | `0xe93237C50D904957Cf27E7B1133b510C669c2e74` | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` |
+| MU-USDG   | `0xfF080c8ce2E5feadaCa0Da81314Ae59D232d4afD` | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` |
+| NVDA-USDG | `0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC` | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` |
+| SNDK-USDG | `0xB90A19fF0Af67f7779afF50A882A9CfF42446400` | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` |
+| SPCX-USDG | `0x4a0E65A3EcceC6dBe60AE065F2e7bb85Fae35eEa` | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` |
+| TSLA-USDG | `0x322F0929c4625eD5bAd873c95208D54E1c003b2d` | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` |
