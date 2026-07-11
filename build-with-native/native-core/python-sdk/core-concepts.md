@@ -7,7 +7,7 @@ description: The eight ideas the Native Core Python SDK is built on — read thi
 The SDK is a thin, typed, synchronous client over the two gateway endpoints. `Info` wraps [`POST /info`](../post-info.md) (market data, balances, order status); `Exchange` wraps [`POST /trade`](../post-trade.md) (one signed action per call) and owns an internal `Info` as `exchange.info`. Both return the gateway's raw JSON as plain dicts. This page expands the eight ideas every integration leans on. It does not re-document the wire fields — for those, see the [`POST /trade`](../post-trade.md) and [`POST /info`](../post-info.md) references.
 
 {% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and connects to **testnet only** — mainnet is not yet enabled. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
+**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
 {% endhint %}
 
 ## Accepted is not filled
@@ -152,7 +152,7 @@ If the API wallet is not an approved agent on that owner, the constructor raises
 
 ## Testnet only, for now
 
-This release runs on **testnet** (`https://api-test.native.org`, chain id `969696`) and nothing else. The bundle's `network` must be `testnet`, and `from_bundle` picks the gateway from it. Mainnet is defined but **blocked**: constructing `Info` or `Exchange` against the mainnet gateway — or from a bundle with `network: "mainnet"` — raises `LocalValidationError`, because an API wallet can only be approved on the testnet site for now. An API wallet is bound to one network.
+This release runs on **testnet** (`https://api-test.native.org`) and nothing else. The bundle's `network` is `testnet`, and `from_bundle` picks the gateway from it. An API wallet is created and approved on the testnet site, and is bound to that network.
 
 ---
 

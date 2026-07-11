@@ -7,7 +7,7 @@ description: Install the Native Core Python SDK, mint an API wallet, and place y
 The Native Core Python SDK (`native-core-python-sdk`, import `native_core`) is a thin, typed, synchronous client over the gateway's two REST endpoints: `POST /info` for reads and `POST /trade` for writes. This page takes you from `pip install` to a resting order you place and cancel yourself.
 
 {% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and connects to **testnet only** — mainnet is not yet enabled. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
+**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
 {% endhint %}
 
 ## Install

@@ -11,7 +11,7 @@ pip install native-core-python-sdk
 ```
 
 {% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and connects to **testnet only** — mainnet is not yet enabled. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
+**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
 {% endhint %}
 
 ## What it is
@@ -33,7 +33,7 @@ info = exchange.info                             # reads share the same client
 
 * **No WebSocket or streaming.** There is no async API and no push feed — you poll. Wrap calls in your own executor if you need concurrency, and share **one** `Exchange` per API wallet across threads (the nonce is a per-instance, lock-guarded, monotonic counter; two instances on one key collide nonces).
 * **It cannot move funds.** The SDK signs with an API wallet, a protocol-level agent key scoped only to placing and cancelling orders. Deposits, withdrawals, and approving or revoking the API wallet happen in the Native web app with your main wallet — never in the SDK.
-* **Mainnet is not enabled.** This release trades on testnet only. Constructing an `Info` or `Exchange` against the mainnet gateway raises `LocalValidationError`.
+* **Testnet only.** This release trades on testnet.
 
 ## In this section
 

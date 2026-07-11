@@ -11,24 +11,26 @@ The Native Core gateway is a single HTTP front door with exactly two REST endpoi
 
 There is no WebSocket or streaming feed — reads are poll-based over `POST /info`. This page is the front door for anyone integrating **directly** with the gateway: market makers, trading bots, AI-agent builders, and aggregators.
 
-{% hint style="info" %}
-**Use the Python SDK unless you have a reason not to.** Hand-rolling the `/trade` signing (a canonical binary payload, recoverable secp256k1 signatures, per-signer monotonic nonces) is easy to get subtly wrong. The [Native Core Python SDK](python-sdk/README.md) is a thin, typed client over these two endpoints that handles signing, nonces, and the accepted-vs-filled reconciliation for you.
-{% endhint %}
-
 {% hint style="warning" %}
-**Testnet only.** The gateway is currently live on **testnet only**, at `https://api-test.native.org` (chain id `969696`). Mainnet (`https://api.native.org`, chain id `696969`) is defined but **not yet enabled** — an API wallet cannot be created or used against it. Everything on this page targets testnet.
+**Testnet only.** The Native Core gateway is currently available on **testnet only**, at `https://api-test.native.org`. Everything on this page targets testnet.
 {% endhint %}
 
-## Environments & base URLs
+There are two ways to integrate:
 
-The chain id is part of every signed `/trade` payload, so it differs per environment: signing with the mainnet chain id against the testnet gateway is rejected with `WrongChainId`.
+* **Call the gateway directly** — the two REST endpoints documented on this page. Full control, any language.
+* **Use the [Native Core Python SDK](python-sdk/README.md)** — a thin, typed client that wraps both endpoints and handles `/trade` signing, nonces, and accepted-vs-filled reconciliation for you.
 
-| Network | Gateway base URL             | Chain ID | Status                                        |
-| ------- | ---------------------------- | -------- | --------------------------------------------- |
-| Testnet | `https://api-test.native.org` | `969696` | **Usable** — the only enabled environment.    |
-| Mainnet | `https://api.native.org`      | `696969` | Defined but **not yet enabled**. Do not use.  |
+Signing `/trade` by hand (a canonical binary payload with recoverable secp256k1 signatures and per-signer monotonic nonces) is involved, so the SDK is the faster path — but the wire format below is fully specified if you need to build your own client.
 
-The examples below use `API_URL=https://api-test.native.org`. For the underlying settlement chains, see:
+## Environment
+
+The gateway is served over HTTPS. The examples below use:
+
+```bash
+API_URL=https://api-test.native.org
+```
+
+For the underlying settlement chains, see:
 
 {% content-ref url="../../resources/networks.md" %}
 [networks.md](../../resources/networks.md)

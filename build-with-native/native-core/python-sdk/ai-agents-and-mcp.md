@@ -7,10 +7,8 @@ description: Wire an AI agent to trade on Native Core — the safety contract, t
 The Native Core Python SDK is built to be driven by an AI agent, not just a person. This page is the agent-integration centerpiece: one safety contract, then two ways to connect — a bundled MCP server that needs no glue code, or the SDK called directly from your own agent loop.
 
 {% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and connects to **testnet only** — mainnet is not yet enabled. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
+**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
 {% endhint %}
-
-Pointing an agent at mainnet raises `LocalValidationError` at construction — an API wallet can only be approved on the testnet site for now.
 
 ## Why Native Core is agent-friendly
 
@@ -71,7 +69,7 @@ The server reads its configuration from these environment variables:
 | Variable | Purpose |
 | --- | --- |
 | `NATIVE_CORE_BUNDLE` | Path to a connection bundle JSON (`{network, accountAddress, agentPrivateKey}`). Preferred — supplies everything on its own. |
-| `NATIVE_CORE_NETWORK` | `testnet` (default) when not using a bundle. Mainnet is not supported yet. |
+| `NATIVE_CORE_NETWORK` | `testnet` (default) when not using a bundle. |
 | `NATIVE_CORE_BASE_URL` | Gateway URL, as an alternative to `NATIVE_CORE_NETWORK`. |
 | `NATIVE_CORE_ACCOUNT` | Your account address (the owner main wallet), for account-scoped reads. |
 | `NATIVE_CORE_AGENT_KEY` | The API wallet's private key, required for trading. |

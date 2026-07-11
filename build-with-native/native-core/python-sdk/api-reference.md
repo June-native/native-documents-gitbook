@@ -9,7 +9,7 @@ description: >-
 The complete surface of `native-core-python-sdk` (import `native_core`): the `Info` and `Exchange` classes, the response and problem helpers, the exception hierarchy, the transport controls, and the constants. Every method lists the underlying gateway call it makes so you can cross-reference the wire behaviour.
 
 {% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and connects to **testnet only** — mainnet is not yet enabled. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
+**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
 {% endhint %}
 
 {% hint style="info" %}
@@ -155,13 +155,13 @@ Everything subclasses `native_core.Error`. Business rejections are **not** excep
 | Exception | Raised when |
 | --- | --- |
 | `Error` | Base class for every SDK exception |
-| `LocalValidationError` | Before signing: bad precision, below the minimum notional, an unknown `tif` or market, a mainnet gateway, or (at construction) an API wallet that is not an approved agent |
+| `LocalValidationError` | Before signing: bad precision, below the minimum notional, an unknown `tif` or market, or (at construction) an API wallet that is not an approved agent |
 | `NetworkError` | A transport failure (timeout, connection, DNS) **before any response arrived** |
 | `SubmissionUncertain` | A write was signed and sent, then timed out — the most important one. Carries `.cloid` and `.nonce`; reconcile with `reconcile_by_cloid` / `wait_for_order` and never resubmit |
 | `ClientError` | An HTTP 4xx whose body is **not** a trade response. Has `status_code`, `error_code`, `error_message` |
 | `ServerError` | An HTTP 5xx whose body is **not** a trade response. Has `status_code` |
 
-`ErrorCode` is a convenience enum of known rejection codes: `RateLimited`, `ExpiredTx`, `WrongChainId`, `DirectSignerIsActiveAgent`, `AgentEpochMismatch`, `InsufficientSpotBalance`.
+`ErrorCode` is a convenience enum of known rejection codes such as `RateLimited`, `ExpiredTx`, `DirectSignerIsActiveAgent`, `AgentEpochMismatch`, and `InsufficientSpotBalance`.
 
 ## Transport controls
 
@@ -196,16 +196,8 @@ Exposed under `native_core.constants`.
 
 | Constant | Value | Notes |
 | --- | --- | --- |
-| `TESTNET_API_URL` | `https://api-test.native.org` | The only usable gateway today |
-| `MAINNET_API_URL` | `https://api.native.org` | **Defined but blocked** — constructing `Info` / `Exchange` against it raises `LocalValidationError` |
-| `TESTNET_CHAIN_ID` | `969696` | Part of every signed payload |
-| `MAINNET_CHAIN_ID` | `696969` | Defined for completeness only |
-| `NETWORK_URLS` | `{"testnet": ..., "mainnet": ...}` | Logical network name → gateway URL; the bundle's `network` field maps through this |
-| `CHAIN_ID_BY_URL` | `{url: chain_id}` | The chain id is derived from the gateway URL |
-
-{% hint style="warning" %}
-Mainnet is not usable through the SDK yet — an API wallet can only be approved on the testnet site. A mainnet bundle or a hand-built client against `MAINNET_API_URL` raises `LocalValidationError` at construction.
-{% endhint %}
+| `TESTNET_API_URL` | `https://api-test.native.org` | The gateway the SDK talks to |
+| `NETWORK_URLS` | network name → gateway URL | The bundle's `network` field maps through this |
 
 ## See also
 

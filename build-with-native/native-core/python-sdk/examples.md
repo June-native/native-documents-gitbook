@@ -5,7 +5,7 @@ description: Runnable scripts that ship with the Native Core Python SDK, plus tw
 # Examples
 
 {% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and connects to **testnet only** — mainnet is not yet enabled. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
+**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
 {% endhint %}
 
 The SDK ships a folder of runnable scripts under `examples/` in the source distribution (the `.tar.gz` on PyPI). They all read `examples/config.json` — a two-field file you copy from the template and fill in with your API wallet key:
