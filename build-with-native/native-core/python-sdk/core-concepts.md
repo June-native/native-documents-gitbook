@@ -154,6 +154,25 @@ If the API wallet is not an approved agent on that owner, the constructor raises
 
 This release runs on **testnet** (`https://api-test.native.org`) and nothing else. The bundle's `network` is `testnet`, and `from_bundle` picks the gateway from it. An API wallet is created and approved on the testnet site, and is bound to that network.
 
+## Polling & freshness
+
+Reads are **poll-only** over [`POST /info`](../post-info.md) — no WebSocket, no streaming feed (none exists on the gateway). Block time is ~50ms; `wait_for_open` / `wait_for_order` poll internally (starting at 50ms and backing off) against a ~5s default deadline. For a standing reconcile loop — open orders, fills, balances — poll on a **fixed interval** tuned to the strategy, not the block rate: a few hundred milliseconds for a tight quoting loop, low seconds for slower reconciliation. Polling faster than block time only burns requests without seeing new state.
+
+Every read view carries `query_height` and `app_hash` — the committed height the answer reflects. `queryStatus` exposes the retained recent-height window (`oldest_available_height`, `latest_available_height`, `recent_query_window_blocks`), which bounds how far back a windowed read such as `userFills` can reach. Market and asset metadata (`markets`, `assets`) may be served from an in-process cache for up to ~10s, so treat precision and symbol metadata as **slowly-changing** — fetch it once at startup (the SDK does this when `Info` is constructed) — and re-fetch balances, orders, and fills every loop.
+
+## Cancel on disconnect
+
+There is **no server-side scheduled-cancel** (dead-man switch) today, and because the gateway is poll-only it never observes a dropped bot — a crashed or partitioned process leaves its resting orders on the book. Run the switch **client-side**: cancel every open order on shutdown, on any unhandled exception, and on a heartbeat timeout.
+
+```python
+try:
+    run_strategy(exchange)
+finally:
+    exchange.cancel_open()   # dead-man switch: nothing left resting after exit
+```
+
+`exchange.cancel_open(...)` finds where the effective account actually rests (via `open_orders_all`) and issues one `cancel_all` per market with orders; cancels are always admitted, even for a frozen account. Pass `markets=[...]` to bound the scan when you already know where you traded. `examples/market_maker_bot.py` wires this in a `finally:` shutdown pass — see [examples.md](examples.md) for the runnable pattern.
+
 ---
 
 ## Next

@@ -146,7 +146,7 @@ curl -sS -X POST "$API_URL/info" \
 
 ## Rate limits & errors
 
-The gateway enforces rate limits. Nonce validation and rate limiting are **authority-scoped** — keyed on the recovered signer — so one API wallet is one bucket. The exact numeric limits are not exposed on the wire; get them from the platform.
+The gateway enforces rate limits. Nonce validation and rate limiting are **authority-scoped** — keyed on the recovered signer — so one API wallet is one bucket (see [Nonces & API Wallets](nonces-and-api-wallets.md)). The exact numeric limits are not exposed on the wire; get them from the platform.
 
 The `/trade` error model keys on the **response body, not the HTTP status**. The gateway returns the same trade-response shape for HTTP 200 / 400 / 429 / 503 / 504, with `submission_status` in `{ accepted, rejected, timeout }`. A business rejection is **data**, not a transport error — read `submission_status` and, on a rejection, `error.code`.
 
@@ -157,10 +157,10 @@ The `/trade` error model keys on the **response body, not the HTTP status**. The
 | `rejected` (other, e.g. bad precision) | A business rejection.                                    | No — fix the cause, then submit a fresh action.                                 |
 | `timeout`                            | Indeterminate — the action **may** still land.           | **No** — reconcile by `cloid`; resubmitting under a new nonce risks a double-fill. |
 
-The complete `/trade` error-code tables live with the signing reference:
+For the error model, the codes you actually hit, and their fixes, see:
 
-{% content-ref url="transaction-signing.md" %}
-[transaction-signing.md](transaction-signing.md)
+{% content-ref url="error-responses.md" %}
+[error-responses.md](error-responses.md)
 {% endcontent-ref %}
 
 ## Next step

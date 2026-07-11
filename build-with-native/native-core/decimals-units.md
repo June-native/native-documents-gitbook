@@ -124,3 +124,30 @@ The checked-in testnet/mainnet genesis quote allowlist is USDC asset `1` with `m
 * non-integer display prices may have at most `max_price_sig_figs` significant figures; integer display prices are always allowed.
 * quote notional is computed with widened arithmetic and must fit into `u64` quote balance atoms.
 * If the configured minimum spot notional is nonzero, the raw quote notional must be at least that minimum.
+
+### Valid / invalid examples
+
+Copy-checkable pairs on ETH/USDC (`price_decimals = 2`, `max_price_sig_figs = 7`, `base_quantity_decimals = 4`). Send the display string exactly; nothing rounds on the wire.
+
+`price`:
+
+| Value | Result | Why |
+| ------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `3500.00`    | valid                                 | raw `350000` is an integer price; the significant-figures gate is skipped.                         |
+| `3500.12`    | valid                                 | 2 fractional digits `<=` `price_decimals`; 6 significant figures `<=` `max_price_sig_figs`.        |
+| `34999.99`   | valid                                 | 7 significant figures — exactly at `max_price_sig_figs`.                                           |
+| `3500.123`   | rejected `invalid_price_precision`    | 3 fractional digits `>` `price_decimals` (2).                                                      |
+| `3500.120`   | rejected `invalid_price_precision`    | trailing zeros count — still 3 fractional digits `>` 2.                                            |
+| `123456.78`  | rejected `tick`                       | 2 fractional digits clear the parser, but 8 significant figures `>` `max_price_sig_figs` (7).      |
+
+`quantity`:
+
+| Value     | Result                                | Why                                                        |
+| --------- | ------------------------------------- | ---------------------------------------------------------- |
+| `1.0000`  | valid                                 | 4 fractional digits `<=` `base_quantity_decimals`.         |
+| `0.0001`  | valid                                 | smallest lot — 1 order quantity atom.                      |
+| `1.2345`  | valid                                 | 4 fractional digits.                                       |
+| `1.12345` | rejected `invalid_quantity_precision` | 5 fractional digits `>` `base_quantity_decimals` (4).      |
+| `1.10000` | rejected `invalid_quantity_precision` | trailing zeros count — still 5 fractional digits `>` 4.    |
+
+Fractional-digit precision (`price_decimals` / `base_quantity_decimals`) is a `POST /trade` parse rejection — see [`/trade` error codes](transaction-signing.md#trade-error-codes). Significant figures (`max_price_sig_figs`) apply only to non-integer prices and are enforced deeper as a `tick` rejection; an integer display price such as `3500` skips that gate entirely, and `quantity` has no significant-figures cap.

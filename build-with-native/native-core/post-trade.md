@@ -83,6 +83,34 @@ Protected market order example:
 }
 ```
 
+The response keys on `submission_status` in the body, not the HTTP status. `accepted` means the tx entered the node pipeline, not that it filled — reconcile by `cloid` with [orderStatus](post-info.md#orderstatus). A rejection carries `error.code`.
+
+{% tabs %}
+{% tab title="Accepted" %}
+```json
+{
+  "submission_status": "accepted",
+  "tx_hash": "0x..."
+}
+```
+{% endtab %}
+{% tab title="Rejected" %}
+```json
+{
+  "submission_status": "rejected",
+  "tx_hash": "0x...",
+  "error": {
+    "code": "MinTradeSpotNtl"
+  }
+}
+```
+
+`MinTradeSpotNtl`: the order notional was below the market's quote-asset minimum.
+{% endtab %}
+{% endtabs %}
+
+Request-local validation rejections (e.g. `invalid_quantity_precision`) carry no `tx_hash` because canonical bytes were never assembled; admission rejections like `MinTradeSpotNtl` include one. See the full `/trade` error-code table in [error-responses.md](error-responses.md).
+
 ### cancel
 
 Cancels one order by exchange order id or client order id. Provide `oid` or `cloid`; if both are present, `oid` is used.
