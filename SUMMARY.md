@@ -50,7 +50,7 @@
   * [Gateway API Access](build-with-native/native-core/api-access.md)
   * [Notation](build-with-native/native-core/notation.md)
   * [Nonces & API Wallets](build-with-native/native-core/nonces-and-api-wallets.md)
-  * [Decimals Units](build-with-native/native-core/decimals-units.md)
+  * [Decimals & Units](build-with-native/native-core/decimals-units.md)
   * [POST /info](build-with-native/native-core/post-info.md)
   * [POST /trade](build-with-native/native-core/post-trade.md)
   * [Transaction Signing](build-with-native/native-core/transaction-signing.md)

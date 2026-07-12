@@ -24,7 +24,7 @@ curl -sS -X POST "$API_URL/info" \
 
 Response:
 
-See [Decimal Units](decimals-units.md) for raw/display conversion and validation rules. The gateway may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background gateway task.
+See [Decimals & Units](decimals-units.md) for raw/display conversion and validation rules. The gateway may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background gateway task.
 
 ```json
 {
@@ -128,7 +128,7 @@ Returns accounting withdraw-token rows sorted by `(chain_id, asset_id)`. `min_wi
 { "type": "markets" }
 ```
 
-Response field `markets` is sorted by `market_id`. `price_decimals` and `max_price_sig_figs` are market metadata, as is `base_quantity_decimals`. `quote_balance_decimals` is derived from the quote asset and included as a convenience field for raw notional conversion. See [Decimal Units](decimals-units.md). The gateway may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background gateway task.
+Response field `markets` is sorted by `market_id`. `price_decimals` and `max_price_sig_figs` are market metadata, as is `base_quantity_decimals`. `quote_balance_decimals` is derived from the quote asset and included as a convenience field for raw notional conversion. See [Decimals & Units](decimals-units.md). The gateway may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background gateway task.
 
 ```json
 {

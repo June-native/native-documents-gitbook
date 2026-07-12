@@ -29,17 +29,19 @@ The Native Core Gateway is the direct integration surface for the Native Core on
 
 Operational, recovery, and node-private interfaces are intentionally not part of this contract.
 
-## Gateway API Access
+{% hint style="warning" %}
+**Testnet only.** The Native Core gateway is currently available on **testnet only**, at `https://api-test.native.org`. Everything in this section targets testnet.
+{% endhint %}
 
-New to Native Core? Start here for environments, the API-wallet access model, and how to send your first request:
+## Start here
+
+New to Native Core? Start with the access model — environments, the API-wallet model, and how to send your first request:
 
 {% content-ref url="api-access.md" %}
 [api-access.md](api-access.md)
 {% endcontent-ref %}
 
-## Python SDK
-
-The official Python SDK wraps `POST /trade` and `POST /info`, handles signing, and ships an MCP server for AI agents:
+Prefer a client library? The official Python SDK wraps both endpoints, signs `/trade` for you, and ships an MCP server for AI agents:
 
 {% content-ref url="python-sdk/" %}
 [python-sdk](python-sdk/)
@@ -54,32 +56,40 @@ The official Python SDK wraps `POST /trade` and `POST /info`, handles signing, a
 * `POST /trade` and `POST /info` accept an optional `x-trace-id` HTTP header for request correlation. When the header is absent or invalid, the gateway generates one. The response always includes the trace id in `x-trace-id`.
 * `POST /trade` returns admission success or rejection. Public clients confirm effects through business queries such as `orderStatus`, `openOrders`, `userFills`, `userBalances`, `spotCreditPositions`, `spotCreditAccount`, `batchOrderStatus`, `quoteAssets`, `accountingWithdrawTokens`, `withdraws`, `queryStatus`, `oracleStatus`, and `markPrices`.
 
-## Transaction Signing
+## Concepts
 
-Native Core transactions require signing. Read more:
+Terminology, the API-wallet and nonce model, and the integer-atom number model:
 
-{% content-ref url="transaction-signing.md" %}
-[transaction-signing.md](transaction-signing.md)
+{% content-ref url="notation.md" %}
+[notation.md](notation.md)
 {% endcontent-ref %}
 
-## Decimal Units
-
-Native Core executes on integers only. Read more:
+{% content-ref url="nonces-and-api-wallets.md" %}
+[nonces-and-api-wallets.md](nonces-and-api-wallets.md)
+{% endcontent-ref %}
 
 {% content-ref url="decimals-units.md" %}
 [decimals-units.md](decimals-units.md)
 {% endcontent-ref %}
 
-## POST /trade
+## Endpoints & signing
+
+The two REST endpoints, how to sign a write, and how to read an error:
+
+{% content-ref url="post-info.md" %}
+[post-info.md](post-info.md)
+{% endcontent-ref %}
 
 {% content-ref url="post-trade.md" %}
 [post-trade.md](post-trade.md)
 {% endcontent-ref %}
 
-## POST /info
+{% content-ref url="transaction-signing.md" %}
+[transaction-signing.md](transaction-signing.md)
+{% endcontent-ref %}
 
-{% content-ref url="post-info.md" %}
-[post-info.md](post-info.md)
+{% content-ref url="error-responses.md" %}
+[error-responses.md](error-responses.md)
 {% endcontent-ref %}
 
 ## Changelog

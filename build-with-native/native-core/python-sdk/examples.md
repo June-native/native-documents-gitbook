@@ -83,7 +83,7 @@ python examples/basic_batch.py
 
 ## Read markets and the order book
 
-Self-contained read-only script. `Info` wraps [`POST /info`](../post-info.md); reads need only the gateway, so no order is ever signed here. See [Decimal Units](../decimals-units.md) for what `price_decimals` and `base_quantity_decimals` mean.
+Self-contained read-only script. `Info` wraps [`POST /info`](../post-info.md); reads need only the gateway, so no order is ever signed here. See [Decimals & Units](../decimals-units.md) for what `price_decimals` and `base_quantity_decimals` mean.
 
 ```python
 from native_core import Info
@@ -224,4 +224,4 @@ finally:
 * [getting-started.md](getting-started.md) — mint an API wallet, save the bundle, and run your first trade.
 * [PyPI project](https://pypi.org/project/native-core-python-sdk/) — `pip install native-core-python-sdk==0.1.0`.
 * [Native GitHub org](https://github.com/Native-org) — clone the SDK repo for the full `examples/` folder, including `market_maker_bot.py`.
-* Wire references: [`POST /trade`](../post-trade.md), [`POST /info`](../post-info.md), [Transaction signing](../transaction-signing.md), [Decimal Units](../decimals-units.md).
+* Wire references: [`POST /trade`](../post-trade.md), [`POST /info`](../post-info.md), [Transaction signing](../transaction-signing.md), [Decimals & Units](../decimals-units.md).
