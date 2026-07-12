@@ -233,6 +233,30 @@ Per-user retained withdraw records (3-day window), sorted by `(block_height, tx_
 }
 ```
 
+### accountStatus
+
+Whether an account exists and its freeze state.
+
+```json
+{
+  "type": "accountStatus",
+  "user": "0x0000000000000000000000000000000000000001"
+}
+```
+
+```json
+{
+  "query_height": 180000,
+  "app_hash": "0x...",
+  "owner": "0x0000000000000000000000000000000000000001",
+  "found": true,
+  "account_index": 5,
+  "status": "active"
+}
+```
+
+`found` is `true` once the account exists (it is created on its first deposit). `status` is `"active"` or `"frozen"`, and is `null` when `found` is `false`. `account_index` is the protocol's internal account index, `null` before the account exists.
+
 ### spotCreditAccount
 
 ```json

@@ -40,10 +40,10 @@ For the underlying settlement chains, see:
 
 Writes are authorized by an **API wallet**: a protocol-level *agent* key scoped only to placing and cancelling orders. An API wallet can trade your account's balance, but it can **never** move funds off Native — deposits, withdrawals, and agent approval all require your main wallet. That scoping (and the fact that it is revocable) is what makes it safe to run in an unattended bot.
 
-You mint one in the Native web app, not through the gateway:
+You mint one in the **[Native web app](https://app-uat.native.org/markets/ETH-USDT?network=testnet&agentWallets=agents)** (testnet), not through the gateway — that link opens the **API wallets** panel directly:
 
 1. Connect your **main wallet** and deposit **Arbitrum Sepolia** testnet assets. There is no faucet — bring your own. Your trading account is created on the first deposit.
-2. Click **Create API wallet**. Your main wallet signs one `approveAgent`, and the app shows a one-time **connection bundle** containing the agent key. Copy it now; it is shown once.
+2. In the **API wallets** panel, click **Create API wallet**. Your main wallet signs one `approveAgent`, and the app shows a one-time **connection bundle** containing the agent key. Copy it now; it is shown once.
 3. Revoke or rotate the API wallet in the app at any time.
 
 The connection bundle is a small JSON object:

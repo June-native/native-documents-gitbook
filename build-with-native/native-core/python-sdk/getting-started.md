@@ -28,7 +28,7 @@ pip install native-core-python-sdk==0.1.0
 
 The SDK trades with an **API wallet**: a protocol-level *agent* key scoped only to placing and cancelling orders. It can never move funds — deposits, withdrawals, and the approval itself are signed by your main wallet in the web app, not by the SDK. You mint the API wallet once, in the Native web app:
 
-1. **Connect your main wallet.** Open the Native web app and connect the wallet that will own the trading account.
+1. **Connect your main wallet.** Open the **[Native web app](https://app-uat.native.org/markets/ETH-USDT?network=testnet&agentWallets=agents)** (testnet) — that link opens the **API wallets** panel directly — and connect the wallet that will own the trading account.
 2. **Deposit to create the account.** There is no faucet — bring your own **Arbitrum Sepolia** testnet assets and deposit them from your main wallet. Your trading account is created on the **first deposit**.
 3. **Create the API wallet.** Open the API wallets panel and choose *Create API wallet*. Your main wallet signs a single `approveAgent`, and the app returns a one-time **connection bundle** that contains the agent's private key.
 4. **Save the bundle.** The private key is shown **once**. Copy the whole bundle and save it to a file — `bundle.json` is what the quickstart below loads.
