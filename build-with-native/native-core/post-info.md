@@ -408,7 +408,18 @@ When the oracle is unavailable, `oracle_status` is `{ "status": "unavailable", "
 }
 ```
 
-Response field `agents` contains the active agent slots for the owner.
+```json
+{
+  "query_height": 180000,
+  "app_hash": "0x...",
+  "owner": "0x0000000000000000000000000000000000000001",
+  "agents": [
+    { "slot_id": 0, "agent": "0x00000000000000000000000000000000000000aa", "epoch": 3 }
+  ]
+}
+```
+
+`agents` holds the active agent (API-wallet) slots for the owner. To sign `/trade` writes, read the `epoch` of the slot whose `agent` matches your API-wallet address and pass it as the envelope `agent_epoch`. `agent` is `null` for an empty slot.
 
 ### userFills
 

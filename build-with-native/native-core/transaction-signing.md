@@ -11,12 +11,14 @@ Canonical unsigned payload:
 ```
 string("NATIVE_CORE_TX_SIGNING_V1")
 u32(1)                  // tx codec version
-u32(696969)             // Native Core chain id
+u32(969696)             // Native Core chain id
 u64(nonce)
 option<u64>(agent_epoch)
 option<u64>(expires_after_ms)
 action_bytes
 ```
+
+The chain id is the target deployment's Native chain id (**testnet: `969696`**). It is folded into the signed bytes but is **never sent on the wire**, so it must equal the gateway you target — signing with the wrong chain id makes the gateway recover a different authority and reject the write.
 
 Encoding rules:
 
@@ -141,7 +143,8 @@ TypeScript signing helper example for Node.js with `ethers`. The example uses No
 import { SigningKey, getBytes, keccak256 } from "ethers";
 
 const NativeCore = {
-  chainId: 696_969,
+  chainId: 969_696, // Native Core testnet chain id — must match the gateway you sign for
+
   txCodecVersion: 1,
   signingDomain: "NATIVE_CORE_TX_SIGNING_V1",
 } as const;
@@ -430,16 +433,22 @@ class NativeCoreTradeSigner {
 const signer = new NativeCoreTradeSigner("0x...", {
   "2": { price_decimals: 2, base_quantity_decimals: 4 },
 });
-const request = signer.sign({
-  type: "order",
-  market_id: "2",
-  side: "bid",
-  order_type: "limit",
-  tif: "alo",
-  price: "3500.00",
-  quantity: "1.0000",
-  cloid: "0x11111111111111111111111111111111",
-});
+const request = signer.sign(
+  {
+    type: "order",
+    market_id: "2",
+    side: "bid",
+    order_type: "limit",
+    tif: "alo",
+    price: "3500.00",
+    quantity: "1.0000",
+    cloid: "0x11111111111111111111111111111111",
+  },
+  // Trading actions are signed by the API wallet (an agent key), so agent_epoch
+  // is REQUIRED. Read it from POST /info `userAgents` (the `epoch` of the slot
+  // whose `agent` is your API-wallet address). Omit it only for owner-signed actions.
+  { agentEpoch: 3n },
+);
 
 await fetch(`${API_URL}/trade`, {
   method: "POST",
@@ -447,6 +456,8 @@ await fetch(`${API_URL}/trade`, {
   body: JSON.stringify(request),
 });
 ```
+
+`agent_epoch` is mandatory for these API-wallet–signed trading actions: an API wallet is always an active agent, so a `/trade` write that omits `agent_epoch` is treated as direct-owner mode and rejected with `DirectSignerIsActiveAgent`. Read the current epoch from [`userAgents`](post-info.md#useragents).
 
 Accepted response:
 

@@ -71,7 +71,7 @@ The server reads its configuration from these environment variables:
 | `NATIVE_CORE_BUNDLE` | Path to a connection bundle JSON (`{network, accountAddress, agentPrivateKey}`). Preferred — supplies everything on its own. |
 | `NATIVE_CORE_NETWORK` | `testnet` (default) when not using a bundle. |
 | `NATIVE_CORE_BASE_URL` | Gateway URL, as an alternative to `NATIVE_CORE_NETWORK`. |
-| `NATIVE_CORE_ACCOUNT` | Your account address (the owner main wallet), for account-scoped reads. |
+| `NATIVE_CORE_ACCOUNT` | Your account address (the owner main wallet) — needed for account-scoped reads **and** to register the write tools. |
 | `NATIVE_CORE_AGENT_KEY` | The API wallet's private key, required for trading. |
 | `NATIVE_CORE_ENABLE_TRADING` | Set to `1` (or `true`/`yes`/`on`) to register the write tools. Off by default: without it the server is read-only even if a key is present. |
 

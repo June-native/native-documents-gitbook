@@ -30,11 +30,7 @@ The gateway is served over HTTPS. The examples below use:
 API_URL=https://api-test.native.org
 ```
 
-For the underlying settlement chains, see:
-
-{% content-ref url="../../resources/networks.md" %}
-[networks.md](../../resources/networks.md)
-{% endcontent-ref %}
+You fund a trading account by depositing **Arbitrum Sepolia** testnet assets from your main wallet in the web app (there is no faucet — bring your own). See the [access model](#access-model-api-wallets) below for the deposit-and-mint flow.
 
 ## Access model — API wallets
 
