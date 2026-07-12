@@ -23,7 +23,7 @@ Anything that moves value is **main-wallet only** and never a gateway `/trade` a
 | **Agent** — API wallet | *API wallet* | `order` · `cancel` · `cancelAll` · `modify` · `batch` | No |
 | **Owner** — trading account | *Account* | `approveAgent` · `revokeAgent` · deposit · `withdraw` | Yes |
 
-The mint flow and the connection-bundle shape are on the access page; the click-by-click walkthrough is in the SDK quickstart.
+The mint flow and connection-bundle shape are on the gateway access page. If you integrate with the Python SDK, its quickstart walks the same web-app setup click-by-click.
 
 {% content-ref url="api-access.md" %}
 [api-access.md](api-access.md)

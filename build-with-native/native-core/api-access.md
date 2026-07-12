@@ -56,10 +56,10 @@ The connection bundle is a small JSON object:
 }
 ```
 
-`accountAddress` is used only locally to identify the account you trade on — it never goes on the wire. The gateway recovers the signer from the signature. For the full click-by-click setup, see:
+`accountAddress` is used only locally to identify the account you trade on — it never goes on the wire. The gateway recovers the signer from the signature. For the API wallet's authority model, replay protection, and safety rules, see:
 
-{% content-ref url="python-sdk/getting-started.md" %}
-[getting-started.md](python-sdk/getting-started.md)
+{% content-ref url="nonces-and-api-wallets.md" %}
+[nonces-and-api-wallets.md](nonces-and-api-wallets.md)
 {% endcontent-ref %}
 
 ## Making requests
