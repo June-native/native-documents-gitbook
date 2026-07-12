@@ -14,11 +14,7 @@ The gateway does not authenticate a session; it recovers the signer from each si
 
 Writes are authorized by an **API wallet**: a protocol-level *agent* key scoped only to placing and cancelling orders. It can trade your account's balance but can **never** move funds off Native. That scoping — plus the fact that it is revocable — is what makes it safe to embed in a bot.
 
-You mint one in the Native web app, not through the gateway:
-
-1. Connect your **main wallet** and deposit **Arbitrum Sepolia** testnet assets. There is no faucet — bring your own. Your trading account is created on the first deposit.
-2. Choose **Create API wallet**. Your main wallet signs one `approveAgent`, and the app returns a one-time **connection bundle** `{ network, accountAddress, agentPrivateKey }` containing the agent key. It is shown once — copy it now.
-3. Revoke or rotate the API wallet in the app at any time.
+You mint one in the Native web app, not through the gateway: connect your **main wallet**, deposit to create the trading account, then choose **Create API wallet** — your main wallet signs one `approveAgent`, and the app returns a one-time **connection bundle** `{ network, accountAddress, agentPrivateKey }` containing the agent key. It is shown once; copy it. Revoke or rotate it in the app any time.
 
 Anything that moves value is **main-wallet only** and never a gateway `/trade` action from a bot: deposits, withdrawals, and `approveAgent` / `revokeAgent` are all signed by your main wallet in the web app. The API wallet's allowlist is exactly `order`, `cancel`, `cancelAll`, `modify`, and `batch`.
 
@@ -50,12 +46,7 @@ The nonce is a decimal-string `u64` **Unix millisecond timestamp** — use `Date
 
 Because the window is measured against the *block* timestamp and only the latest 100 are retained, a monotonic-from-now clock always satisfies every rule: each new millisecond timestamp is larger than everything retained and comfortably inside the window.
 
-**SDK nonce discipline — one `Exchange` per API wallet.** In the Python SDK the nonce is a **per-instance, lock-guarded, monotonic millisecond counter**: `max(now_ms, last + 1)`, so same-millisecond calls still get distinct, increasing nonces. A single `Exchange` is therefore safe to share across threads — but two instances, or two processes, signing with the **same** API-wallet key hand out colliding nonces and draw seemingly random duplicate rejections. Construct **one** `Exchange` per API wallet and share it; never one per worker.
-
-```python
-exchange = Exchange.from_bundle("bundle.json")   # construct once
-# hand the SAME exchange to every worker thread; never build a second one on this key
-```
+**Using the Python SDK?** It manages this for you: its nonce is a per-instance, lock-guarded, monotonic millisecond counter, so a single `Exchange` is safe to share across threads. The one rule to keep is to construct **one** `Exchange` per API wallet and share it — never one per worker, or two instances on the same key hand out colliding nonces. See [One Exchange per API wallet](python-sdk/core-concepts.md#one-exchange-per-api-wallet).
 
 The nonce rides in the `/trade` envelope alongside the action, and it is one of the fields folded into the canonical signed payload — so tampering with it invalidates the signature.
 

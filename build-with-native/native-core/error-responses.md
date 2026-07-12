@@ -87,6 +87,14 @@ The wire carries `error.code`, not display copy — the **Message** column is il
 
 A [`batch`](post-trade.md#batch) is one `/trade` call under one envelope nonce, so the envelope gets **one** `submission_status`. `accepted` means the batch entered the pipeline — it does **not** mean every item succeeded. Items execute in array order, and **each item may individually succeed or fail** inside the batch execution result. Reconcile **per item** by `cloid` via [`batchOrderStatus`](post-info.md#batchorderstatus) (up to 20 lookups per call, which covers a full `1..=10`-item batch). Don't infer item outcomes from the envelope status.
 
+## Execution-level failures
+
+Every code above is an **admission** outcome — the gateway returns it on the `/trade` response (or as `submission_status`). Execution is a separate, later stage: an `accepted` action still runs against the book and **can fail there**. An execution failure does **not** appear on the `/trade` response — you discover it by polling [`orderStatus`](post-info.md#orderstatus) by `cloid` (an `accepted` order that later reads back as failed).
+
+| Code | What it means | Fix |
+| --- | --- | --- |
+| `tick` | A non-integer `price` exceeded the market's `max_price_sig_figs`. The action was admitted, then rejected at execution — `/trade` returned `accepted`, and the failure shows up on `orderStatus`. | Snap the price to the market's `price_decimals` / `max_price_sig_figs` before signing. The [Python SDK](python-sdk/README.md) checks this locally (`LocalValidationError`) and never sends it; see [Decimals & units](decimals-units.md#valid-invalid-examples). |
+
 ## See also
 
 {% content-ref url="transaction-signing.md" %}

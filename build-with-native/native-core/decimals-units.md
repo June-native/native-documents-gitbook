@@ -121,26 +121,30 @@ The checked-in testnet/mainnet genesis quote allowlist is USDC asset `1` with `m
 * `price` must be present for both limit orders and protected market orders in the current protocol encoding.
 * `market` orders are valid only with `ioc` or `fok`.
 * `gtc` and `alo` are valid only for limit orders.
-* non-integer display prices may have at most `max_price_sig_figs` significant figures; integer display prices are always allowed.
+* non-integer display prices may have at most `max_price_sig_figs` significant figures (enforced at execution, not admission — see [Valid / invalid examples](#valid-invalid-examples)); integer display prices are always allowed.
 * quote notional is computed with widened arithmetic and must fit into `u64` quote balance atoms.
 * If the configured minimum spot notional is nonzero, the raw quote notional must be at least that minimum.
 
 ### Valid / invalid examples
 
-Copy-checkable pairs on ETH/USDC (`price_decimals = 2`, `max_price_sig_figs = 7`, `base_quantity_decimals = 4`). Send the display string exactly; nothing rounds on the wire.
+The pairs below use an **illustrative** market with `price_decimals = 2`, `max_price_sig_figs = 5`, and `base_quantity_decimals = 4`. These are not any specific market's real values — read each market's precision from [`POST /info` `markets`](post-info.md#markets). Send the display string exactly; nothing rounds on the wire.
+
+Two independent gates apply to a `price`, and they fail at **different layers**:
+
+* **Fractional digits `>` `price_decimals`** — rejected at **admission**: `POST /trade` returns `submission_status: "rejected"` with `invalid_price_precision` (or `invalid_quantity_precision` for `quantity`).
+* **Non-integer price with more than `max_price_sig_figs` significant figures** — the action is *accepted* into the pipeline, then **fails at execution** as [`tick`](error-responses.md#execution-level-failures); you see it on [`orderStatus`](post-info.md#orderstatus), not on the `/trade` response. The [Python SDK](python-sdk/README.md) saves you the round trip by rejecting it locally (`LocalValidationError: … significant figures`) before it ever signs.
 
 `price`:
 
 | Value | Result | Why |
 | ------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `3500.00`    | valid                                 | raw `350000` is an integer price; the significant-figures gate is skipped.                         |
-| `3500.12`    | valid                                 | 2 fractional digits `<=` `price_decimals`; 6 significant figures `<=` `max_price_sig_figs`.        |
-| `34999.99`   | valid                                 | 7 significant figures — exactly at `max_price_sig_figs`.                                           |
-| `3500.123`   | rejected `invalid_price_precision`    | 3 fractional digits `>` `price_decimals` (2).                                                      |
+| `3500.1`     | valid                                 | 1 fractional digit `<=` `price_decimals`; 5 significant figures — exactly at `max_price_sig_figs`. |
+| `3500.12`    | accepted, then `tick` at execution    | 2 fractional digits clear admission, but 6 significant figures `>` `max_price_sig_figs` (5). The SDK rejects it locally first. |
+| `3500.123`   | rejected `invalid_price_precision`    | 3 fractional digits `>` `price_decimals` (2) — rejected at admission.                              |
 | `3500.120`   | rejected `invalid_price_precision`    | trailing zeros count — still 3 fractional digits `>` 2.                                            |
-| `123456.78`  | rejected `tick`                       | 2 fractional digits clear the parser, but 8 significant figures `>` `max_price_sig_figs` (7).      |
 
-`quantity`:
+`quantity` — only the fractional-digit gate applies; `quantity` has no significant-figures cap:
 
 | Value     | Result                                | Why                                                        |
 | --------- | ------------------------------------- | ---------------------------------------------------------- |
@@ -150,4 +154,4 @@ Copy-checkable pairs on ETH/USDC (`price_decimals = 2`, `max_price_sig_figs = 7`
 | `1.12345` | rejected `invalid_quantity_precision` | 5 fractional digits `>` `base_quantity_decimals` (4).      |
 | `1.10000` | rejected `invalid_quantity_precision` | trailing zeros count — still 5 fractional digits `>` 4.    |
 
-Fractional-digit precision (`price_decimals` / `base_quantity_decimals`) is a `POST /trade` parse rejection — see [`/trade` error codes](transaction-signing.md#trade-error-codes). Significant figures (`max_price_sig_figs`) apply only to non-integer prices and are enforced deeper as a `tick` rejection; an integer display price such as `3500` skips that gate entirely, and `quantity` has no significant-figures cap.
+Fractional-digit precision (`price_decimals` / `base_quantity_decimals`) is a `POST /trade` **admission** rejection — see [`/trade` error codes](transaction-signing.md#trade-error-codes). Significant figures (`max_price_sig_figs`) apply only to non-integer prices and are enforced one layer deeper, at **execution**, as a [`tick`](error-responses.md#execution-level-failures) failure surfaced on `orderStatus`; an integer display price such as `3500` skips that gate entirely.

@@ -150,14 +150,7 @@ The gateway enforces rate limits. Nonce validation and rate limiting are **autho
 
 The `/trade` error model keys on the **response body, not the HTTP status**. The gateway returns the same trade-response shape for HTTP 200 / 400 / 429 / 503 / 504, with `submission_status` in `{ accepted, rejected, timeout }`. A business rejection is **data**, not a transport error — read `submission_status` and, on a rejection, `error.code`.
 
-| Outcome                              | What it means                                            | Safe to resend?                                                                 |
-| ------------------------------------ | -------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `accepted`                           | Admitted to the pipeline — **not** filled.               | N/A — poll `orderStatus` by `cloid` for the settled outcome.                    |
-| `rejected` with `RateLimited`        | Throttled; never admitted. Carries `error.retry_after_ms`. | **Yes** — the only safe-to-resend case. Back off `retry_after_ms`, then resend. |
-| `rejected` (other, e.g. bad precision) | A business rejection.                                    | No — fix the cause, then submit a fresh action.                                 |
-| `timeout`                            | Indeterminate — the action **may** still land.           | **No** — reconcile by `cloid`; resubmitting under a new nonce risks a double-fill. |
-
-For the error model, the codes you actually hit, and their fixes, see:
+Two outcomes decide whether you may resend: a `rejected` + `RateLimited` (throttled, never admitted) is the **only** safe resend — back off `error.retry_after_ms` and resend the same signed action; a `timeout` is indeterminate and must **never** be resent under a new nonce — reconcile by `cloid` instead. For the full outcome table, the codes you actually hit, and their fixes, see:
 
 {% content-ref url="error-responses.md" %}
 [error-responses.md](error-responses.md)
