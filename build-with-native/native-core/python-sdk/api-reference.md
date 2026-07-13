@@ -201,7 +201,7 @@ Exposed under `native_core.constants`.
 
 ## See also
 
-* [Getting started](getting-started.md) — mint an API wallet and place your first order.
+* [Getting started](getting-started.md) — create an API wallet and place your first order.
 * [Core concepts](core-concepts.md) — accepted-vs-filled, the reconcile-by-cloid contract, and one `Exchange` per key.
 * [AI agents and MCP](ai-agents-and-mcp.md) — driving the SDK from an agent, and the bundled `native-core-mcp` server.
 * [Troubleshooting](troubleshooting.md) — what each error means and how to fix it.
