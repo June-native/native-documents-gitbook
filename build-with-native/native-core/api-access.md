@@ -142,7 +142,7 @@ curl -sS -X POST "$API_URL/info" \
 
 ## Rate limits & errors
 
-The gateway enforces rate limits. Nonce validation and rate limiting are **authority-scoped** — keyed on the recovered signer — so one API wallet is one bucket (see [Nonces & API Wallets](nonces-and-api-wallets.md)). The exact numeric limits are not exposed on the wire; get them from the platform.
+Rate limiting is **authority-scoped** — keyed on the recovered signer, so one API wallet is one bucket (see [Nonces & API Wallets](nonces-and-api-wallets.md)). A throttled write is rejected with `RateLimited`, carrying an `error.retry_after_ms` back-off hint; it is the one rejection that is safe to resend, after backing off.
 
 The `/trade` error model keys on the **response body, not the HTTP status**. The gateway returns the same trade-response shape for HTTP 200 / 400 / 429 / 503 / 504, with `submission_status` in `{ accepted, rejected, timeout }`. A business rejection is **data**, not a transport error — read `submission_status` and, on a rejection, `error.code`.
 

@@ -150,7 +150,7 @@ print(exchange.effective_account)                  # the account orders act on: 
 
 If the API wallet is not an approved agent on that owner, the constructor raises `LocalValidationError`; `agent_info()` reports it as data instead of throwing. Deposits, withdrawals, and `approveAgent` / `revokeAgent` are signed by your **main wallet in the web app**, never in the SDK.
 
-## Testnet only, for now
+## Testnet only
 
 This release runs on **testnet** (`https://api-test.native.org`) and nothing else. The bundle's `network` is `testnet`, and `from_bundle` picks the gateway from it. An API wallet is created and approved on the testnet site, and is bound to that network.
 
