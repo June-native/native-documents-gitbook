@@ -9,7 +9,7 @@ The Native Core gateway is a single HTTP front door with exactly two REST endpoi
 * `POST /info` — **reads**. One endpoint for all public reads, dispatched by a top-level `type` field (market metadata, order books, balances, order status, fills).
 * `POST /trade` — **writes**. One client-signed action per call (`order`, `cancel`, `cancelAll`, `modify`, `batch`, and the owner-signed `withdraw` / `settle` / `repay`).
 
-There is no WebSocket or streaming feed — reads are poll-based over `POST /info`. This page is the front door for anyone integrating **directly** with the gateway: market makers, trading bots, AI-agent builders, and aggregators.
+Reads are poll-based over `POST /info`. This page is the front door for anyone integrating **directly** with the gateway: market makers, trading bots, AI-agent builders, and aggregators.
 
 {% hint style="warning" %}
 **Testnet only.** The Native Core gateway is currently available on **testnet only**, at `https://api-test.native.org`. Everything on this page targets testnet.

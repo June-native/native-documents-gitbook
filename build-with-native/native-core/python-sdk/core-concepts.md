@@ -84,7 +84,7 @@ exchange = Exchange.from_bundle("bundle.json")    # construct once
 # ... hand the SAME exchange to every worker thread; do not build a second one on this key.
 ```
 
-The client is synchronous and poll-based: there is **no async API and no WebSocket or streaming feed** (none exists on the gateway either). If you need concurrency, wrap calls in your own executor and still share the one `Exchange`.
+The client is synchronous and poll-based. If you need concurrency, wrap calls in your own executor and still share the one `Exchange`.
 
 ## Numbers are strings, never floats
 
@@ -156,7 +156,7 @@ This release runs on **testnet** (`https://api-test.native.org`) and nothing els
 
 ## Polling & freshness
 
-Reads are **poll-only** over [`POST /info`](../post-info.md) — no WebSocket, no streaming feed (none exists on the gateway). Block time is ~50ms; `wait_for_open` / `wait_for_order` poll internally (starting at 50ms and backing off) against a ~5s default deadline. For a standing reconcile loop — open orders, fills, balances — poll on a **fixed interval** tuned to the strategy, not the block rate: a few hundred milliseconds for a tight quoting loop, low seconds for slower reconciliation. Polling faster than block time only burns requests without seeing new state.
+Reads are **poll-only** over [`POST /info`](../post-info.md). Block time is ~50ms; `wait_for_open` / `wait_for_order` poll internally (starting at 50ms and backing off) against a ~5s default deadline. For a standing reconcile loop — open orders, fills, balances — poll on a **fixed interval** tuned to the strategy, not the block rate: a few hundred milliseconds for a tight quoting loop, low seconds for slower reconciliation. Polling faster than block time only burns requests without seeing new state.
 
 Every read view carries `query_height` and `app_hash` — the committed height the answer reflects. `queryStatus` exposes the retained recent-height window (`oldest_available_height`, `latest_available_height`, `recent_query_window_blocks`), which bounds how far back a windowed read such as `userFills` can reach. Market and asset metadata (`markets`, `assets`) may be served from an in-process cache for up to ~10s, so treat precision and symbol metadata as **slowly-changing** — fetch it once at startup (the SDK does this when `Info` is constructed) — and re-fetch balances, orders, and fills every loop.
 

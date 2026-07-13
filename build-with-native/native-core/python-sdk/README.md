@@ -31,7 +31,7 @@ info = exchange.info                             # reads share the same client
 
 ## What it is NOT
 
-* **No WebSocket or streaming.** There is no async API and no push feed — you poll. Wrap calls in your own executor if you need concurrency, and share **one** `Exchange` per API wallet across threads (the nonce is a per-instance, lock-guarded, monotonic counter; two instances on one key collide nonces).
+* **Synchronous and poll-based.** Wrap calls in your own executor if you need concurrency, and share **one** `Exchange` per API wallet across threads (the nonce is a per-instance, lock-guarded, monotonic counter; two instances on one key collide nonces).
 * **It cannot move funds.** The SDK signs with an API wallet, a protocol-level agent key scoped only to placing and cancelling orders. Deposits, withdrawals, and approving or revoking the API wallet happen in the Native web app with your main wallet — never in the SDK.
 * **Testnet only.** This release trades on testnet.
 
