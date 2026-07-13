@@ -33,7 +33,7 @@ The legacy scheme above applies to trading actions. Authorization-sensitive acti
 
 ### EIP-712 signing (auth_scheme: "eip712")
 
-Public `withdraw`, `settle`, and `repay` must be submitted with `auth_scheme: "eip712"`. This is a **direct cutover**: the moment the new binary is live, legacy signatures over these public actions are rejected (`legacy_signature_not_accepted`), and there is no config switch, height activation, or grace window — public `withdraw`/`settle`/`repay` clients must switch at deploy. Conversely, `auth_scheme="eip712"` on any non-target action is rejected (`eip712_not_allowed_for_action`), and an EIP-712 request may not carry `agent_epoch` (`eip712_agent_epoch_not_allowed`).
+Public `withdraw`, `settle`, `repay`, `approveAgent`, and `revokeAgent` must be submitted with `auth_scheme: "eip712"`. (The full cutover set also covers `deposit` and the operator `admin*` writes, which are not part of this public trading contract.) This is a **direct cutover**: the moment the new binary is live, legacy signatures over these actions are rejected (`legacy_signature_not_accepted`), and there is no config switch, height activation, or grace window — clients must switch at deploy. Conversely, `auth_scheme="eip712"` on any non-target action (`order`/`cancel`/`cancelAll`/`modify`/`batch`) is rejected (`eip712_not_allowed_for_action`), and an EIP-712 request may not carry `agent_epoch` (`eip712_agent_epoch_not_allowed`).
 
 The signature covers an EIP-712 typed-data digest, not a binary payload. Clients sign the **v4** scheme, which is MetaMask-compatible: the domain is `EIP712Domain{name:"Native Core", version:"1", verifyingContract:0x0000…0000}` — **no `chainId`** — so a wallet can sign while connected to any EVM chain. The Native chain id is instead a signed message field, `nativeChainId`, so replay separation across environments is preserved. Each target action has its own primary type whose fields mirror the action, prefixed by the common fields `uint256 nativeChainId, uint256 authKind, uint256 authScope, uint256 nonce, bool expiresAfterMsPresent, uint256 expiresAfterMs`. `nativeChainId` is the Native Core chain id; `authKind` is `1` (single) and `authScope` is `0` for these public user actions. Amounts are signed as canonical atoms; addresses as `address`; an optional `cloid` as `bool cloidPresent` + `bytes16 cloid`. The presence flags keep an absent value distinct from an explicit `0`. The transaction **authority** is the recovered signer, exactly as for legacy single-signature actions.
 
@@ -459,16 +459,18 @@ await fetch(`${API_URL}/trade`, {
 
 `agent_epoch` is mandatory for these API-wallet–signed trading actions: an API wallet is always an active agent, so a `/trade` write that omits `agent_epoch` is treated as direct-owner mode and rejected with `DirectSignerIsActiveAgent`. Read the current epoch from [`userAgents`](post-info.md#useragents).
 
-Accepted response:
+`/trade` is synchronous, so the response carries the transaction's executed outcome. For an order, `submission_status` is the lifecycle status (`resting`/`filled`/`cancelled`/`rejected`); a non-order action returns `success`/`failed`. See [POST /trade](post-trade.md) and [error responses](error-responses.md) for the full model.
+
+Order outcome (an order that rested):
 
 ```json
 {
-  "submission_status": "accepted",
+  "submission_status": "resting",
   "tx_hash": "0x..."
 }
 ```
 
-Rejected response:
+Rejected response (node-admission code, returned verbatim):
 
 ```json
 {
@@ -480,7 +482,7 @@ Rejected response:
 }
 ```
 
-Rejected request-local validation responses usually have no `tx_hash` because canonical bytes were not assembled. Rejections after canonical byte assembly include `tx_hash`. Rate-limit responses also include `error.retry_after_ms`. If node admission cannot be reached, the response is `submission_status: "timeout"` with an `error.code` beginning with `node_unreachable: `.
+Request-shaping rejections usually have no `tx_hash` because canonical bytes were not assembled; admission and execution rejections include it. Rate-limit responses also include `error.retry_after_ms`. A `submission_status: "timeout"` means the outcome was not observed in time — either the wait budget elapsed (HTTP `200`, no `error`) or the submission could not be routed (`HandoffTimeout` / `HandoffBufferFull:*` / `HandoffMultipleActive` at HTTP `503`, or `node_unreachable: …` at HTTP `504`); reconcile by `cloid`, never resubmit.
 
 Malformed or non-decodable JSON is handled by the API and returns the `TradeResponse` shape with `error.code = "invalid_json"`. This includes invalid action type tags and invalid field types. Request-local validation failures after decoding, such as negative numeric strings or malformed decimal strings, return their specific error code in the same response shape. All such responses include `x-trace-id`.
 
@@ -495,7 +497,9 @@ Request-shaping errors:
 | `must provide exactly one of signature or signatures` | Both `signature` and `signatures` were present, or neither. |
 | `signatures_not_allowed_for_action` | `signatures` (multisig) was sent for an action whose type does not accept a multisig proof. |
 | `invalid_signatures_len` | The `signatures` array was empty or exceeded 32 entries. |
-| `legacy_signature_not_accepted` | A legacy (`auth_scheme` absent or `"legacy"`) signature was sent for `withdraw`, `settle`, or `repay`. These require `auth_scheme:"eip712"`. |
+| `signatures_required_for_action` | A single `signature` was sent for a multisig-only action (e.g. `deposit`/ACCOUNTING, or an admin action under an active admin multisig policy). |
+| `insufficient_signatures` | Fewer `signatures` than the required admin multisig threshold. |
+| `legacy_signature_not_accepted` | A legacy (`auth_scheme` absent or `"legacy"`) signature was sent for an EIP-712 cutover action (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`, or an operator `deposit`/`admin*`). These require `auth_scheme:"eip712"`. |
 | `eip712_not_allowed_for_action` | `auth_scheme:"eip712"` was sent for a non-target action; only legacy is accepted for those. |
 | `eip712_agent_epoch_not_allowed` | An `auth_scheme:"eip712"` request carried `agent_epoch`, which EIP-712 forbids. |
 | `market_metadata_unavailable` | The write path needed market decimal metadata from node query state, but the metadata query failed or returned an invalid shape. |
@@ -521,8 +525,11 @@ Request-shaping errors:
 | `encode_error: <TxCodecError>` | The write path could not assemble canonical signed tx bytes, for example because a batch length exceeded codec limits. |
 | `empty_tx_bytes` | Defensive guard: canonical byte assembly produced an empty byte vector. This should not occur for normal JSON requests. |
 | `decode_error: <TxDecodeError>` | The write path assembled bytes but could not decode them or recover the authorization (single signature, or a multisig proof — empty/too-many/duplicate/unsorted recovered signers). For public JSON this is the usual shape for a malformed or unrecoverable signature. |
-| `RateLimited` | The signer exceeded the per-signer request rate. The response includes `retry_after_ms`. |
-| `node_unreachable: <tonic error>` | The submit path could not complete node admission. The HTTP status is `504` and `submission_status` is `"timeout"`. |
+| `RateLimited` | The signer exceeded the per-signer request rate (50/s over a 1-second window). HTTP `429`; includes `retry_after_ms`. |
+| `PlaceOrderSuspended` | Place-order actions (`order` / `modify` / a `batch` with one) are suspended while the write path is degraded; `cancel` / `cancelAll` still admit. HTTP `503`, `retry_after_ms: 1000`. |
+| `ExpiredTx` | The envelope's `expires_after_ms` was already past at the gateway clock; fast-failed before the node hop. HTTP `200`, `submission_status: "rejected"`. |
+| `HandoffTimeout` / `HandoffBufferFull:{request_count\|bytes\|signer}` / `HandoffMultipleActive` | The submission could not be routed to a single writable node (leadership handoff / backpressure). HTTP `503`, `submission_status: "timeout"`, `retry_after_ms: 1000`. |
+| `node_unreachable: <tonic error>` | The submit path could not complete node admission. HTTP `504`, `submission_status: "timeout"`. |
 
 Node admission pass-through errors:
 
@@ -568,9 +575,9 @@ Node admission pass-through errors:
 | `AccountFrozen` | The account was frozen by an operator (`adminFreezeAccount`); while frozen, only `cancel` / `cancelAll` are admitted. |
 | `V3SignatureSuperseded` | The signature used the superseded **v3** EIP-712 scheme for a `withdraw` / `settle` / `repay`; only the **v4** scheme is accepted at submit — re-sign with v4. |
 
-Execution remains authoritative, so an accepted response means the tx entered the node pipeline; it may still later execute as a failed transaction.
+Node-admission codes are returned **verbatim** (CamelCase). When an action is admitted but then fails at execution, `/trade` returns that failure synchronously too, with a **lowercase** execution code (e.g. `tick`); see [error responses](error-responses.md).
 
-Supported top-level action types:
+Supported public top-level action types:
 
 * `order`
 * `cancel`
@@ -580,3 +587,7 @@ Supported top-level action types:
 * `withdraw` (user single-signature, EIP-712 `auth_scheme:"eip712"`; see [withdraw](post-trade.md#withdraw))
 * `settle` (user single-signature, EIP-712 `auth_scheme:"eip712"`)
 * `repay` (user single-signature, EIP-712 `auth_scheme:"eip712"`)
+* `approveAgent` (owner single-signature, EIP-712 `auth_scheme:"eip712"`; see [approveAgent](post-trade.md#approveagent))
+* `revokeAgent` (owner single-signature, EIP-712 `auth_scheme:"eip712"`)
+
+Operator/accounting writes (`deposit`, `adminSetAccountingWithdrawTokens`, `admin*`, `setMultisigPolicy`, `addAsset`, `openMarket`, …) are also accepted by the API but require operator/admin authority and are not part of this public trading contract.

@@ -7,7 +7,7 @@ description: How to reach Native Core — the two REST endpoints, environments, 
 Native Core exposes a single HTTP API with exactly two REST endpoints:
 
 * `POST /info` — **reads**. One endpoint for all public reads, dispatched by a top-level `type` field (market metadata, order books, balances, order status, fills).
-* `POST /trade` — **writes**. One client-signed action per call (`order`, `cancel`, `cancelAll`, `modify`, `batch`, and the owner-signed `withdraw` / `settle` / `repay`).
+* `POST /trade` — **writes**. One client-signed action per call (`order`, `cancel`, `cancelAll`, `modify`, `batch`, and the owner-signed `withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`).
 
 Reads are poll-based over `POST /info`. This page is the front door for anyone integrating **directly** with Native Core: market makers, trading bots, AI-agent builders, and aggregators.
 
@@ -18,7 +18,7 @@ Reads are poll-based over `POST /info`. This page is the front door for anyone i
 There are two ways to integrate:
 
 * **Call the API directly** — the two REST endpoints documented on this page. Full control, any language.
-* **Use the [Native Core Python SDK](python-sdk/README.md)** — a thin, typed client that wraps both endpoints and handles `/trade` signing, nonces, and accepted-vs-filled reconciliation for you.
+* **Use the [Native Core Python SDK](python-sdk/README.md)** — a thin, typed client that wraps both endpoints and handles `/trade` signing, nonces, and the synchronous outcome (reconciling a `timeout` by `cloid`) for you.
 
 Signing `/trade` by hand means building a canonical binary payload with recoverable secp256k1 signatures and per-signer monotonic nonces — fully specified below for building your own client. The Python SDK implements it for you.
 
@@ -113,7 +113,7 @@ Every `/trade` write is a **client-signed transaction**. The API reconstructs a 
 
 * **Trading actions** (`order`, `cancel`, `cancelAll`, `modify`, `batch`) use the default legacy binary scheme (`auth_scheme: "legacy"`) and are signed by the **API wallet** key.
 * **Owner `/trade` actions** (`withdraw` / `settle` / `repay`) are **EIP-712** (`auth_scheme: "eip712"`) and are signed by your **main wallet** — not with the API wallet, and not part of a bot's hot path.
-* **Agent approval** (`approveAgent` / `revokeAgent`) is also a main-wallet EIP-712 signature, but it happens **in the Native web app**, not as a `/trade` action — it is how you create or revoke the API wallet in the first place.
+* **Agent approval** (`approveAgent` / `revokeAgent`) is also a main-wallet EIP-712 signature — it is how you create or revoke the API wallet. This is normally done in the Native web app, though both are `/trade` action types the API accepts directly.
 
 The exact payload layout, encoding rules, and EIP-712 typed-data schemes are here:
 
@@ -131,20 +131,20 @@ Native Core executes on **integers only**. Public `order` / `modify` payloads ac
 
 ## Request correlation
 
-Both endpoints accept an optional `x-trace-id` request header and **echo it back** in the response, so you can line a request up with the API's own logs. If you omit it or send an invalid value, the API generates one; the response always includes an `x-trace-id`.
+`POST /trade` accepts an optional `x-trace-id` request header and **echoes it back** in the response, so you can line a write up with the API's own logs. If you omit it or send an invalid value, the API mints one; a `/trade` response always includes an `x-trace-id`. `POST /info` does not process or return `x-trace-id`.
 
 ```bash
-curl -sS -X POST "$API_URL/info" \
+curl -sS -X POST "$API_URL/trade" \
   -H 'content-type: application/json' \
   -H 'x-trace-id: client-trace-001' \
-  -d '{"type":"queryStatus"}'
+  -d '{ "action": { ... }, "nonce": "...", "signature": "0x..." }'
 ```
 
 ## Rate limits & errors
 
-Rate limiting is **authority-scoped** — keyed on the recovered signer, so one API wallet is one bucket (see [Nonces & API Wallets](nonces-and-api-wallets.md)). A throttled write is rejected with `RateLimited`, carrying an `error.retry_after_ms` back-off hint; it is the one rejection that is safe to resend, after backing off.
+Rate limiting is **authority-scoped** — keyed on the recovered signer, so one API wallet is one bucket (see [Nonces & API Wallets](nonces-and-api-wallets.md)). The limit is **50 requests/second per signer** over a 1-second sliding window; over-quota writes are rejected with HTTP `429`, `error.code: "RateLimited"`, and an `error.retry_after_ms` back-off hint. It is the one rejection that is safe to resend, after backing off. Request bodies over **64 KiB** (`/info`) or **256 KiB** (`/trade`) are rejected with HTTP `413`.
 
-The `/trade` error model keys on the **response body, not the HTTP status**. The API returns the same trade-response shape for HTTP 200 / 400 / 429 / 503 / 504, with `submission_status` in `{ accepted, rejected, timeout }`. A business rejection is **data**, not a transport error — read `submission_status` and, on a rejection, `error.code`.
+The `/trade` error model keys on the **response body, not the HTTP status**. The API returns the same trade-response shape for HTTP 200 / 400 / 429 / 503 / 504. Because `/trade` is synchronous, `submission_status` carries the executed outcome — an order's lifecycle state (`resting`/`filled`/`cancelled`/`rejected`), `success`/`failed` for non-order actions, or `timeout` — and a failure carries `error.code`. A business rejection is **data**, not a transport error.
 
 Two outcomes decide whether you may resend: a `rejected` + `RateLimited` (throttled, never admitted) is the **only** safe resend — back off `error.retry_after_ms` and resend the same signed action; a `timeout` is indeterminate and must **never** be resent under a new nonce — reconcile by `cloid` instead. For the full outcome table, the codes you actually hit, and their fixes, see:
 

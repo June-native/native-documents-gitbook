@@ -16,12 +16,12 @@ Writes are authorized by an **API wallet**: a protocol-level *agent* key scoped 
 
 You create one in the Native web app, not through the API: connect your **main wallet**, deposit to create the trading account, then choose **Create API wallet** — your main wallet signs one `approveAgent`, and the app returns a one-time **connection bundle** `{ network, accountAddress, agentPrivateKey }` containing the agent key. It is shown once; copy it. Revoke or rotate it in the app any time.
 
-Anything that moves value is **main-wallet only** and never a `/trade` action from a bot: deposits, withdrawals, and `approveAgent` / `revokeAgent` are all signed by your main wallet in the web app. The API wallet's allowlist is exactly `order`, `cancel`, `cancelAll`, `modify`, and `batch`.
+Anything that moves value or manages agents is **owner-signed** and outside the API wallet's reach: `withdraw`, `settle`, `repay`, and the agent-lifecycle `approveAgent` / `revokeAgent` must be signed by your **main wallet** under `auth_scheme:"eip712"`. These *are* real `/trade` action types — the API accepts them directly — but the API-wallet (agent) key cannot sign them; the web app is simply where you normally sign them with the main wallet. The API wallet's allowlist is exactly `order`, `cancel`, `cancelAll`, `modify`, and `batch`.
 
 | Concept | Web app label | Signs | Can move funds? |
 | --- | --- | --- | --- |
-| **Agent** — API wallet | *API wallet* | `order` · `cancel` · `cancelAll` · `modify` · `batch` | No |
-| **Owner** — trading account | *Account* | `approveAgent` · `revokeAgent` · deposit · `withdraw` | Yes |
+| **Agent** — API wallet | *API wallet* | `order` · `cancel` · `cancelAll` · `modify` · `batch` (legacy) | No |
+| **Owner** — trading account | *Account* | `withdraw` · `settle` · `repay` · `approveAgent` · `revokeAgent` (EIP-712) | Yes |
 
 The API-wallet setup and connection-bundle shape are on the API access page. If you integrate with the Python SDK, its quickstart walks the same web-app setup click-by-click.
 
@@ -60,7 +60,7 @@ The nonce rides in the `/trade` envelope alongside the action, and it is one of 
 
 ## `agent_epoch`
 
-An agent-signed request also carries `agent_epoch`, a decimal `u64` identifying the live approval slot for that API wallet. The current epoch is not something you hardcode — it is resolved live from the `userAgents` read at construction, so a stale value from an old bundle does no harm. If the epoch has rotated underneath you, execution rejects the write with `AgentEpochMismatch`; the SDK catches that once, re-resolves the epoch from `userAgents`, and retries the same action under a fresh nonce. Omit `agent_epoch` for owner-signed requests.
+An agent-signed request also carries `agent_epoch`, a decimal `u64` identifying the live approval **generation** (epoch) for the API wallet — distinct from its `slot_id` (`0`–`3`). The current epoch is not something you hardcode — it is resolved live from the `userAgents` read (the `epoch` of the slot holding your API-wallet address), so a stale value from an old bundle does no harm. If the epoch has rotated underneath you, node admission rejects the write with `AgentEpochMismatch`; the SDK catches that once, re-resolves the epoch from `userAgents`, and retries the same action under a fresh nonce. Omit `agent_epoch` for owner-signed requests.
 
 ## Safety
 

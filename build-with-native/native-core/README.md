@@ -47,10 +47,10 @@ Prefer a client library? The official Python SDK wraps both endpoints, signs `/t
 
 * `API_URL` examples use `https://api-test.native.org`.
 * Hex values are `0x`-prefixed lowercase strings unless noted otherwise.
-* Protocol numeric fields in signed actions are decimal strings.
+* Protocol numeric fields in signed actions are decimal strings; integer-valued fields (ids, nonces) also accept an unsigned JSON integer, while decimal price/quantity/amount fields must be strings.
 * Business query responses include `query_height` and `app_hash` when a query view is available. `query_height` is the execution height represented by the published read view.
-* `POST /trade` and `POST /info` accept an optional `x-trace-id` HTTP header for request correlation. When the header is absent or invalid, the API generates one. The response always includes the trace id in `x-trace-id`.
-* `POST /trade` returns admission success or rejection. Public clients confirm effects through business queries such as `orderStatus`, `openOrders`, `userFills`, `userBalances`, `spotCreditPositions`, `spotCreditAccount`, `batchOrderStatus`, `quoteAssets`, `accountingWithdrawTokens`, `withdraws`, `queryStatus`, `oracleStatus`, and `markPrices`.
+* `POST /trade` accepts an optional `x-trace-id` HTTP header for request correlation; when it is absent or invalid the API mints one, and the `/trade` response always echoes it in `x-trace-id`. `POST /info` does not process or return `x-trace-id`.
+* `POST /trade` is **synchronous**: it returns the transaction's executed outcome in `submission_status` — an order's lifecycle state (`resting`/`filled`/`cancelled`/`rejected`), `success`/`failed` for non-order actions, or `timeout` when the outcome is not observed within the wait budget — with a `tx_hash` and, on failure, an `error.code`. Business queries such as `orderStatus`, `openOrders`, `userFills`, `userBalances`, `spotCreditPositions`, `spotCreditAccount`, `batchOrderStatus`, `queryStatus`, `oracleStatus`, and `markPrices` re-read state or reconcile a `timeout` by `cloid`; they are no longer the primary way to learn a write's outcome.
 
 ## Concepts
 
@@ -91,6 +91,7 @@ The two REST endpoints, how to sign a write, and how to read an error:
 ## Changelog
 
 ```
+2026-07-13: v0.6 - synchronous /trade (returns the executed outcome — order lifecycle status, success/failed, or timeout — rather than admission-only); per-signer rate limiting (RateLimited, 429); place-order suspension breaker (PlaceOrderSuspended, 503); submit-routing timeout codes (HandoffTimeout/HandoffBufferFull/HandoffMultipleActive/node_unreachable); gateway ExpiredTx fast-fail; 64 KiB/256 KiB request body limits (413); x-trace-id scoped to /trade; approveAgent/revokeAgent actions; and deposits/accountingDepositContracts/multisigPolicy info queries.
 2026-06-11: v0.5 - add withdraw/settle/repay actions with EIP-712 signing, x-trace-id, queryStatus/accountingWithdrawTokens/withdraws/batchOrderStatus info queries, assets withdraw fees, and revised /trade error codes.
 2026-05-30: v0.4 - add cancelAll action, trading-fee fields on userFills, orderStatus pending/null-OID overlay, assets.issuer, expanded /trade error codes, and signing example refresh.
 2026-05-13: v0.3 - admission precheck and margin controls, migrate quantity precision to markets, and add quote-asset minimum/allowlist admin and query APIs (plus related fixes).

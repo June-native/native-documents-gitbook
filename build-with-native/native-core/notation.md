@@ -33,7 +33,7 @@ Terms and field names shared by the [`POST /trade`](post-trade.md) and [`POST /i
 
 | Term        | Meaning                                                                                                                          |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `market_id` | Protocol-assigned market id (`u32`). Discover via `POST /info` `markets`. Sent as a decimal string on `/trade`, returned as an integer on `/info`. |
+| `market_id` | Protocol-assigned market id (`u32`). Discover via `POST /info` `markets`. Sent as a decimal string (or unsigned integer) on `/trade`, returned as an integer on `/info`. |
 | `asset_id`  | Protocol-assigned asset id (`u32`). Discover via `POST /info` `assets`.                                                          |
 
 Ids are assigned by the protocol, not chosen by the client. In the Python SDK, `Info.resolve_market_id("BASE/QUOTE")` maps a symbol (e.g. `"ETH/USDC"`) to its `market_id`, and a market argument accepts either the symbol or the id.
