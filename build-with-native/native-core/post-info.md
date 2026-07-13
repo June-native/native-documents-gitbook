@@ -337,6 +337,10 @@ Whether an account exists and its freeze state.
 
 ### spotCreditAccount
 
+{% hint style="info" %}
+`spotCreditAccount` and `spotCreditPositions` read a **credit account** — a protocol-granted account type distinct from the default spot (balance) account that [`userBalances`](post-info.md#userbalances) reads. If you have not been granted a credit line, these report no position. See [Account Types](account-types.md).
+{% endhint %}
+
 ```json
 {
   "type": "spotCreditAccount",

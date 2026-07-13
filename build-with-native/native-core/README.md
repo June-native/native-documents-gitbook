@@ -54,10 +54,14 @@ Prefer a client library? The official Python SDK wraps both endpoints, signs `/t
 
 ## Concepts
 
-Terminology, the API-wallet and nonce model, and the integer-atom number model:
+Terminology, the two account types, the API-wallet and nonce model, and the integer-atom number model:
 
 {% content-ref url="notation.md" %}
 [notation.md](notation.md)
+{% endcontent-ref %}
+
+{% content-ref url="account-types.md" %}
+[account-types.md](account-types.md)
 {% endcontent-ref %}
 
 {% content-ref url="nonces-and-api-wallets.md" %}

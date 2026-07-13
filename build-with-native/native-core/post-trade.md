@@ -316,6 +316,10 @@ Parse errors include `missing_cloid` and `invalid_cloid`. Historical WAL records
 
 ### settle
 
+{% hint style="info" %}
+`settle` and `repay` move value between the two account types. A `SpotCreditAccount` is the **credit account**; a balance-mode / cash account is the default **spot account**. See [Account Types](account-types.md).
+{% endhint %}
+
 SpotCreditAccount de-risking (tag 33). The signer must be an **Active** `SpotCreditAccount` (the margin owner). It moves `amount` of `asset_id` out of the signer's long margin position (`actual_qty > 0`) into `cash_account`'s **available** balance, requiring the signer's post-position `available_usd >= 0`. `cash_account` may be **any existing balance-mode account** (it must not be a SpotCreditAccount). `asset_id`/`amount` are raw atoms. `cloid` is a **required** 16-byte hex client operation id. Must use `signature`; `signatures` is rejected (`signatures_not_allowed_for_action`).
 
 Requires `auth_scheme:"eip712"`. See [EIP-712 signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712).

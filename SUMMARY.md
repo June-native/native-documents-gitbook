@@ -49,6 +49,7 @@
 * [Native Core API](build-with-native/native-core/README.md)
   * [API Access](build-with-native/native-core/api-access.md)
   * [Notation](build-with-native/native-core/notation.md)
+  * [Account Types](build-with-native/native-core/account-types.md)
   * [Nonces & API Wallets](build-with-native/native-core/nonces-and-api-wallets.md)
   * [Decimals & Units](build-with-native/native-core/decimals-units.md)
   * [POST /info](build-with-native/native-core/post-info.md)
