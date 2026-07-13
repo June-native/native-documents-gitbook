@@ -8,7 +8,7 @@ This page specifies the byte-level methodology behind `/trade` signing, for buil
 
 Canonical unsigned payload:
 
-```
+```rust
 string("NATIVE_CORE_TX_SIGNING_V1")
 u32(1)                  // tx codec version
 u32(969696)             // Native Core chain id
@@ -55,7 +55,7 @@ Public action tags:
 
 Order action bytes:
 
-```
+```rust
 u16(action_tag)
 u32(market_id)
 u8(side)          // bid=0, ask=1
@@ -68,7 +68,7 @@ option<bytes16>(cloid)
 
 Cancel action bytes:
 
-```
+```rust
 // by oid
 u16(2)
 u32(market_id)
@@ -82,7 +82,7 @@ bytes16(cloid)
 
 Modify action bytes:
 
-```
+```rust
 // by oid
 u16(6)
 u32(market_id)
@@ -98,7 +98,7 @@ replacement_order
 
 `replacement_order` uses the same fields as `order` after `market_id`:
 
-```
+```rust
 u8(side)
 u8(order_type)
 u8(tif)
@@ -109,7 +109,7 @@ option<bytes16>(cloid)
 
 CancelAll action bytes:
 
-```
+```rust
 u16(26)
 u32(market_id)
 ```
@@ -118,7 +118,7 @@ u32(market_id)
 
 Batch action bytes:
 
-```
+```rust
 u16(18)
 u32(item_count)
 item_0
@@ -128,7 +128,7 @@ item_1
 
 Each batch item starts with a `u8` item tag followed by the item payload without the top-level `u16` action tag:
 
-```
+```rust
 0: order payload
 1: cancel-by-oid payload
 2: modify-by-oid payload
