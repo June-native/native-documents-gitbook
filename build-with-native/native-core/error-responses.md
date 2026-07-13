@@ -90,7 +90,7 @@ A [`batch`](post-trade.md#batch) is one `/trade` call under one envelope nonce, 
 
 ## Execution-level failures
 
-Every code above is an **admission** outcome — the gateway returns it on the `/trade` response (or as `submission_status`). Execution is a separate, later stage: an `accepted` action still runs against the book and **can fail there**. An execution failure does **not** appear on the `/trade` response — you discover it by polling [`orderStatus`](post-info.md#orderstatus) by `cloid` (an `accepted` order that later reads back as failed).
+Every code above is an **admission** outcome — the API returns it on the `/trade` response (or as `submission_status`). Execution is a separate, later stage: an `accepted` action still runs against the book and **can fail there**. An execution failure does **not** appear on the `/trade` response — you discover it by polling [`orderStatus`](post-info.md#orderstatus) by `cloid` (an `accepted` order that later reads back as failed).
 
 | Code | What it means | Fix |
 | --- | --- | --- |

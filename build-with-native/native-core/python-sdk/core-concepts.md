@@ -4,7 +4,7 @@ description: The eight ideas the Native Core Python SDK is built on — read thi
 
 # Core Concepts
 
-The SDK is a thin, typed, synchronous client over the two gateway endpoints. `Info` wraps [`POST /info`](../post-info.md) (market data, balances, order status); `Exchange` wraps [`POST /trade`](../post-trade.md) (one signed action per call) and owns an internal `Info` as `exchange.info`. Both return the gateway's raw JSON as plain dicts. This page expands the eight ideas every integration leans on. It does not re-document the wire fields — for those, see the [`POST /trade`](../post-trade.md) and [`POST /info`](../post-info.md) references.
+The SDK is a thin, typed, synchronous client over the two Native Core endpoints. `Info` wraps [`POST /info`](../post-info.md) (market data, balances, order status); `Exchange` wraps [`POST /trade`](../post-trade.md) (one signed action per call) and owns an internal `Info` as `exchange.info`. Both return the API's raw JSON as plain dicts. This page expands the eight ideas every integration leans on. It does not re-document the wire fields — for those, see the [`POST /trade`](../post-trade.md) and [`POST /info`](../post-info.md) references.
 
 {% hint style="warning" %}
 **Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
@@ -104,7 +104,7 @@ exchange.order("ETH/USDT", is_buy=True, sz=sz, limit_px=px, tif="gtc")
 
 ## Errors live in the response body
 
-Error handling keys on the **response body, not the HTTP status**. The gateway returns the same trade-response shape for HTTP 200/400/429/503/504, with `submission_status` in `{accepted, rejected, timeout}`. A business rejection — `{"submission_status": "rejected", "error": {"code": …}}` — is **data, not an exception**. Read it with the top-level helpers: `is_accepted`, `is_rejected`, `is_timeout`, `error_code`, `retry_after_ms`, `is_retryable`.
+Error handling keys on the **response body, not the HTTP status**. The API returns the same trade-response shape for HTTP 200/400/429/503/504, with `submission_status` in `{accepted, rejected, timeout}`. A business rejection — `{"submission_status": "rejected", "error": {"code": …}}` — is **data, not an exception**. Read it with the top-level helpers: `is_accepted`, `is_rejected`, `is_timeout`, `error_code`, `retry_after_ms`, `is_retryable`.
 
 `next_action(response)` collapses any trade response into one verdict to branch on (and returns `None` for a non-trade response):
 
@@ -138,7 +138,7 @@ markets = info.markets()["markets"]               # list; each market carries pr
 
 ## Agent vs owner mode
 
-The SDK trades with an **API wallet** — a protocol-level agent key scoped only to placing and cancelling orders; it can never move funds. `Exchange.from_bundle(bundle)` builds an **agent-mode** `Exchange`: the bundle's `agentPrivateKey` signs, and its `accountAddress` is the **owner** the orders act on. The owner address is used only locally — it never goes on the wire; the gateway recovers the signer from the signature.
+The SDK trades with an **API wallet** — a protocol-level agent key scoped only to placing and cancelling orders; it can never move funds. `Exchange.from_bundle(bundle)` builds an **agent-mode** `Exchange`: the bundle's `agentPrivateKey` signs, and its `accountAddress` is the **owner** the orders act on. The owner address is used only locally — it never goes on the wire; the API recovers the signer from the signature.
 
 The **agent epoch** is resolved live at construction from `userAgents` (not taken from the bundle, which may be stale), and refreshed once automatically if a write is rejected with `AgentEpochMismatch`. Check approval any time without side effects:
 
@@ -152,7 +152,7 @@ If the API wallet is not an approved agent on that owner, the constructor raises
 
 ## Testnet only
 
-This release runs on **testnet** (`https://api-test.native.org`) and nothing else. The bundle's `network` is `testnet`, and `from_bundle` picks the gateway from it. An API wallet is created and approved on the testnet site, and is bound to that network.
+This release runs on **testnet** (`https://api-test.native.org`) and nothing else. The bundle's `network` is `testnet`, and `from_bundle` picks the endpoint from it. An API wallet is created and approved on the testnet site, and is bound to that network.
 
 ## Polling & freshness
 
@@ -162,7 +162,7 @@ Every read view carries `query_height` and `app_hash` — the committed height t
 
 ## Cancel on disconnect
 
-There is **no server-side scheduled-cancel** (dead-man switch) today, and because the gateway is poll-only it never observes a dropped bot — a crashed or partitioned process leaves its resting orders on the book. Run the switch **client-side**: cancel every open order on shutdown, on any unhandled exception, and on a heartbeat timeout.
+There is **no server-side scheduled-cancel** (dead-man switch) today, and because the API is poll-only it never observes a dropped bot — a crashed or partitioned process leaves its resting orders on the book. Run the switch **client-side**: cancel every open order on shutdown, on any unhandled exception, and on a heartbeat timeout.
 
 ```python
 try:

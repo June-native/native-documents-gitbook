@@ -12,25 +12,21 @@ layout:
   pagination:
     visible: true
   metadata:
-    visible: true
+    visible: false
   tags:
     visible: true
   actions:
     visible: true
 ---
 
-# Native Core Gateway
+# Native Core API
 
-{% hint style="info" %}
-_Last updated: 2026-06-11 (_&#x76;0.&#x35;_)_
-{% endhint %}
-
-The Native Core Gateway is the direct integration surface for the Native Core on-chain CLOB. Clients submit signed business actions with `POST /trade` and read business state with `POST /info`. It serves market makers, trading bots, AI agents, and anyone integrating directly with Native Core.
+The Native Core API is the direct integration surface for the on-chain CLOB. Clients submit signed business actions with `POST /trade` and read business state with `POST /info`. It serves market makers, trading bots, AI agents, and anyone integrating directly with Native Core.
 
 Operational, recovery, and node-private interfaces are intentionally not part of this contract.
 
 {% hint style="warning" %}
-**Testnet only.** The Native Core gateway is currently available on **testnet only**, at `https://api-test.native.org`. Everything in this section targets testnet.
+**Testnet only.** Native Core is currently available on **testnet only**, at `https://api-test.native.org`. Everything in this section targets testnet.
 {% endhint %}
 
 ## Start here
@@ -53,7 +49,7 @@ Prefer a client library? The official Python SDK wraps both endpoints, signs `/t
 * Hex values are `0x`-prefixed lowercase strings unless noted otherwise.
 * Protocol numeric fields in signed actions are decimal strings.
 * Business query responses include `query_height` and `app_hash` when a query view is available. `query_height` is the execution height represented by the published read view.
-* `POST /trade` and `POST /info` accept an optional `x-trace-id` HTTP header for request correlation. When the header is absent or invalid, the gateway generates one. The response always includes the trace id in `x-trace-id`.
+* `POST /trade` and `POST /info` accept an optional `x-trace-id` HTTP header for request correlation. When the header is absent or invalid, the API generates one. The response always includes the trace id in `x-trace-id`.
 * `POST /trade` returns admission success or rejection. Public clients confirm effects through business queries such as `orderStatus`, `openOrders`, `userFills`, `userBalances`, `spotCreditPositions`, `spotCreditAccount`, `batchOrderStatus`, `quoteAssets`, `accountingWithdrawTokens`, `withdraws`, `queryStatus`, `oracleStatus`, and `markPrices`.
 
 ## Concepts

@@ -24,7 +24,7 @@ curl -sS -X POST "$API_URL/info" \
 
 Response:
 
-See [Decimals & Units](decimals-units.md) for raw/display conversion and validation rules. The gateway may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background gateway task.
+See [Decimals & Units](decimals-units.md) for raw/display conversion and validation rules. The API may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background task.
 
 ```json
 {
@@ -79,7 +79,7 @@ When no query view is available yet, all fields are `null`.
 { "type": "quoteAssets" }
 ```
 
-Returns the current canonical quote-asset allowlist sorted by `asset_id`. `min_quantity` is the human-readable minimum order notional in the quote token; `min_quantity_atoms` is the raw integer atom quantity encoded as a decimal string for JavaScript safety. The gateway may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background gateway task.
+Returns the current canonical quote-asset allowlist sorted by `asset_id`. `min_quantity` is the human-readable minimum order notional in the quote token; `min_quantity_atoms` is the raw integer atom quantity encoded as a decimal string for JavaScript safety. The API may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background task.
 
 ```json
 {
@@ -128,7 +128,7 @@ Returns accounting withdraw-token rows sorted by `(chain_id, asset_id)`. `min_wi
 { "type": "markets" }
 ```
 
-Response field `markets` is sorted by `market_id`. `price_decimals` and `max_price_sig_figs` are market metadata, as is `base_quantity_decimals`. `quote_balance_decimals` is derived from the quote asset and included as a convenience field for raw notional conversion. See [Decimals & Units](decimals-units.md). The gateway may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background gateway task.
+Response field `markets` is sorted by `market_id`. `price_decimals` and `max_price_sig_figs` are market metadata, as is `base_quantity_decimals`. `quote_balance_decimals` is derived from the quote asset and included as a convenience field for raw notional conversion. See [Decimals & Units](decimals-units.md). The API may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background task.
 
 ```json
 {
@@ -554,7 +554,7 @@ Malformed items do not prevent valid items from being queried; the malformed slo
 }
 ```
 
-If `orders` is not an array the gateway returns HTTP 400 `InvalidOrderStatusBatch`. If more than 20 items are supplied, the gateway returns HTTP 400:
+If `orders` is not an array the API returns HTTP 400 `InvalidOrderStatusBatch`. If more than 20 items are supplied, the API returns HTTP 400:
 
 ```json
 {

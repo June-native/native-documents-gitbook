@@ -4,7 +4,7 @@ description: Install the Native Core Python SDK, create an API wallet, and place
 
 # Getting Started
 
-The Native Core Python SDK (`native-core-python-sdk`, import `native_core`) is a thin, typed, synchronous client over the gateway's two REST endpoints: `POST /info` for reads and `POST /trade` for writes. This page takes you from `pip install` to a resting order you place and cancel yourself.
+The Native Core Python SDK (`native-core-python-sdk`, import `native_core`) is a thin, typed, synchronous client over Native Core's two REST endpoints: `POST /info` for reads and `POST /trade` for writes. This page takes you from `pip install` to a resting order you place and cancel yourself.
 
 {% hint style="warning" %}
 **Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
@@ -36,7 +36,7 @@ The SDK trades with an **API wallet**: a protocol-level *agent* key scoped only 
 A leaked API wallet key can trade your balance but can never withdraw or move funds off Native, so it is safe to run in a bot. Revoke or rotate it in the app any time.
 
 {% hint style="info" %}
-Exact panel labels in the app may differ from the names here. The web app's **API wallet** is the protocol's **agent**, and the web app's **Account** is the protocol's **owner** (your main wallet). The SDK uses the owner address only locally to resolve the agent — it never goes on the wire; the gateway recovers the signer from the signature.
+Exact panel labels in the app may differ from the names here. The web app's **API wallet** is the protocol's **agent**, and the web app's **Account** is the protocol's **owner** (your main wallet). The SDK uses the owner address only locally to resolve the agent — it never goes on the wire; the API recovers the signer from the signature.
 {% endhint %}
 
 ## The connection bundle
@@ -45,7 +45,7 @@ The bundle is a small JSON object. Hand it to the SDK as a file path, a `dict`, 
 
 ```jsonc
 {
-  "network": "testnet",       // which gateway to use — must be "testnet"
+  "network": "testnet",       // which network to use — must be "testnet"
   "accountAddress": "0x…",    // your main wallet (the owner the bot trades on)
   "agentPrivateKey": "0x…",   // the API wallet key the SDK signs with — the ONLY secret
   "agentEpoch": "10"          // optional; the SDK ignores it and re-resolves the epoch live
@@ -66,7 +66,7 @@ from native_core import Exchange, is_accepted, order_state
 BUNDLE = "bundle.json"   # a file path, or the dict / JSON string itself
 MARKET = "ETH/USDT"
 
-exchange = Exchange.from_bundle(BUNDLE)   # picks the testnet gateway, loads the key, sets the owner
+exchange = Exchange.from_bundle(BUNDLE)   # picks the testnet endpoint, loads the key, sets the owner
 info = exchange.info                      # Exchange owns an internal Info
 
 # Confirm the API wallet is approved on the owner before trading.

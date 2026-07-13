@@ -46,8 +46,8 @@
 
 ## Build with Native
 
-* [Native Core Gateway](build-with-native/native-core/README.md)
-  * [Gateway API Access](build-with-native/native-core/api-access.md)
+* [Native Core API](build-with-native/native-core/README.md)
+  * [API Access](build-with-native/native-core/api-access.md)
   * [Notation](build-with-native/native-core/notation.md)
   * [Nonces & API Wallets](build-with-native/native-core/nonces-and-api-wallets.md)
   * [Decimals & Units](build-with-native/native-core/decimals-units.md)

@@ -18,7 +18,7 @@ option<u64>(expires_after_ms)
 action_bytes
 ```
 
-The chain id is the target deployment's Native chain id (**testnet: `969696`**). It is folded into the signed bytes but is **never sent on the wire**, so it must equal the gateway you target — signing with the wrong chain id makes the gateway recover a different authority and reject the write.
+The chain id is the target deployment's Native chain id (**testnet: `969696`**). It is folded into the signed bytes but is **never sent on the wire**, so it must equal the deployment you target — signing with the wrong chain id makes the API recover a different authority and reject the write.
 
 Encoding rules:
 
@@ -39,7 +39,7 @@ The signature covers an EIP-712 typed-data digest, not a binary payload. Clients
 
 A superseded **v3** EIP-712 scheme (domain included `chainId`; no `nativeChainId` field) is retained only for historical decode/replay and is **not accepted at submit**. Because `/trade` carries no codec-version field, a request whose signature was produced under the old v3 scheme is assembled as v4 and recovers a different address, so it fails with a signature/authority error — re-sign with the v4 scheme.
 
-`withdraw` keeps an optional `cloid` at the protocol level (legacy WAL records may omit it), but the public gateway JSON requires `cloid`; the EIP-712 `cloidPresent` flag models the optionality.
+`withdraw` keeps an optional `cloid` at the protocol level (legacy WAL records may omit it), but the public API JSON requires `cloid`; the EIP-712 `cloidPresent` flag models the optionality.
 
 Public action tags:
 
@@ -143,7 +143,7 @@ TypeScript signing helper example for Node.js with `ethers`. The example uses No
 import { SigningKey, getBytes, keccak256 } from "ethers";
 
 const NativeCore = {
-  chainId: 969_696, // Native Core testnet chain id — must match the gateway you sign for
+  chainId: 969_696, // Native Core testnet chain id — must match the deployment you sign for
 
   txCodecVersion: 1,
   signingDomain: "NATIVE_CORE_TX_SIGNING_V1",
@@ -482,7 +482,7 @@ Rejected response:
 
 Rejected request-local validation responses usually have no `tx_hash` because canonical bytes were not assembled. Rejections after canonical byte assembly include `tx_hash`. Rate-limit responses also include `error.retry_after_ms`. If node admission cannot be reached, the response is `submission_status: "timeout"` with an `error.code` beginning with `node_unreachable: `.
 
-Malformed or non-decodable JSON is handled by the gateway and returns the `TradeResponse` shape with `error.code = "invalid_json"`. This includes invalid action type tags and invalid field types. Request-local validation failures after decoding, such as negative numeric strings or malformed decimal strings, return their specific error code in the same response shape. All such responses include `x-trace-id`.
+Malformed or non-decodable JSON is handled by the API and returns the `TradeResponse` shape with `error.code = "invalid_json"`. This includes invalid action type tags and invalid field types. Request-local validation failures after decoding, such as negative numeric strings or malformed decimal strings, return their specific error code in the same response shape. All such responses include `x-trace-id`.
 
 ### `/trade` error codes
 

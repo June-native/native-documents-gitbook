@@ -45,13 +45,13 @@ from example_utils import setup
 address, info, exchange = setup()   # reads examples/config.json
 ```
 
-`setup()` reads `examples/config.json`, builds the API wallet from `secret_key`, resolves agent-vs-owner (a blank `account_address` derives the address from the key and trades in **direct-owner** mode; a filled one signs as an **agent** on that owner), prints the effective account and gateway, then — before returning — reads `user_balances` for the **owner** and **hard-fails** if the account holds nothing:
+`setup()` reads `examples/config.json`, builds the API wallet from `secret_key`, resolves agent-vs-owner (a blank `account_address` derives the address from the key and trades in **direct-owner** mode; a filled one signs as an **agent** on that owner), prints the effective account and endpoint, then — before returning — reads `user_balances` for the **owner** and **hard-fails** if the account holds nothing:
 
 ```
 connected
   account (owner) : 0x1234…
   api wallet      : 0xabcd…  (agent mode)
-  gateway         : https://api-test.native.org
+  endpoint        : https://api-test.native.org
 ```
 
 It turns the two misconfigs that would otherwise surface as empty query results or opaque rejections — a **wrong owner** address, or an **unfunded account** — into one clear up-front error (`RuntimeError: account 0x… has no balances … fund it before running`). Read-only scripts call `read_only()` instead: same config, but no balance gate and no signing wallet, so it runs even when the key is not yet an approved agent.
@@ -83,7 +83,7 @@ python examples/basic_batch.py
 
 ## Read markets and the order book
 
-Self-contained read-only script. `Info` wraps [`POST /info`](../post-info.md); reads need only the gateway, so no order is ever signed here. See [Decimals & Units](../decimals-units.md) for what `price_decimals` and `base_quantity_decimals` mean.
+Self-contained read-only script. `Info` wraps [`POST /info`](../post-info.md); reads need only the endpoint, so no order is ever signed here. See [Decimals & Units](../decimals-units.md) for what `price_decimals` and `base_quantity_decimals` mean.
 
 ```python
 from native_core import Info
@@ -91,7 +91,7 @@ from native_core import Info
 BUNDLE = "bundle.json"   # your saved connection bundle (see getting-started.md)
 MARKET = "ETH/USDT"
 
-info = Info.from_bundle(BUNDLE)   # picks the testnet gateway from the bundle's network
+info = Info.from_bundle(BUNDLE)   # picks the testnet endpoint from the bundle's network
 
 # List the tradable markets and their precision.
 for m in info.markets()["markets"]:
@@ -118,7 +118,7 @@ from native_core import Exchange, is_accepted, order_state
 BUNDLE = "bundle.json"
 MARKET = "ETH/USDT"
 
-exchange = Exchange.from_bundle(BUNDLE)   # picks the gateway, loads the key, sets owner
+exchange = Exchange.from_bundle(BUNDLE)   # picks the endpoint, loads the key, sets owner
 info = exchange.info
 
 # Price a bid well below the market so it rests instead of filling.
@@ -180,7 +180,7 @@ from native_core import Exchange
 BUNDLE = "bundle.json"
 MARKET = "ETH/USDT"
 REFRESH = 5.0             # re-quote cadence, seconds
-HEARTBEAT_TIMEOUT = 30.0  # a round slower than this = degraded gateway -> flatten and stop
+HEARTBEAT_TIMEOUT = 30.0  # a round slower than this = degraded endpoint -> flatten and stop
 
 exchange = Exchange.from_bundle(BUNDLE)
 info = exchange.info
@@ -209,7 +209,7 @@ try:
         exchange.place(MARKET, is_buy=True, sz=sz, limit_px=px, tif="gtc")
 
         if time.monotonic() - started > HEARTBEAT_TIMEOUT:
-            raise TimeoutError("round overran the heartbeat")        # gateway degraded -> bail
+            raise TimeoutError("round overran the heartbeat")        # endpoint degraded -> bail
         time.sleep(REFRESH)
 except (KeyboardInterrupt, Exception) as exc:                        # Ctrl-C, SIGTERM, heartbeat, or any bug
     print(f"stopping: {exc!r}")

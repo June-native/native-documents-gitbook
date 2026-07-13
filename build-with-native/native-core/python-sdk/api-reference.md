@@ -6,7 +6,7 @@ description: >-
 
 # API Reference
 
-The complete surface of `native-core-python-sdk` (import `native_core`): the `Info` and `Exchange` classes, the response and problem helpers, the exception hierarchy, the transport controls, and the constants. Every method lists the underlying gateway call it makes so you can cross-reference the wire behaviour.
+The complete surface of `native-core-python-sdk` (import `native_core`): the `Info` and `Exchange` classes, the response and problem helpers, the exception hierarchy, the transport controls, and the constants. Every method lists the underlying API call it makes so you can cross-reference the wire behaviour.
 
 {% hint style="warning" %}
 **Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
@@ -16,7 +16,7 @@ The complete surface of `native-core-python-sdk` (import `native_core`): the `In
 This page is a symbol reference. For the field-level semantics of any returned JSON, follow the linked wire reference: reads resolve to [`POST /info`](../post-info.md), writes to [`POST /trade`](../post-trade.md). See also [Decimal units](../decimals-units.md) for raw/display conversion and [Transaction signing](../transaction-signing.md) for the signature the SDK builds for you.
 {% endhint %}
 
-Both classes return the gateway's JSON as plain, `TypedDict`-annotated dicts. Construct with `Info.from_bundle(bundle)` / `Exchange.from_bundle(bundle)` (a dict, JSON string, or file path), or by hand with `Info(base_url)` / `Exchange(wallet, base_url, owner=<account_address>)`. Anywhere a `market` argument appears, pass a `"BASE/QUOTE"` symbol (e.g. `"ETH/USDT"`) or its integer market id.
+Both classes return the API's JSON as plain, `TypedDict`-annotated dicts. Construct with `Info.from_bundle(bundle)` / `Exchange.from_bundle(bundle)` (a dict, JSON string, or file path), or by hand with `Info(base_url)` / `Exchange(wallet, base_url, owner=<account_address>)`. Anywhere a `market` argument appears, pass a `"BASE/QUOTE"` symbol (e.g. `"ETH/USDT"`) or its integer market id.
 
 ## Info (reads)
 
@@ -48,7 +48,7 @@ Wraps [`POST /info`](../post-info.md). Each call maps to one top-level `type` di
 
 ### Local and polling helpers
 
-Client-side conveniences on `Info`. The first three read only the market metadata fetched once at construction and send no request; the rest poll the gateway.
+Client-side conveniences on `Info`. The first three read only the market metadata fetched once at construction and send no request; the rest poll the API.
 
 | Method | Returns | Sends |
 | --- | --- | --- |
@@ -86,7 +86,7 @@ Wraps [`POST /trade`](../post-trade.md); one signed action per call. `Exchange` 
 
 Also on `Exchange`: the `agent_address` property (the signing wallet), and `effective_account` (the account orders act on — the owner in agent mode, otherwise the wallet address; pass it as the `user` to every `Info` order-status read).
 
-Each write returns the raw gateway response with the client handle echoed in: `submission_status`, `tx_hash`, `error`, `cloid` (or `cloids` for a batch), and `nonce`.
+Each write returns the raw API response with the client handle echoed in: `submission_status`, `tx_hash`, `error`, `cloid` (or `cloids` for a batch), and `nonce`.
 
 {% hint style="warning" %}
 `submission_status: "accepted"` means **admitted to the pipeline, not filled**. Resolve the real outcome by `cloid` with `wait_for_open` / `reconcile_by_cloid` before treating an order as done. On a wire timeout the SDK raises `SubmissionUncertain` (or returns `submission_status: "timeout"`) — reconcile by `cloid` and **never resubmit under a fresh nonce**, or the order may land twice. See [Core concepts](core-concepts.md).
@@ -99,7 +99,7 @@ from decimal import Decimal
 
 from native_core import Exchange, is_accepted, order_state
 
-exchange = Exchange.from_bundle("bundle.json")   # testnet bundle: picks the gateway, loads the key
+exchange = Exchange.from_bundle("bundle.json")   # testnet bundle: picks the endpoint, loads the key
 info = exchange.info
 MARKET = "ETH/USDT"
 
@@ -172,7 +172,7 @@ Everything subclasses `native_core.Error`. Business rejections are **not** excep
 | `timeout` | `30` | Per-request deadline in seconds. Pass `None` for no deadline |
 | `pool_maxsize` | `100` | Connection-pool size |
 | `on_request` | `None` | `on_request(url_path, body, trace_id)` — called before each request; `trace_id` is the id being sent, or `None` |
-| `on_response` | `None` | `on_response(url_path, status, body, elapsed_ms, trace_id)` — called after each response; `trace_id` is the `x-trace-id` the gateway echoed, or `None` |
+| `on_response` | `None` | `on_response(url_path, status, body, elapsed_ms, trace_id)` — called after each response; `trace_id` is the `x-trace-id` the API echoed, or `None` |
 | `trace_id_factory` | `None` | Called once per request for the `x-trace-id` to send; omit to send no header. You supply the id — the SDK never generates one |
 
 ```python
@@ -188,7 +188,7 @@ exchange = Exchange.from_bundle(
 )
 ```
 
-To capture only the id the gateway itself generates, send none and read the `trace_id` argument of `on_response`.
+To capture only the id the API itself generates, send none and read the `trace_id` argument of `on_response`.
 
 ## Constants
 
@@ -196,8 +196,8 @@ Exposed under `native_core.constants`.
 
 | Constant | Value | Notes |
 | --- | --- | --- |
-| `TESTNET_API_URL` | `https://api-test.native.org` | The gateway the SDK talks to |
-| `NETWORK_URLS` | network name → gateway URL | The bundle's `network` field maps through this |
+| `TESTNET_API_URL` | `https://api-test.native.org` | The endpoint the SDK talks to |
+| `NETWORK_URLS` | network name → endpoint URL | The bundle's `network` field maps through this |
 
 ## See also
 

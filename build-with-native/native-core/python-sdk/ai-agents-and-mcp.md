@@ -12,7 +12,7 @@ The Native Core Python SDK is built to be driven by an AI agent, not just a pers
 
 ## Why Native Core is agent-friendly
 
-The gateway and SDK are shaped so an autonomous model can trade without ever holding a fund-moving key or parsing prose to know what happened.
+The API and the SDK are shaped so an autonomous model can trade without ever holding a fund-moving key or parsing prose to know what happened.
 
 - **Scoped, revocable keys.** An agent trades with an **API wallet** — a protocol-level agent key scoped only to placing and cancelling orders. It can never deposit, withdraw, or move funds off Native. Create it in the web app, and revoke or rotate it there any time. A leaked API wallet key can trade the balance but cannot drain it. See [getting-started.md](getting-started.md) for how to create one.
 - **Reads on, writes gated.** Market data, balances, and order status are always available. The order-placing and cancelling surface is turned on only by an explicit switch, so a read-only agent physically cannot place an order.
@@ -70,7 +70,7 @@ The server reads its configuration from these environment variables:
 | --- | --- |
 | `NATIVE_CORE_BUNDLE` | Path to a connection bundle JSON (`{network, accountAddress, agentPrivateKey}`). Preferred — supplies everything on its own. |
 | `NATIVE_CORE_NETWORK` | `testnet` (default) when not using a bundle. |
-| `NATIVE_CORE_BASE_URL` | Gateway URL, as an alternative to `NATIVE_CORE_NETWORK`. |
+| `NATIVE_CORE_BASE_URL` | Endpoint URL, as an alternative to `NATIVE_CORE_NETWORK`. |
 | `NATIVE_CORE_ACCOUNT` | Your account address (the owner main wallet) — needed for account-scoped reads **and** to register the write tools. |
 | `NATIVE_CORE_AGENT_KEY` | The API wallet's private key, required for trading. |
 | `NATIVE_CORE_ENABLE_TRADING` | Set to `1` (or `true`/`yes`/`on`) to register the write tools. Off by default: without it the server is read-only even if a key is present. |
@@ -99,7 +99,7 @@ Drop `NATIVE_CORE_ENABLE_TRADING` (or leave it unset) for a read-only assistant 
 
 | Tool | Does |
 | --- | --- |
-| `whoami` | The configured account, gateway, and whether trading is enabled |
+| `whoami` | The configured account, endpoint, and whether trading is enabled |
 | `list_markets` | Tradable markets with their id and precision |
 | `get_orderbook` | Top bids and asks for one market |
 | `get_balances` | Spot balances for the configured account |
@@ -119,7 +119,7 @@ Drop `NATIVE_CORE_ENABLE_TRADING` (or leave it unset) for a read-only assistant 
 | `cancel_order` | Cancel one order by `oid` or `cloid` |
 | `cancel_all_orders` | Cancel every open order in one market |
 
-Every result is normalized with the SDK's own helpers, so the assistant sees a decision-ready shape (`state`, `filled_qty`, `next_action`) rather than raw gateway JSON. The never-resubmit contract is enforced by shape: a timed-out or uncertain write comes back with `next_action = RECONCILE_BY_CLOID` and the `cloid`, and the model is pointed at `reconcile_order` — never told to resend. These tools are thin wrappers over the same SDK calls (`get_order` ≈ `reconcile_by_cloid`, `get_min_order_size` ≈ `min_order_size`, `preview_order` ≈ `build_order`).
+Every result is normalized with the SDK's own helpers, so the assistant sees a decision-ready shape (`state`, `filled_qty`, `next_action`) rather than raw API JSON. The never-resubmit contract is enforced by shape: a timed-out or uncertain write comes back with `next_action = RECONCILE_BY_CLOID` and the `cloid`, and the model is pointed at `reconcile_order` — never told to resend. These tools are thin wrappers over the same SDK calls (`get_order` ≈ `reconcile_by_cloid`, `get_min_order_size` ≈ `min_order_size`, `preview_order` ≈ `build_order`).
 
 {% hint style="info" %}
 Use a dedicated, limited API wallet here, never your main wallet. The MCP tools are convenience, not a security boundary: the real protection is that the API wallet is scoped and revocable in the app.

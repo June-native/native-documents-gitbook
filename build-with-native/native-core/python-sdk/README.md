@@ -1,10 +1,10 @@
 ---
-description: A thin, typed, synchronous Python client over the Native Core gateway's POST /info and POST /trade.
+description: A thin, typed, synchronous Python client over Native Core's POST /info and POST /trade.
 ---
 
 # Python SDK
 
-`native-core-python-sdk` is a thin, typed, synchronous Python client over the Native Core gateway. It wraps the two REST endpoints — reads through `POST /info`, writes through `POST /trade` — as two classes that return the gateway's JSON as plain, `TypedDict`-annotated dicts. Import name `native_core`; requires Python 3.10+; runtime deps are `requests`, `eth-account`, and `eth-utils`.
+`native-core-python-sdk` is a thin, typed, synchronous Python client over Native Core. It wraps the two REST endpoints — reads through `POST /info`, writes through `POST /trade` — as two classes that return the API's JSON as plain, `TypedDict`-annotated dicts. Import name `native_core`; requires Python 3.10+; runtime deps are `requests`, `eth-account`, and `eth-utils`.
 
 ```bash
 pip install native-core-python-sdk
@@ -63,5 +63,5 @@ info = exchange.info                             # reads share the same client
 
 ## See also
 
-* [../api-access.md](../api-access.md) — calling the raw gateway directly, without the SDK.
+* [../api-access.md](../api-access.md) — calling the raw API directly, without the SDK.
 * [../post-trade.md](../post-trade.md) and [../post-info.md](../post-info.md) — the wire reference for the two endpoints the SDK wraps.
