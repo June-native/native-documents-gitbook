@@ -565,6 +565,8 @@ Node admission pass-through errors:
 | `InvalidRepay` | Repay payload, account shape, or target position is invalid. |
 | `AssetNotFound` | A settle/repay asset reference was absent from the current committed state. |
 | `Overflow` | Admission precheck arithmetic or id allocation overflowed. |
+| `AccountFrozen` | The account was frozen by an operator (`adminFreezeAccount`); while frozen, only `cancel` / `cancelAll` are admitted. |
+| `V3SignatureSuperseded` | The signature used the superseded **v3** EIP-712 scheme for a `withdraw` / `settle` / `repay`; only the **v4** scheme is accepted at submit — re-sign with v4. |
 
 Execution remains authoritative, so an accepted response means the tx entered the node pipeline; it may still later execute as a failed transaction.
 
