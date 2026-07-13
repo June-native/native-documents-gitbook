@@ -14,7 +14,7 @@ The gateway does not authenticate a session; it recovers the signer from each si
 
 Writes are authorized by an **API wallet**: a protocol-level *agent* key scoped only to placing and cancelling orders. It can trade your account's balance but can **never** move funds off Native. That scoping — plus the fact that it is revocable — is what makes it safe to embed in a bot.
 
-You mint one in the Native web app, not through the gateway: connect your **main wallet**, deposit to create the trading account, then choose **Create API wallet** — your main wallet signs one `approveAgent`, and the app returns a one-time **connection bundle** `{ network, accountAddress, agentPrivateKey }` containing the agent key. It is shown once; copy it. Revoke or rotate it in the app any time.
+You create one in the Native web app, not through the gateway: connect your **main wallet**, deposit to create the trading account, then choose **Create API wallet** — your main wallet signs one `approveAgent`, and the app returns a one-time **connection bundle** `{ network, accountAddress, agentPrivateKey }` containing the agent key. It is shown once; copy it. Revoke or rotate it in the app any time.
 
 Anything that moves value is **main-wallet only** and never a gateway `/trade` action from a bot: deposits, withdrawals, and `approveAgent` / `revokeAgent` are all signed by your main wallet in the web app. The API wallet's allowlist is exactly `order`, `cancel`, `cancelAll`, `modify`, and `batch`.
 
@@ -23,7 +23,7 @@ Anything that moves value is **main-wallet only** and never a gateway `/trade` a
 | **Agent** — API wallet | *API wallet* | `order` · `cancel` · `cancelAll` · `modify` · `batch` | No |
 | **Owner** — trading account | *Account* | `approveAgent` · `revokeAgent` · deposit · `withdraw` | Yes |
 
-The mint flow and connection-bundle shape are on the gateway access page. If you integrate with the Python SDK, its quickstart walks the same web-app setup click-by-click.
+The API-wallet setup and connection-bundle shape are on the gateway access page. If you integrate with the Python SDK, its quickstart walks the same web-app setup click-by-click.
 
 {% content-ref url="api-access.md" %}
 [api-access.md](api-access.md)

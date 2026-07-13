@@ -14,7 +14,7 @@ The Native Core Python SDK is built to be driven by an AI agent, not just a pers
 
 The gateway and SDK are shaped so an autonomous model can trade without ever holding a fund-moving key or parsing prose to know what happened.
 
-- **Scoped, revocable keys.** An agent trades with an **API wallet** — a protocol-level agent key scoped only to placing and cancelling orders. It can never deposit, withdraw, or move funds off Native. Mint it in the web app, and revoke or rotate it there any time. A leaked API wallet key can trade the balance but cannot drain it. See [getting-started.md](getting-started.md) for how to mint one.
+- **Scoped, revocable keys.** An agent trades with an **API wallet** — a protocol-level agent key scoped only to placing and cancelling orders. It can never deposit, withdraw, or move funds off Native. Create it in the web app, and revoke or rotate it there any time. A leaked API wallet key can trade the balance but cannot drain it. See [getting-started.md](getting-started.md) for how to create one.
 - **Reads on, writes gated.** Market data, balances, and order status are always available. The order-placing and cancelling surface is turned on only by an explicit switch, so a read-only agent physically cannot place an order.
 - **Outcomes are structured, not prose.** Every trade response is decision-ready: the agent branches on a field (`submission_status`, `next_action`, `state`, `filled_qty`) instead of reading a sentence. A business rejection is **data** in the response body, not an exception.
 - **Deterministic reconcile-by-cloid.** Every order carries a client order id (`cloid`) you can look up. That single primitive is what stops an agent from double-filling after a timeout — the core of the safety contract below.

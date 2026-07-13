@@ -30,13 +30,13 @@ The gateway is served over HTTPS. The examples below use:
 API_URL=https://api-test.native.org
 ```
 
-You fund a trading account by depositing **Arbitrum Sepolia** testnet assets from your main wallet in the web app (there is no faucet — bring your own). See the [access model](#access-model-api-wallets) below for the deposit-and-mint flow.
+You fund a trading account by depositing **Arbitrum Sepolia** testnet assets from your main wallet in the web app (there is no faucet — bring your own). See the [access model](#access-model-api-wallets) below for depositing and creating the API wallet.
 
 ## Access model — API wallets
 
 Writes are authorized by an **API wallet**: a protocol-level *agent* key scoped only to placing and cancelling orders. An API wallet can trade your account's balance, but it can **never** move funds off Native — deposits, withdrawals, and agent approval all require your main wallet. That scoping (and the fact that it is revocable) is what makes it safe to run in an unattended bot.
 
-You mint one in the **[Native web app](https://app-uat.native.org/markets/ETH-USDT?network=testnet&agentWallets=agents)** (testnet), not through the gateway — that link opens the **API wallets** panel directly:
+You create one in the **[Native web app](https://app-uat.native.org/markets/ETH-USDT?network=testnet&agentWallets=agents)** (testnet), not through the gateway — that link opens the **API wallets** panel directly:
 
 1. Connect your **main wallet** and deposit **Arbitrum Sepolia** testnet assets. There is no faucet — bring your own. Your trading account is created on the first deposit.
 2. In the **API wallets** panel, click **Create API wallet**. Your main wallet signs one `approveAgent`, and the app shows a one-time **connection bundle** containing the agent key. Copy it now; it is shown once.
@@ -113,7 +113,7 @@ Every `/trade` write is a **client-signed transaction**. The gateway reconstruct
 
 * **Trading actions** (`order`, `cancel`, `cancelAll`, `modify`, `batch`) use the default legacy binary scheme (`auth_scheme: "legacy"`) and are signed by the **API wallet** key.
 * **Owner `/trade` actions** (`withdraw` / `settle` / `repay`) are **EIP-712** (`auth_scheme: "eip712"`) and are signed by your **main wallet** — not with the API wallet, and not part of a bot's hot path.
-* **Agent approval** (`approveAgent` / `revokeAgent`) is also a main-wallet EIP-712 signature, but it happens **in the Native web app**, not as a gateway `/trade` action — it is how you mint or revoke the API wallet in the first place.
+* **Agent approval** (`approveAgent` / `revokeAgent`) is also a main-wallet EIP-712 signature, but it happens **in the Native web app**, not as a gateway `/trade` action — it is how you create or revoke the API wallet in the first place.
 
 The exact payload layout, encoding rules, and EIP-712 typed-data schemes are here:
 

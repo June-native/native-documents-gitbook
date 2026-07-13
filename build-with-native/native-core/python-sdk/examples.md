@@ -14,7 +14,7 @@ The SDK ships a folder of runnable scripts under `examples/` in the source distr
 { "secret_key": "0x<agentPrivateKey>", "account_address": "0x<accountAddress>" }
 ```
 
-`secret_key` is the `agentPrivateKey` from your connection bundle; `account_address` is your main wallet (leave it blank to derive it from the key and trade in direct-owner mode). For how to mint the bundle and set this up, see [getting-started.md](getting-started.md).
+`secret_key` is the `agentPrivateKey` from your connection bundle; `account_address` is your main wallet (leave it blank to derive it from the key and trade in direct-owner mode). For how to create the API wallet and set this up, see [getting-started.md](getting-started.md).
 
 ```bash
 cp examples/config.json.example examples/config.json   # then paste your key
@@ -221,7 +221,7 @@ finally:
 
 ## See also
 
-* [getting-started.md](getting-started.md) — mint an API wallet, save the bundle, and run your first trade.
+* [getting-started.md](getting-started.md) — create an API wallet, save the bundle, and run your first trade.
 * [PyPI project](https://pypi.org/project/native-core-python-sdk/) — `pip install native-core-python-sdk==0.1.0`.
 * [Native GitHub org](https://github.com/Native-org) — clone the SDK repo for the full `examples/` folder, including `market_maker_bot.py`.
 * Wire references: [`POST /trade`](../post-trade.md), [`POST /info`](../post-info.md), [Transaction signing](../transaction-signing.md), [Decimals & Units](../decimals-units.md).

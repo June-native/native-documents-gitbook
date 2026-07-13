@@ -16,7 +16,7 @@ pip install native-core-python-sdk
 
 ## What it is
 
-Two classes, split by direction. `Info` handles reads (market data, balances, order status); `Exchange` handles writes (place, cancel, modify, batch) and owns an internal `Info` as `exchange.info`. Both build from a connection bundle you mint once in the web app:
+Two classes, split by direction. `Info` handles reads (market data, balances, order status); `Exchange` handles writes (place, cancel, modify, batch) and owns an internal `Info` as `exchange.info`. Both build from a connection bundle you create once in the web app:
 
 ```python
 from native_core import Exchange, is_accepted, order_state
