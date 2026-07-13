@@ -20,7 +20,7 @@ There are two ways to integrate:
 * **Call the gateway directly** — the two REST endpoints documented on this page. Full control, any language.
 * **Use the [Native Core Python SDK](python-sdk/README.md)** — a thin, typed client that wraps both endpoints and handles `/trade` signing, nonces, and accepted-vs-filled reconciliation for you.
 
-Signing `/trade` by hand (a canonical binary payload with recoverable secp256k1 signatures and per-signer monotonic nonces) is involved, so the SDK is the faster path — but the wire format below is fully specified if you need to build your own client.
+Signing `/trade` by hand means building a canonical binary payload with recoverable secp256k1 signatures and per-signer monotonic nonces — fully specified below for building your own client. The Python SDK implements it for you.
 
 ## Environment
 
@@ -154,7 +154,7 @@ Two outcomes decide whether you may resend: a `rejected` + `RateLimited` (thrott
 
 ## Next step
 
-The fastest way onto the gateway is the Python SDK — it wraps both endpoints, signs `/trade` for you, and turns each of the outcomes above into a decision-ready field.
+The Python SDK wraps both endpoints, signs `/trade` for you, and turns each of the outcomes above into a decision-ready field.
 
 {% content-ref url="python-sdk/README.md" %}
 [README.md](python-sdk/README.md)
