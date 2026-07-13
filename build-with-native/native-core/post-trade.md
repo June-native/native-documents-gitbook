@@ -35,6 +35,8 @@ Request envelope fields:
 | `signature`        | yes for public actions | `0x`-prefixed 65-byte recoverable secp256k1 signature. Legacy v1, or — when `auth_scheme="eip712"` — an EIP-712 v4 single signature. Mutually exclusive with `signatures`.                                                                          |
 | `signatures`       | no for public actions | Array of `0x`-prefixed 65-byte signatures for an internal multisig request. Public actions reject this field with `signatures_not_allowed_for_action`; internal multisig submissions are not part of this public contract. Mutually exclusive with `signature`. |
 
+The envelope is **strict**: exactly one of `signature` or `signatures` must be present (neither or both → `must provide exactly one of signature or signatures`), and any field not in the table above is rejected as `invalid_json`. Numeric fields (`nonce`, `agent_epoch`, `expires_after_ms`) accept a decimal string **or** an unsigned JSON integer, with the string form preferred above 2^53. Only `action`, `nonce`, `agent_epoch`, and `expires_after_ms` are folded into the signed payload; `auth_scheme`, `signature`, and `signatures` are transport fields that select and carry the proof (see [Transaction Signing](transaction-signing.md)).
+
 Public actions are single-signature; sending `signatures` with a public action is rejected with `signatures_not_allowed_for_action`. The transaction **authority** used for nonce/rate-limit and `txStatusByCloid` is the recovered signer.
 
 Nonce validation is authority-scoped. Execution accepts nonces within the committed block timestamp window (`block_timestamp_ms - 2 days` through `block_timestamp_ms + 1 day`), rejects duplicates, and retains the latest 100 consumed nonces per authority. When the retained window is full, a new nonce must be greater than the current minimum retained nonce.
@@ -84,6 +86,19 @@ Protected market order example:
 ```
 
 `POST /trade` is **synchronous**: the request blocks while the transaction is admitted, executed on-chain, and the outcome is read back — typically well under a second, bounded by a wait budget (~3s). The result is in the body's `submission_status`; `tx_hash` is present once canonical bytes are assembled, and a non-successful outcome carries `error.code`.
+
+Response envelope:
+
+```jsonc
+{
+  "submission_status": "<status>",   // always present
+  "tx_hash": "0x…",                  // present once canonical bytes exist; omitted on a request-shaping reject
+  "error": {                         // present only on a non-successful outcome
+    "code": "<code>",
+    "retry_after_ms": 1000           // present only on RateLimited / PlaceOrderSuspended / Handoff*
+  }
+}
+```
 
 * **Order actions** (`order`, `modify`, or a `batch` containing them) return the order's lifecycle status: `resting`, `filled`, `cancelled`, or `rejected`. A `rejected` order carries the execution reason in `error.code`.
 * **Non-order actions** (`withdraw`, `settle`, `repay`, `approveAgent`, `revokeAgent`) return `success` or `failed`. A `failed` action carries `error.code`.
