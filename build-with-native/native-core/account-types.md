@@ -8,13 +8,13 @@ Native Core has two kinds of trading account. Every owner is exactly one of them
 
 | | **Spot account** (balance) | **Credit account** |
 | --- | --- | --- |
-| How you get one | Created on your **first deposit** — the default account. | **Granted by the protocol.** You do not open one yourself. |
-| What backs a trade | Your `available` balance per asset. | A USD credit line. |
-| Signed / short positions | No — you can only trade balance you hold. | Yes — positions are signed; `actual_qty` may be negative (short). |
-| Risk gate when an order runs | Sufficient `available` balance. | `available_usd >= 0` against the credit line. |
+| Provisioning | Created automatically on **first deposit** — the default account. | **Provisioned by the protocol**; not self-service. |
+| Collateral | Per-asset `available` balance. | A USD credit line. |
+| Short positions | Not supported — trading is limited to held balance. | Supported — positions are signed (`actual_qty` may be negative). |
+| Order-time risk gate | Sufficient `available` balance. | `available_usd >= 0` against the credit line. |
 | State | `active` / `frozen` | `active` / `frozen` |
 
-A `frozen` account may only cancel; new orders and modifies are rejected. **Most integrations are spot accounts** — if the protocol has not granted you a credit line, you are a spot account and the credit-account reads below simply report that you have no credit position.
+A `frozen` account may only cancel — new orders and modifies are rejected. Most integrations use a **spot account**; without a protocol-granted credit line, an owner is a spot account and the credit-account reads below report no credit position.
 
 ## Reading an account
 
