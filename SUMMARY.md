@@ -33,11 +33,11 @@
 
 ## Products
 
+* [Native Liquidity Provisioning](products/native-liquidity-provisioning/README.md)
+  * [Tokenized Stocks & Equities (RWAs)](products/native-liquidity-provisioning/tokenized-stocks-and-equities-rwas.md)
+  * [Yield-Bearing Assets](products/native-liquidity-provisioning/native-liquidity-provisioning.md)
 * [Native Earn Program](products/native-earn/README.md)
   * [Native Earn FAQ](products/native-earn/native-earn-faq.md)
-  * [Native Liquidity Provisioning](products/native-earn/native-liquidity-provisioning/README.md)
-    * [Tokenized Stocks & Equities (RWAs)](products/native-earn/native-liquidity-provisioning/tokenized-stocks-and-equities-rwas.md)
-    * [Yield-Bearing Assets](products/native-earn/native-liquidity-provisioning/native-liquidity-provisioning.md)
 
 ## USER GUIDE
 
