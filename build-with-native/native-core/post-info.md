@@ -2,7 +2,7 @@
 
 All public reads use one endpoint with a top-level `type` discriminator.
 
-Unsupported or malformed query bodies return:
+A malformed body, or one whose `type` is missing or not a string, returns HTTP `400` with `error.code: "InvalidInfoRequest"`. A well-formed body whose `type` is not a known query returns HTTP `400` with `error.code: "UnsupportedInfoType"`:
 
 ```json
 {
