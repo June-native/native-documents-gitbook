@@ -47,6 +47,7 @@
 ## Build with Native
 
 * [Native Core API](build-with-native/native-core/README.md)
+  * [Trade over REST](build-with-native/native-core/trade-over-rest.md)
   * [API Access](build-with-native/native-core/api-access.md)
   * [Notation](build-with-native/native-core/notation.md)
   * [Account Types](build-with-native/native-core/account-types.md)
