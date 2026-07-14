@@ -90,10 +90,9 @@ Request-shaping and gateway errors:
 | `legacy_signature_not_accepted` | A legacy (`auth_scheme` absent or `"legacy"`) signature was sent for an EIP-712 cutover action (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`, or an operator `deposit`/`admin*`). These require `auth_scheme:"eip712"`. |
 | `eip712_not_allowed_for_action` | `auth_scheme:"eip712"` was sent for a non-target action; only legacy is accepted for those. |
 | `eip712_agent_epoch_not_allowed` | An `auth_scheme:"eip712"` request carried `agent_epoch`, which EIP-712 forbids. |
-| `market_metadata_unavailable` | The write path needed market decimal metadata from node query state, but the metadata query failed or returned an invalid shape. |
-| `asset_metadata_unavailable` | The write path needed asset decimal metadata from node query state, but the metadata query failed or returned an invalid shape. |
-| `unknown_market` | The request referenced a market absent from refreshed market metadata. |
-| `unknown_asset` | The request referenced an asset absent from refreshed asset metadata. |
+| `query_view_unavailable` | The query view was not yet available when the write path needed market/asset metadata. Transient — retry shortly. |
+| `unknown_market` | The request referenced a market that is not in the current query view's market metadata. |
+| `unknown_asset` | The request referenced an asset that is not in the current query view's asset metadata. |
 | `invalid_market_id` | A market id was a valid `u64` JSON value but exceeded the protocol `u32` range. |
 | `invalid_asset_id` | An asset id was a valid `u64` JSON value but exceeded the protocol `u32` range. |
 | `invalid_dst_address` | `withdraw.dst_address` was not a 20-byte hex address. |
