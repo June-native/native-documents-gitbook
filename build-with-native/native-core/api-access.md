@@ -11,6 +11,10 @@ Native Core exposes a single HTTP API with exactly two REST endpoints:
 
 Reads are poll-based over `POST /info`. This page is the front door for anyone integrating **directly** with Native Core: market makers, trading bots, AI-agent builders, and aggregators.
 
+{% hint style="info" %}
+**Streaming coming soon.** Today all reads are poll-based over `POST /info`. A WebSocket streaming API for live market data and order updates is on the roadmap.
+{% endhint %}
+
 {% hint style="warning" %}
 **Testnet only.** Native Core is currently available on **testnet only**, at `https://api-test.native.org`. Everything on this page targets testnet.
 {% endhint %}

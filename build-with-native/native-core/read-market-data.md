@@ -8,6 +8,10 @@ Every read is a `POST /info` call, unauthenticated, dispatched on a top-level `t
 
 Testnet: `API_URL=https://api-test.native.org`.
 
+{% hint style="info" %}
+**Streaming coming soon.** Reads are poll-based today; a WebSocket streaming API for live market data and order updates is on the roadmap.
+{% endhint %}
+
 ## Discover markets
 
 Before you can sign an order you need the `market_id` and the market's precision.
