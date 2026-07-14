@@ -16,7 +16,7 @@ Writes are authorized by an **API wallet**: a protocol-level *agent* key scoped 
 
 You create one in the Native web app, not through the API: connect your **main wallet**, deposit to create the trading account, then choose **Create API wallet** — your main wallet signs one `approveAgent`, and the app returns a one-time **connection bundle** `{ network, accountAddress, agentPrivateKey }` containing the agent key. It is shown once; copy it. Revoke or rotate it in the app any time.
 
-Anything that moves value or manages agents is **owner-signed** and outside the API wallet's reach: `withdraw`, `settle`, `repay`, and the agent-lifecycle `approveAgent` / `revokeAgent` must be signed by your **main wallet** under `auth_scheme:"eip712"`. These *are* real `/trade` action types — the API accepts them directly — but the API-wallet (agent) key cannot sign them; the web app is simply where you normally sign them with the main wallet. The API wallet's allowlist is exactly `order`, `cancel`, `cancelAll`, `modify`, and `batch`.
+Anything that moves value or manages agents is **owner-signed** and outside the API wallet's reach: `withdraw`, `settle`, `repay`, and the agent-lifecycle `approveAgent` / `revokeAgent` must be signed by your **main wallet** under `auth_scheme:"eip712"`. These *are* real `/trade` action types — the API accepts them directly — but the API-wallet (agent) key cannot sign them; the web app is where you normally sign them with the main wallet. The API wallet's allowlist is exactly `order`, `cancel`, `cancelAll`, `modify`, and `batch`.
 
 | Concept | Web app label | Signs | Can move funds? |
 | --- | --- | --- | --- |
