@@ -31,10 +31,14 @@ Operational, recovery, and node-private interfaces are intentionally not part of
 
 ## Start here
 
-New to Native Core? Start with the access model — environments, the API-wallet model, and how to send your first request:
+New to Native Core? The guides take you from zero to a working integration — start with your first order over REST:
 
-{% content-ref url="api-access.md" %}
-[api-access.md](api-access.md)
+{% content-ref url="trade-over-rest.md" %}
+[trade-over-rest.md](trade-over-rest.md)
+{% endcontent-ref %}
+
+{% content-ref url="guides.md" %}
+[guides.md](guides.md)
 {% endcontent-ref %}
 
 Prefer a client library? The official Python SDK wraps both endpoints, signs `/trade` for you, and ships an MCP server for AI agents:
@@ -52,44 +56,16 @@ Prefer a client library? The official Python SDK wraps both endpoints, signs `/t
 * `POST /trade` accepts an optional `x-trace-id` HTTP header for request correlation; when it is absent or invalid the API mints one, and the `/trade` response always echoes it in `x-trace-id`. `POST /info` does not process or return `x-trace-id`.
 * `POST /trade` is **synchronous**: it waits for the transaction's execution outcome and returns `submission_status` — `accepted` (the transaction landed and executed), `rejected` (refused, or failed at execution), or `timeout` (outcome not observed within the wait budget) — with a `tx_hash` and, on a non-success, an `error.code`. It reports that a write **landed**, not an order's fill state: read `orderStatus` (or `openOrders` / `userFills`) to see whether an order rested or filled, and to reconcile a `timeout` by `cloid`.
 
-## Concepts
+## Reference & concepts
 
-Terminology, the two account types, the API-wallet and nonce model, and the integer-atom number model:
+The exhaustive contract — every endpoint, field, and error code — and the models it assumes:
 
-{% content-ref url="notation.md" %}
-[notation.md](notation.md)
+{% content-ref url="reference.md" %}
+[reference.md](reference.md)
 {% endcontent-ref %}
 
-{% content-ref url="account-types.md" %}
-[account-types.md](account-types.md)
-{% endcontent-ref %}
-
-{% content-ref url="nonces-and-api-wallets.md" %}
-[nonces-and-api-wallets.md](nonces-and-api-wallets.md)
-{% endcontent-ref %}
-
-{% content-ref url="decimals-units.md" %}
-[decimals-units.md](decimals-units.md)
-{% endcontent-ref %}
-
-## Endpoints & signing
-
-The two REST endpoints, how to sign a write, and how to read an error:
-
-{% content-ref url="post-info.md" %}
-[post-info.md](post-info.md)
-{% endcontent-ref %}
-
-{% content-ref url="post-trade.md" %}
-[post-trade.md](post-trade.md)
-{% endcontent-ref %}
-
-{% content-ref url="transaction-signing.md" %}
-[transaction-signing.md](transaction-signing.md)
-{% endcontent-ref %}
-
-{% content-ref url="error-responses.md" %}
-[error-responses.md](error-responses.md)
+{% content-ref url="concepts.md" %}
+[concepts.md](concepts.md)
 {% endcontent-ref %}
 
 ## Changelog
