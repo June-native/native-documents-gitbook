@@ -22,6 +22,6 @@ Native Pool is currently powering:
 [native-earn](../products/native-earn/)
 {% endcontent-ref %}
 
-{% content-ref url="../products/native-liquidity-provisioning.md" %}
-[native-liquidity-provisioning.md](../products/native-liquidity-provisioning.md)
+{% content-ref url="../products/native-earn/native-liquidity-provisioning/native-liquidity-provisioning.md" %}
+[native-liquidity-provisioning.md](../products/native-earn/native-liquidity-provisioning/native-liquidity-provisioning.md)
 {% endcontent-ref %}
