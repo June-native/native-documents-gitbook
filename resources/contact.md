@@ -16,5 +16,4 @@
 
 ### Partnered Support Channel
 
-* For users from Binance Earn Campaign, support is available via Telegram group:\
-  [https://t.me/NativeBNwalletEarnSupport](https://t.me/NativeBNwalletEarnSupport)
+* For users from Binance Earn Campaign, support is available via Telegram group: @NativeBNwalletEarnSupport
