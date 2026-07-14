@@ -4,7 +4,11 @@ description: Zero to a live order over REST — the fastest path to your first N
 
 # Trade over REST
 
-One signed request per call, and the call blocks for the outcome — no socket to manage. This page takes you from nothing to a working order. Testnet only: `API_URL=https://api-test.native.org`.
+One signed request per call, and the call blocks for the outcome — no socket to manage. This page takes you from nothing to a working order.
+
+{% hint style="warning" %}
+**Testnet only.** Native Core is currently available on **testnet only**. The examples below use `API_URL=https://api-test.native.org`.
+{% endhint %}
 
 ## 1. Get an API wallet
 
