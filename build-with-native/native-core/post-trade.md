@@ -100,27 +100,22 @@ Response envelope:
 }
 ```
 
-* **Order actions** (`order`, `modify`, or a `batch` containing them) return the order's lifecycle status: `resting`, `filled`, `cancelled`, or `rejected`. A `rejected` order carries the execution reason in `error.code`.
-* **Non-order actions** (`withdraw`, `settle`, `repay`, `approveAgent`, `revokeAgent`) return `success` or `failed`. A `failed` action carries `error.code`.
-* `rejected` (for any action) also covers refusals **before** execution — request-shaping, rate limit, expiry, place-order suspension, or node admission.
-* `timeout` means the outcome was not observed within the wait budget, or the submission could not be routed to the active node. The transaction **may still commit**; reconcile by `cloid` via [orderStatus](post-info.md#orderstatus) / [txStatusByCloid](post-info.md#orderstatus) — never blindly resubmit.
+`submission_status` is one of exactly three values:
+
+* `accepted` — the transaction landed and executed. For an order that means it rested, filled, partially filled, or was cancelled by its own time-in-force / self-trade rules (an IOC/FOK that didn't fully fill, a self-trade-prevention cancel, or a market order that found no liquidity); for a non-order action (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`) it means the action committed. There is no `error`. **`/trade` reports that the order landed, not its fill state — read [`orderStatus`](post-info.md#orderstatus) to see whether it rested or filled.**
+* `rejected` — the write was refused (request-shaping, rate limit, expiry, place-order suspension, or node admission) **or** it failed at execution. `error.code` carries the reason; `tx_hash` is present once canonical bytes exist.
+* `timeout` — the outcome was not observed within the wait budget, or the submission could not be routed to the active node. The transaction **may still commit**; reconcile by `cloid` via [`orderStatus`](post-info.md#orderstatus) / [`txStatusByCloid`](post-info.md#orderstatus) — never blindly resubmit.
 
 {% tabs %}
-{% tab title="Resting" %}
+{% tab title="Accepted" %}
 ```json
 {
-  "submission_status": "resting",
+  "submission_status": "accepted",
   "tx_hash": "0x..."
 }
 ```
-{% endtab %}
-{% tab title="Filled" %}
-```json
-{
-  "submission_status": "filled",
-  "tx_hash": "0x..."
-}
-```
+
+The transaction landed and executed. Read [`orderStatus`](post-info.md#orderstatus) to see whether the order rested or filled — the `/trade` response does not carry the fill state.
 {% endtab %}
 {% tab title="Rejected" %}
 ```json

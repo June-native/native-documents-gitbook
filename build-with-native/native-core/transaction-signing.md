@@ -459,13 +459,13 @@ await fetch(`${API_URL}/trade`, {
 
 `agent_epoch` is mandatory for these API-wallet–signed trading actions: an API wallet is always an active agent, so a `/trade` write that omits `agent_epoch` is treated as direct-owner mode and rejected with `DirectSignerIsActiveAgent`. Read the current epoch from [`userAgents`](post-info.md#useragents).
 
-`/trade` is synchronous, so the response carries the transaction's executed outcome. For an order, `submission_status` is the lifecycle status (`resting`/`filled`/`cancelled`/`rejected`); a non-order action returns `success`/`failed`. See [POST /trade](post-trade.md) and [error responses](error-responses.md) for the full model.
+`/trade` is synchronous, so the response carries the outcome. `submission_status` is `accepted` (the transaction landed and executed), `rejected` (refused, or failed at execution), or `timeout`. `/trade` reports that the order landed, not its fill state — read [`orderStatus`](post-info.md#orderstatus) to see whether it rested or filled. See [POST /trade](post-trade.md) and [error responses](error-responses.md) for the full model.
 
-Order outcome (an order that rested):
+Order outcome (the order landed):
 
 ```json
 {
-  "submission_status": "resting",
+  "submission_status": "accepted",
   "tx_hash": "0x..."
 }
 ```

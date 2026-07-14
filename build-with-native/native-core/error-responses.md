@@ -12,15 +12,16 @@ Only the transport layer raises — a non-trade-response `4xx`/`5xx` body, or a 
 
 The call blocks for the on-chain outcome and returns it directly.
 
+There are exactly three values.
+
 | `submission_status` | When | Do next |
 | --- | --- | --- |
-| `resting` / `filled` / `cancelled` | An order / modify executed and reached this lifecycle state. | Done. Optionally re-read via [`orderStatus`](post-info.md#orderstatus). |
-| `rejected` | The write was refused — request-shaping, gateway (rate limit / suspension / expiry), node admission, or an **order that failed at execution**. `error.code` says why; `tx_hash` is present once canonical bytes exist. | If `RateLimited`, back off `error.retry_after_ms` and resend the same signed action. Otherwise fix the cause and submit a **fresh** action. |
-| `success` / `failed` | A non-order action (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`) committed, or failed. `failed` carries `error.code`. | On `failed`, fix and resubmit a fresh action. |
+| `accepted` | The transaction landed and executed — for an order that covers rested, filled, or a benign IOC/FOK/self-trade/no-liquidity cancel; for a non-order action it committed. No `error`. | Done. The `/trade` response does not carry the fill state — read [`orderStatus`](post-info.md#orderstatus) to see whether an order rested or filled. |
+| `rejected` | The write was refused — request-shaping, gateway (rate limit / suspension / expiry), node admission — **or** it failed at execution. `error.code` says why; `tx_hash` is present once canonical bytes exist. | If `RateLimited`, back off `error.retry_after_ms` and resend the same signed action. Otherwise fix the cause and submit a **fresh** action. |
 | `timeout` | The outcome wasn't observed within the wait budget, or the submission couldn't be routed to the active node. **May still land.** | Reconcile by `cloid`. **Never** resubmit under a new nonce — double-fill risk. |
 
 {% hint style="warning" %}
-`timeout` is not `failed` — the transaction may still commit in a later block. Reconcile by `cloid` (via [`orderStatus`](post-info.md#orderstatus) / [`txStatusByCloid`](post-info.md#orderstatus)); resubmitting under a new nonce is the one move that can double-fill you.
+`timeout` is not `rejected` — the transaction may still commit in a later block. Reconcile by `cloid` (via [`orderStatus`](post-info.md#orderstatus) / [`txStatusByCloid`](post-info.md#orderstatus)); resubmitting under a new nonce is the one move that can double-fill you.
 {% endhint %}
 
 A `timeout` has two shapes: the wait budget elapsed → HTTP `200` with **no** `error`; the submission couldn't be routed → HTTP `503`/`504` with an `error.code` (see the gateway codes below).
@@ -34,7 +35,7 @@ Every `error.code` comes from one of four layers, and the **spelling tells you w
 | Request-shaping | lowercase `snake_case` | `invalid_json`, `invalid_quantity_precision`, `missing_cloid` | 400 | `rejected` (no `tx_hash`) |
 | Gateway | `CamelCase` / prefixed | `RateLimited`, `PlaceOrderSuspended`, `ExpiredTx`, `HandoffTimeout`, `node_unreachable: …` | 429 / 503 / 504 / 200 | `rejected` or `timeout` |
 | Node admission | `CamelCase`, verbatim from the node | `MinTradeSpotNtl`, `DuplicateCloid`, `InsufficientSpotBalance`, `AccountFrozen` | 200 | `rejected` |
-| Execution | lowercase (the variant name) | `tick`, `badnonce`, `insufficientspotbalance` | 200 | `rejected` (order) / `failed` (non-order) |
+| Execution | lowercase (the variant name) | `tick`, `badnonce`, `insufficientspotbalance` | 200 | `rejected` |
 
 One condition can surface at two layers with different spellings — an under-minimum order is usually caught at admission as `MinTradeSpotNtl`, but the same failure at execution reads `mintradespotntl`. Match on the code you actually receive.
 
@@ -63,7 +64,7 @@ A [`batch`](post-trade.md#batch) is one `/trade` call under one envelope nonce, 
 
 ## Execution-level failures
 
-An admitted action still runs against the book and **can fail at execution**. Because `/trade` is synchronous, that failure comes back **on the `/trade` response itself** — for an order, `submission_status: "rejected"` with a lowercase `error.code`; for a non-order action, `submission_status: "failed"` with a lowercase `error.code`. The same outcome is also readable afterward via [`orderStatus`](post-info.md#orderstatus) by `cloid`, which you only need when the write came back `timeout`.
+An admitted action still runs against the book and **can fail at execution**. Because `/trade` is synchronous, that failure comes back **on the `/trade` response itself** — `submission_status: "rejected"` with a lowercase `error.code`, for both order and non-order actions. The same outcome is also readable afterward via [`orderStatus`](post-info.md#orderstatus) by `cloid`, which you only need when the write came back `timeout`.
 
 Execution codes are the lowercase variant names — e.g. `tick`, `badnonce`, `insufficientspotbalance` — distinct from the CamelCase admission codes above.
 
