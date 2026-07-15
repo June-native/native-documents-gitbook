@@ -67,14 +67,3 @@ The exhaustive contract — every endpoint, field, and error code — and the mo
 {% content-ref url="concepts.md" %}
 [concepts.md](concepts.md)
 {% endcontent-ref %}
-
-## Changelog
-
-```
-2026-07-13: v0.6 - synchronous /trade (waits for the execution outcome and returns submission_status accepted/rejected/timeout — a genuine execution failure now comes back as rejected — rather than replying at admission); per-signer rate limiting (RateLimited, 429); place-order suspension breaker (PlaceOrderSuspended, 503); submit-routing timeout codes (HandoffTimeout/HandoffBufferFull/HandoffMultipleActive/node_unreachable); gateway ExpiredTx fast-fail; 64 KiB/256 KiB request body limits (413); x-trace-id scoped to /trade; approveAgent/revokeAgent actions; and deposits/accountingDepositContracts/multisigPolicy info queries.
-2026-06-11: v0.5 - add withdraw/settle/repay actions with EIP-712 signing, x-trace-id, queryStatus/accountingWithdrawTokens/withdraws/batchOrderStatus info queries, assets withdraw fees, and revised /trade error codes.
-2026-05-30: v0.4 - add cancelAll action, trading-fee fields on userFills, orderStatus pending/null-OID overlay, assets.issuer, expanded /trade error codes, and signing example refresh.
-2026-05-13: v0.3 - admission precheck and margin controls, migrate quantity precision to markets, and add quote-asset minimum/allowlist admin and query APIs (plus related fixes).
-2026-05-13: v0.2 - add decimals related, put sections into subpages
-2026-05-12: v0.1 - initial base, with tx signing
-```
