@@ -9,7 +9,7 @@ description: >-
 The complete surface of `native-core-python-sdk` (import `native_core`): the `Info` and `Exchange` classes, the response and problem helpers, the exception hierarchy, the transport controls, and the constants. Every method lists the underlying API call it makes so you can cross-reference the wire behaviour.
 
 {% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
+**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.2.0` and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.2.0`.
 {% endhint %}
 
 {% hint style="info" %}
@@ -72,7 +72,7 @@ Wraps [`POST /trade`](../post-trade.md); one signed action per call. `Exchange` 
 | --- | --- | --- |
 | `order(market, is_buy, sz, limit_px, tif, cloid=None)` | Places one limit order (`tif` is `gtc` / `ioc` / `fok` / `alo`). Echoes `cloid` and `nonce` | `order` |
 | `market_order(market, is_buy, sz, protection_px=None, tif="ioc", cloid=None, *, slippage_bps=None)` | Places a market order (`ioc` / `fok`). Pass `protection_px` (worst acceptable price) **or** `slippage_bps` to derive it from the book | `order` (`order_type: "market"`) |
-| `place(market, is_buy, sz, limit_px, tif, cloid=None, *, confirm=True, timeout=5.0)` | Submits a limit order and waits for the outcome matching its `tif`; returns `{cloid, submission, status, state}` | `order` + polls `orderStatus` |
+| `place(market, is_buy, sz, limit_px, tif, cloid=None, *, confirm=True, timeout=5.0)` | Submits a limit order, then reads the matching `orderStatus` snapshot (the outcome is already settled); returns `{cloid, submission, status, state}` | `order` + `orderStatus` |
 | `build_order(market, is_buy, sz, limit_px, tif, cloid=None, order_type="limit")` | **Dry run** — runs the same local validation and returns `{action, cloid}` without signing or sending. Nothing leaves the process; no nonce consumed | none (sends nothing) |
 | `cancel(market, oid)` | Cancels one order by server order id | `cancel` |
 | `cancel_by_cloid(market, cloid)` | Cancels one order by client order id | `cancel` |
@@ -89,7 +89,7 @@ Also on `Exchange`: the `agent_address` property (the signing wallet), and `effe
 Each write returns the raw API response with the client handle echoed in: `submission_status`, `tx_hash`, `error`, `cloid` (or `cloids` for a batch), and `nonce`.
 
 {% hint style="warning" %}
-`submission_status: "accepted"` means **admitted to the pipeline, not filled**. Resolve the real outcome by `cloid` with `wait_for_open` / `reconcile_by_cloid` before treating an order as done. On a wire timeout the SDK raises `SubmissionUncertain` (or returns `submission_status: "timeout"`) — reconcile by `cloid` and **never resubmit under a fresh nonce**, or the order may land twice. See [Core concepts](core-concepts.md).
+`submission_status: "accepted"` means the transaction **landed and executed** — not that the order rested or filled (it also covers a benign IOC/FOK cancel). The response omits the `oid` and fill, so read the order's status once (`wait_for_open` / `wait_for_order`) for those. On a wire timeout the SDK raises `SubmissionUncertain` (or returns `submission_status: "timeout"`) — reconcile by `cloid` and **never resubmit under a fresh nonce**, or the order may land twice. See [Core concepts](core-concepts.md).
 {% endhint %}
 
 A minimal place-then-reconcile loop:
@@ -129,7 +129,7 @@ Re-exported at the top level (`from native_core import ...`). A business rejecti
 | `error_code(response)` | The rejection `error.code` string, or `None` | trade response |
 | `retry_after_ms(response)` | Back-off hint from `error.retry_after_ms`, or `None` | trade response |
 | `is_retryable(response)` | `True` only for `RateLimited` (never admitted, so safe to resend) | trade response |
-| `next_action(response)` | One verdict: `POLL_ORDER_STATUS`, `BACKOFF_AND_RETRY`, `RECONCILE_BY_CLOID`, or `FIX_AND_RESUBMIT` (`None` for a non-trade response) | trade response |
+| `next_action(response)` | One verdict: `READ_ORDER_STATUS`, `BACKOFF_AND_RETRY`, `RECONCILE_BY_CLOID`, or `FIX_AND_RESUBMIT` (`None` for a non-trade response) | trade response |
 | `order_state(response)` | The order's status string (e.g. `open`, `filled`, `cancelled`, `unknown`) | order-status response |
 | `is_terminal(status)` | `True` when a status string is terminal | status string |
 | `is_undetermined(status)` | `True` when a status string is not yet resolved | status string |
@@ -143,7 +143,7 @@ Re-exported at the top level (`from native_core import ...`). A business rejecti
 
 | `next_action` | Situation | What to do |
 | --- | --- | --- |
-| `POLL_ORDER_STATUS` | accepted — in the pipeline | Poll `wait_for_open` / `wait_for_order` / `reconcile_by_cloid` for the settled state |
+| `READ_ORDER_STATUS` | accepted — landed & executed | Read the order's status once (`wait_for_open` / `wait_for_order`) for the `oid` and fill — the outcome is already settled |
 | `RECONCILE_BY_CLOID` | timeout — indeterminate | `reconcile_by_cloid`; **never** resubmit under a fresh nonce |
 | `BACKOFF_AND_RETRY` | `RateLimited` — never admitted | Sleep `retry_after_ms`, then resend the same order |
 | `FIX_AND_RESUBMIT` | other rejection | Fix the input or account state, then submit fresh |

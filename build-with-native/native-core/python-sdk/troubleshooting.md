@@ -7,7 +7,7 @@ description: Common Native Core Python SDK errors — the surfaced string, what 
 A business rejection is **data on the response body**, not an exception (read it with `error_code`, `is_rejected`, `next_action`). The SDK raises only for problems it catches before signing (`LocalValidationError`), a transport failure (`NetworkError`), a signed-then-timed-out write (`SubmissionUncertain`), or a non-trade 4xx/5xx body (`ClientError` / `ServerError`). This page maps the symptom you actually see — a raised exception or a surfaced `error.code` — to its cause and fix.
 
 {% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
+**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.2.0` and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.2.0`.
 {% endhint %}
 
 ## Common errors
@@ -74,7 +74,7 @@ if is_retryable(resp):                      # True only for RateLimited
 * **One `Exchange` per API wallet.** The nonce is a per-instance, lock-guarded, monotonic ms counter — a single instance is safe to share across threads. Two instances (or two processes) on the same key hand out colliding nonces and draw seemingly random rejections.
 * **Testnet only.** This release runs on testnet — build from a `testnet` bundle.
 * **The account must be funded to trade.** Deposit from your main wallet in the web app first (no faucet — bring Arbitrum Sepolia testnet assets); the account is created on the first deposit. Otherwise orders come back `InsufficientSpotBalance`.
-* **`accepted` is not `filled`.** A raw `order()` / `market_order()` returning `submission_status: "accepted"` only means the order entered the pipeline. Resolve the real state by cloid with `reconcile_by_cloid` (or `wait_for_open` for a resting order) before treating it as done.
+* **`accepted` is not `filled`.** A raw `order()` / `market_order()` returning `submission_status: "accepted"` means the transaction **landed and executed** — not that the order rested or filled. Read the real state by cloid with `reconcile_by_cloid` (or `wait_for_open` for a resting order).
 
 ## See also
 

@@ -7,7 +7,7 @@ description: Wire an AI agent to trade on Native Core — the safety contract, t
 The Native Core Python SDK is built to be driven by an AI agent, not just a person. This page is the agent-integration centerpiece: one safety contract, then two ways to connect — a bundled MCP server that needs no glue code, or the SDK called directly from your own agent loop.
 
 {% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
+**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.2.0` and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.2.0`.
 {% endhint %}
 
 ## Why Native Core is agent-friendly
@@ -23,7 +23,7 @@ The API and the SDK are shaped so an autonomous model can trade without ever hol
 
 An agent that places money-moving orders must hold to a few rules. The SDK returns each outcome as structured fields so the agent branches on a field instead of remembering the rule.
 
-- **Accepted is not filled.** A raw `order()` / `market_order()` returning `submission_status: "accepted"` means only that the order entered the pipeline. Resolve the real outcome by `cloid` — `info.reconcile_by_cloid(user, market, cloid)` (or `wait_for_open` for a resting order) — before treating it as done.
+- **Accepted is not filled.** A raw `order()` / `market_order()` returning `submission_status: "accepted"` means the transaction **landed and executed** — not that the order rested or filled (it also covers a benign IOC/FOK cancel). Read the order's status by `cloid` — `wait_for_open` for a resting order, or `info.reconcile_by_cloid(user, market, cloid)` — for the `oid` and fill.
 - **Never resubmit an uncertain write.** A wire timeout raises `SubmissionUncertain` (carrying `.cloid` and `.nonce`) or returns `submission_status: "timeout"`. The order **may still be live**. Reconcile by `cloid` and act on the result; resubmitting under a fresh nonce risks a double-fill. Only a `RateLimited` rejection is safe to resend — it was never admitted.
 - **Survive a restart.** Generate the `cloid` yourself with `Exchange.random_cloid()`, persist `{intent, cloid}` durably **before** calling `order(..., cloid=cloid)`, and on restart reconcile every persisted cloid before placing anything new. This is the idempotency-key pattern: an agent that crashes after sending but before recording an SDK-generated cloid cannot reconcile and may double-fill.
 - **Numbers are strings.** Pass `sz` and `limit_px` as `str` or `Decimal`, never `float`. Size with `info.min_order_size(market, price)` and dry-run with `build_order(...)` (which signs and sends nothing) to avoid a precision or minimum-notional rejection. See [decimals-units.md](../decimals-units.md).
@@ -32,7 +32,7 @@ An agent that places money-moving orders must hold to a few rules. The SDK retur
 
 | `next_action` | Situation | What the agent does |
 | --- | --- | --- |
-| `POLL_ORDER_STATUS` | accepted — in the pipeline | Poll `wait_for_open` / `wait_for_order` (or `reconcile_by_cloid`) for the settled state |
+| `READ_ORDER_STATUS` | accepted — landed & executed | Read the order's status once (`wait_for_open` / `wait_for_order`) for the `oid` and fill — the outcome is already settled |
 | `RECONCILE_BY_CLOID` | timeout — indeterminate | `reconcile_by_cloid`; **never** resubmit |
 | `BACKOFF_AND_RETRY` | `RateLimited` — never admitted | Sleep `retry_after_ms`, then resend the same order |
 | `FIX_AND_RESUBMIT` | other rejection | Fix the input or account state, then submit fresh |
@@ -165,7 +165,7 @@ except SubmissionUncertain as e:          # signed + sent, then timed out
     reconcile(MARKET, e.cloid)            # look up e.cloid; never resubmit
 else:
     verdict = next_action(resp)
-    if verdict == "POLL_ORDER_STATUS":
+    if verdict == "READ_ORDER_STATUS":
         exchange.info.wait_for_open(exchange.effective_account, MARKET, cloid)
     elif verdict == "RECONCILE_BY_CLOID":
         reconcile(MARKET, cloid)          # timeout body — never resubmit

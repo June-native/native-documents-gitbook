@@ -7,7 +7,7 @@ description: Install the Native Core Python SDK, create an API wallet, and place
 The Native Core Python SDK (`native-core-python-sdk`, import `native_core`) is a thin, typed, synchronous client over Native Core's two REST endpoints: `POST /info` for reads and `POST /trade` for writes. This page takes you from `pip install` to a resting order you place and cancel yourself.
 
 {% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
+**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.2.0` and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.2.0`.
 {% endhint %}
 
 ## Install
@@ -21,7 +21,7 @@ pip install native-core-python-sdk
 Because the SDK is pre-1.0, any release may change the API. Pin an exact version and review the changes before upgrading:
 
 ```bash
-pip install native-core-python-sdk==0.1.0
+pip install native-core-python-sdk==0.2.0
 ```
 
 ## Get an API wallet
@@ -79,9 +79,9 @@ reference = book["asks"] or book["bids"]  # whichever side has liquidity (books 
 px = info.snap_price(MARKET, Decimal(reference[0]["price"]) / 2)  # -> str, snapped to the tick
 sz = info.min_order_size(MARKET, px)                             # -> str, smallest valid size at px
 
-# place() submits the order and polls info.order_status (via wait_for_open) until
-# it rests. "accepted" alone means only admitted to the pipeline — NOT filled;
-# place() resolves the real state for you and returns it.
+# place() submits the order, then reads info.order_status (via wait_for_open) for
+# its resting state. "accepted" means the tx landed & executed — not that it rested
+# or filled; place() reads the real state for you and returns it.
 order = exchange.place(MARKET, is_buy=True, sz=sz, limit_px=px, tif="gtc")
 assert is_accepted(order["submission"])
 print(order["cloid"], order["state"])     # 0x…  open
@@ -99,7 +99,7 @@ print(order_state(final))                 # cancelled
 ```
 
 {% hint style="warning" %}
-**Accepted is not filled, and an uncertain write is never resubmitted.** A raw `submission_status` of `accepted` means only that the order entered the pipeline — resolve the real outcome by `cloid`. If a write times out on the wire the SDK raises `SubmissionUncertain` (carrying `.cloid` and `.nonce`) or returns `submission_status: "timeout"`; **reconcile by cloid — never resubmit under a fresh nonce**, or the order may land twice. Only a `RateLimited` rejection is safe to resend. Use **one** `Exchange` per API wallet and share it across threads; two instances on the same key collide nonces.
+**Accepted is not filled, and an uncertain write is never resubmitted.** A raw `submission_status` of `accepted` means the transaction **landed and executed** — not that the order rested or filled; read the real state by `cloid`. If a write times out on the wire the SDK raises `SubmissionUncertain` (carrying `.cloid` and `.nonce`) or returns `submission_status: "timeout"`; **reconcile by cloid — never resubmit under a fresh nonce**, or the order may land twice. Only a `RateLimited` rejection is safe to resend. Use **one** `Exchange` per API wallet and share it across threads; two instances on the same key collide nonces.
 {% endhint %}
 
 The wire fields behind `POST /trade` and `POST /info`, transaction signing, and decimal/unit rules are documented in the API reference: [../post-trade.md](../post-trade.md), [../post-info.md](../post-info.md), [../transaction-signing.md](../transaction-signing.md), and [../decimals-units.md](../decimals-units.md).

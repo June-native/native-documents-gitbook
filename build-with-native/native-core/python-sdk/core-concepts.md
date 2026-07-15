@@ -1,18 +1,18 @@
 ---
-description: The eight ideas the Native Core Python SDK is built on — read this before wiring a bot.
+description: The core ideas the Native Core Python SDK is built on — read this before wiring a bot.
 ---
 
 # Core Concepts
 
-The SDK is a thin, typed, synchronous client over the two Native Core endpoints. `Info` wraps [`POST /info`](../post-info.md) (market data, balances, order status); `Exchange` wraps [`POST /trade`](../post-trade.md) (one signed action per call) and owns an internal `Info` as `exchange.info`. Both return the API's raw JSON as plain dicts. This page expands the eight ideas every integration leans on. It does not re-document the wire fields — for those, see the [`POST /trade`](../post-trade.md) and [`POST /info`](../post-info.md) references.
+The SDK is a thin, typed, synchronous client over the two Native Core endpoints. `Info` wraps [`POST /info`](../post-info.md) (market data, balances, order status); `Exchange` wraps [`POST /trade`](../post-trade.md) (one signed action per call) and owns an internal `Info` as `exchange.info`. Both return the API's raw JSON as plain dicts. This page expands the core ideas every integration leans on. It does not re-document the wire fields — for those, see the [`POST /trade`](../post-trade.md) and [`POST /info`](../post-info.md) references.
 
 {% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
+**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.2.0` and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.2.0`.
 {% endhint %}
 
 ## Accepted is not filled
 
-A write returns as soon as the transaction enters the node pipeline, not when it executes. `order()` and `market_order()` return `{"submission_status": "accepted", "tx_hash": "…"}` — admitted, but not yet open, filled, or rejected. Resolve the real outcome by `cloid`.
+`order()` and `market_order()` return `{"submission_status": "accepted", "tx_hash": "…"}` once the transaction has **landed and executed**. But `accepted` does not say whether the order rested or filled — it also covers a benign IOC/FOK cancel or a no-liquidity market order. The `/trade` response omits the `oid` and fill amount, so read the order's status to learn the lifecycle and fill.
 
 ```python
 from native_core import Exchange, is_accepted
@@ -20,8 +20,8 @@ from native_core import Exchange, is_accepted
 exchange = Exchange.from_bundle("bundle.json")   # a testnet bundle
 resp = exchange.order("ETH/USDT", is_buy=True, sz="0.01", limit_px="1000.00", tif="gtc")
 
-assert is_accepted(resp)                          # in the pipeline — NOT done
-# Resolve the settled state by cloid before treating the order as placed:
+assert is_accepted(resp)                          # landed & executed — but not necessarily filled
+# Read the order's status once for the oid and fill state:
 snapshot = exchange.info.wait_for_open(exchange.effective_account, "ETH/USDT", resp["cloid"])
 ```
 
@@ -84,7 +84,7 @@ exchange = Exchange.from_bundle("bundle.json")    # construct once
 # ... hand the SAME exchange to every worker thread; do not build a second one on this key.
 ```
 
-The client is synchronous and poll-based. If you need concurrency, wrap calls in your own executor and still share the one `Exchange`.
+The client is synchronous (blocking). If you need concurrency, wrap calls in your own executor and still share the one `Exchange`.
 
 ## Numbers are strings, never floats
 
@@ -110,7 +110,7 @@ Error handling keys on the **response body, not the HTTP status**. The API retur
 
 | `next_action` | Situation | What to do |
 | --- | --- | --- |
-| `POLL_ORDER_STATUS` | `accepted` — in the pipeline | Poll `wait_for_open` / `wait_for_order` (or `reconcile_by_cloid`) for the settled state |
+| `READ_ORDER_STATUS` | `accepted` — landed & executed | Read the order's status once (`wait_for_open` / `wait_for_order`) for the `oid` and fill — the outcome is already settled |
 | `BACKOFF_AND_RETRY` | `RateLimited` — never admitted | Sleep `retry_after_ms`, then resend the same order (the only safe resend) |
 | `RECONCILE_BY_CLOID` | `timeout` — indeterminate | `reconcile_by_cloid`; **never** resubmit |
 | `FIX_AND_RESUBMIT` | other rejection | Fix the input or account state, then submit fresh |
@@ -158,7 +158,7 @@ This release runs on **testnet** (`https://api-test.native.org`) and nothing els
 
 Reads are **poll-only** over [`POST /info`](../post-info.md). Block time is ~50ms; `wait_for_open` / `wait_for_order` poll internally (starting at 50ms and backing off) against a ~5s default deadline. For a standing reconcile loop — open orders, fills, balances — poll on a **fixed interval** tuned to the strategy, not the block rate: a few hundred milliseconds for a tight quoting loop, low seconds for slower reconciliation. Polling faster than block time only burns requests without seeing new state.
 
-Every read view carries `query_height` and `app_hash` — the committed height the answer reflects. `queryStatus` exposes the retained recent-height window (`oldest_available_height`, `latest_available_height`, `recent_query_window_blocks`), which bounds how far back a windowed read such as `userFills` can reach. Market and asset metadata (`markets`, `assets`) may be served from an in-process cache for up to ~10s, so treat precision and symbol metadata as **slowly-changing** — fetch it once at startup (the SDK does this when `Info` is constructed) — and re-fetch balances, orders, and fills every loop.
+Every read view carries `query_height` and `app_hash` — the committed height the answer reflects. `queryStatus` exposes the retained recent-height window (`oldest_available_height`, `latest_available_height`, `recent_query_window_blocks`), which bounds how far back a windowed read such as `userFills` can reach. Treat precision and symbol metadata (`markets`, `assets`) as **slowly-changing** — fetch it once at startup (the SDK does this when `Info` is constructed) — and re-fetch balances, orders, and fills every loop.
 
 ## Cancel on disconnect
 

@@ -11,7 +11,7 @@ pip install native-core-python-sdk
 ```
 
 {% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.1.0` (alpha) and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.1.0`.
+**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.2.0` and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.2.0`.
 {% endhint %}
 
 ## What it is
@@ -26,12 +26,12 @@ info = exchange.info                             # reads share the same client
 ```
 
 * **`Info` + `Exchange`.** One reads, one writes. Construct with `Info.from_bundle(...)` / `Exchange.from_bundle(...)`, or `Info(base_url)` / `Exchange(wallet, base_url, owner=...)` by hand.
-* **Poll-based.** Calls are synchronous and blocking. `exchange.place(...)` submits and waits for the matching outcome; `info.wait_for_open`, `info.wait_for_order`, and `info.reconcile_by_cloid` resolve an order by its `cloid`.
+* **Synchronous.** Calls block for the result. `exchange.place(...)` submits, then reads the matching `orderStatus`; `info.wait_for_open`, `info.wait_for_order`, and `info.reconcile_by_cloid` resolve an order by its `cloid`.
 * **Decision-ready fields.** A business rejection is data on the response body, not an exception. Helpers such as `is_accepted`, `is_rejected`, `is_timeout`, `next_action`, and `order_state` collapse a response into one field to branch on, so you never parse prose.
 
 ## What it is NOT
 
-* **Synchronous and poll-based.** Wrap calls in your own executor if you need concurrency, and share **one** `Exchange` per API wallet across threads (the nonce is a per-instance, lock-guarded, monotonic counter; two instances on one key collide nonces).
+* **Not async or concurrent.** Calls block. Wrap them in your own executor if you need concurrency, and share **one** `Exchange` per API wallet across threads (the nonce is a per-instance, lock-guarded, monotonic counter; two instances on one key collide nonces).
 * **It cannot move funds.** The SDK signs with an API wallet, a protocol-level agent key scoped only to placing and cancelling orders. Deposits, withdrawals, and approving or revoking the API wallet happen in the Native web app with your main wallet — never in the SDK.
 * **Testnet only.** This release trades on testnet.
 
