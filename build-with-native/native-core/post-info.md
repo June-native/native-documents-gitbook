@@ -2,7 +2,7 @@
 
 All public reads use one endpoint with a top-level `type` discriminator.
 
-Unsupported or malformed query bodies return:
+A malformed body, or one whose `type` is missing or not a string, returns HTTP `400` with `error.code: "InvalidInfoRequest"`. A well-formed body whose `type` is not a known query returns HTTP `400` with `error.code: "UnsupportedInfoType"`:
 
 ```json
 {
@@ -18,14 +18,12 @@ Unsupported or malformed query bodies return:
 ```sh
 curl -sS -X POST "$API_URL/info" \
   -H 'content-type: application/json' \
-  -H 'x-trace-id: client-trace-002' \
   -d '{"type":"assets"}'
 ```
 
 Response:
 
-See [Decimal Units](decimals-units.md) for raw/display conversion and validation rules. The gateway may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background gateway task.
-
+See [Decimals & Units](decimals-units.md) for raw/display conversion and validation rules.
 ```json
 {
   "query_height": 180000,
@@ -79,8 +77,7 @@ When no query view is available yet, all fields are `null`.
 { "type": "quoteAssets" }
 ```
 
-Returns the current canonical quote-asset allowlist sorted by `asset_id`. `min_quantity` is the human-readable minimum order notional in the quote token; `min_quantity_atoms` is the raw integer atom quantity encoded as a decimal string for JavaScript safety. The gateway may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background gateway task.
-
+Returns the current canonical quote-asset allowlist sorted by `asset_id`. `min_quantity` is the human-readable minimum order notional in the quote token; `min_quantity_atoms` is the raw integer atom quantity encoded as a decimal string for JavaScript safety.
 ```json
 {
   "query_height": 180000,
@@ -122,14 +119,63 @@ Returns accounting withdraw-token rows sorted by `(chain_id, asset_id)`. `min_wi
 }
 ```
 
+### accountingDepositContracts
+
+```json
+{ "type": "accountingDepositContracts" }
+```
+
+Returns the configured deposit source contracts sorted by `src_chain_id`. No parameters.
+
+```json
+{
+  "query_height": 180000,
+  "app_hash": "0x...",
+  "accounting_deposit_contracts": [
+    {
+      "src_chain_id": 421614,
+      "src_contract": "0xaabbccddeeff00112233445566778899aabbccdd"
+    }
+  ]
+}
+```
+
+### multisigPolicy
+
+Returns the dynamic non-admin multisig policy for one `scope`. Only the `ACCOUNTING` scope (`2`) is queryable; any other value returns HTTP 400 `InvalidMultisigScope`.
+
+```json
+{ "type": "multisigPolicy", "scope": "2" }
+```
+
+When a policy is set:
+
+```json
+{
+  "query_height": 180000,
+  "app_hash": "0x...",
+  "found": true,
+  "policy": {
+    "scope": 2,
+    "scope_name": "ACCOUNTING",
+    "threshold": 2,
+    "signers": [
+      "0x1111111111111111111111111111111111111111",
+      "0x2222222222222222222222222222222222222222"
+    ]
+  }
+}
+```
+
+When none is set, `found` is `false` and the body echoes `scope` / `scope_name` instead of `policy`.
+
 ### markets
 
 ```json
 { "type": "markets" }
 ```
 
-Response field `markets` is sorted by `market_id`. `price_decimals` and `max_price_sig_figs` are market metadata, as is `base_quantity_decimals`. `quote_balance_decimals` is derived from the quote asset and included as a convenience field for raw notional conversion. See [Decimal Units](decimals-units.md). The gateway may serve this metadata response from an in-process cache for up to 10 seconds. The cache is refreshed by a background gateway task.
-
+Response field `markets` is sorted by `market_id`. `price_decimals` and `max_price_sig_figs` are market metadata, as is `base_quantity_decimals`. `quote_balance_decimals` is derived from the quote asset and included as a convenience field for raw notional conversion. See [Decimals & Units](decimals-units.md).
 ```json
 {
   "query_height": 180000,
@@ -208,6 +254,35 @@ Per-user retained withdraw records (3-day window), sorted by `(block_height, tx_
 }
 ```
 
+### deposits
+
+Per-user retained deposit records. Requires `user`; the response key is `user`.
+
+```json
+{ "type": "deposits", "user": "0x0000000000000000000000000000000000000001" }
+```
+
+```json
+{
+  "query_height": 180000,
+  "app_hash": "0x...",
+  "user": "0x0000000000000000000000000000000000000001",
+  "deposits": [
+    {
+      "tx_hash": "0x...",
+      "block_height": 179998,
+      "tx_index": 0,
+      "block_timestamp_ms": 1717000000200,
+      "asset_id": 1,
+      "amount_atoms": "1000000",
+      "src_chain_id": 421614,
+      "src_contract": "0xaabbccddeeff00112233445566778899aabbccdd",
+      "deposit_nonce": "42"
+    }
+  ]
+}
+```
+
 ### userBalances
 
 ```json
@@ -233,7 +308,35 @@ Per-user retained withdraw records (3-day window), sorted by `(block_height, tx_
 }
 ```
 
+### accountStatus
+
+Whether an account exists and its freeze state.
+
+```json
+{
+  "type": "accountStatus",
+  "user": "0x0000000000000000000000000000000000000001"
+}
+```
+
+```json
+{
+  "query_height": 180000,
+  "app_hash": "0x...",
+  "owner": "0x0000000000000000000000000000000000000001",
+  "found": true,
+  "account_index": 5,
+  "status": "active"
+}
+```
+
+`found` is `true` once the account exists (it is created on its first deposit). `status` is `"active"` or `"frozen"`, and is `null` when `found` is `false`. `account_index` is the protocol's internal account index, `null` before the account exists.
+
 ### spotCreditAccount
+
+{% hint style="info" %}
+`spotCreditAccount` and `spotCreditPositions` read a **credit account** — a protocol-granted account type distinct from the default spot (balance) account that [`userBalances`](post-info.md#userbalances) reads. If you have not been granted a credit line, these report no position. See [Account Types](account-types.md).
+{% endhint %}
 
 ```json
 {
@@ -357,6 +460,7 @@ When the oracle is unavailable, `oracle_status` is `{ "status": "unavailable", "
     {
       "status": "open",
       "owner": "0x0000000000000000000000000000000000000001",
+      "owner_index": 5,
       "market_id": 0,
       "oid": 773094113280001,
       "cloid": "0x11111111111111111111111111111111",
@@ -373,7 +477,7 @@ When the oracle is unavailable, `oracle_status` is `{ "status": "unavailable", "
 }
 ```
 
-`original_qty` is the submitted order quantity. For an order that partially fills and then rests on the book, `filled_qty` is nonzero and `remaining_qty` is the currently open quantity.
+`original_qty` is the submitted order quantity. For an order that partially fills and then rests on the book, `filled_qty` is nonzero and `remaining_qty` is the currently open quantity. `owner_index` is the protocol's internal account index for the owner; it also appears on the order objects returned by `orderStatus` / `batchOrderStatus`.
 
 ### userAgents
 
@@ -384,7 +488,18 @@ When the oracle is unavailable, `oracle_status` is `{ "status": "unavailable", "
 }
 ```
 
-Response field `agents` contains the active agent slots for the owner.
+```json
+{
+  "query_height": 180000,
+  "app_hash": "0x...",
+  "owner": "0x0000000000000000000000000000000000000001",
+  "agents": [
+    { "slot_id": 0, "agent": "0x00000000000000000000000000000000000000aa", "epoch": 3 }
+  ]
+}
+```
+
+`agents` holds the active agent (API-wallet) slots for the owner. To sign `/trade` writes, read the `epoch` of the slot whose `agent` matches your API-wallet address and pass it as the envelope `agent_epoch`. `agent` is `null` for an empty slot.
 
 ### userFills
 
@@ -398,13 +513,18 @@ Response field `agents` contains the active agent slots for the owner.
 }
 ```
 
-`limit` must be positive and is capped by the server. Height ranges wider than the configured recent window are rejected.
+`limit` must be positive and is capped at `max_limit` (500). A bad `limit` or a height range wider than the recent window does **not** return HTTP 400 — it returns HTTP 200 with an in-band `error` object (`InvalidFillsQuery` or `HistoryWindowExceeded`) and an empty `fills` array. On success the response echoes the effective `limit`, your `requested_limit`, and `max_limit`.
 
 ```json
 {
   "query_height": 180000,
   "app_hash": "0x...",
   "owner": "0x0000000000000000000000000000000000000001",
+  "from_height": 179900,
+  "to_height": 180000,
+  "limit": 100,
+  "requested_limit": 100,
+  "max_limit": 500,
   "fills": [
     {
       "height": 180000,
@@ -457,12 +577,9 @@ Query by client order id:
 }
 ```
 
-`orderStatus` first checks the live pending overlay (cloid lookup only), then the current open-order view. If neither covers the order, it falls back to the latest retained status record for that `oid` or `(user, market_id, cloid)`. Status records are action-result records, not a complete lifecycle stream: a successful incoming order writes one record even when it rests on the book, but later passive maker fills are exposed through `userFills` and open-order state changes rather than a new status record for the maker order. Explicit cancel and modify actions do write status records for the affected resting order. Outcome-stage failed order attempts also write retained status records when execution has enough order context: `IocCancel`, `FokCancel`, `BadAloPx`, `MarketOrderNoLiquidity`, and `InsufficientSpotCredit` can be queried by `oid` or `(user, market_id, cloid)` inside the recent query window.
+`orderStatus` checks the current open-order view, then falls back to the latest retained status record for that `oid` or `(user, market_id, cloid)`. Status records are action-result records, not a complete lifecycle stream: a successful incoming order writes one record even when it rests on the book, but later passive maker fills are exposed through `userFills` and open-order state changes rather than a new status record for the maker order. Explicit cancel and modify actions do write status records for the affected resting order. Outcome-stage failed order attempts also write retained status records when execution has enough order context: `IocCancel`, `FokCancel`, `BadAloPx`, `MarketOrderNoLiquidity`, and `InsufficientSpotCredit` can be queried by `oid` or `(user, market_id, cloid)` inside the recent query window.
 
-The cloid lookup additionally surfaces:
-
-* **Pending response (live overlay)**: when `/trade` returned `accepted` for a cloid-bearing tx but the queryView has not yet published the result, `orderStatus` by `cloid` returns a synthetic pending response (see below). The pending entry retires automatically when queryView publishes a result for the same accepted `tx_hash`; a queryView result whose `tx_hash` matches replaces the pending response with the real result on the next query.
-* **Null-OID early-failure rows**: when an accepted cloid-bearing tx fails before execution can assign an `OrderId` (`BadNonce`, `ExpiredTx`, agent/owner authorization failure, missing modify target, batch-item-level pre-OID failures, etc.), the published row carries `"oid": null` and a lower-case canonical status string. The row remains visible only while the live process is up — it is not regenerated by WAL replay on restart.
+For an in-flight order — a `/trade` you just sent — you do **not** poll `orderStatus` to learn the outcome: the synchronous `/trade` response already carries it (the order's lifecycle status, or the reject / execution `error.code`). A just-submitted tx that the query view has not yet advanced to reads back `found: false` here until its block is published.
 
 ### batchOrderStatus
 
@@ -519,7 +636,7 @@ Malformed items do not prevent valid items from being queried; the malformed slo
 }
 ```
 
-If `orders` is not an array the gateway returns HTTP 400 `InvalidOrderStatusBatch`. If more than 20 items are supplied, the gateway returns HTTP 400:
+If `orders` is not an array the API returns HTTP 400 `InvalidOrderStatusBatch`. If more than 20 items are supplied, the API returns HTTP 400:
 
 ```json
 {
@@ -588,45 +705,6 @@ Open order response:
     "oid": 773094113280001,
     "cloid": "0x11111111111111111111111111111111",
     "remaining_qty": "1"
-  }
-}
-```
-
-Pending response (live overlay, accepted but not yet published):
-
-```json
-{
-  "found": true,
-  "query_height": 179999,
-  "app_hash": "0x...",
-  "status": "pending",
-  "order": {
-    "status": "pending",
-    "oid": null,
-    "cloid": "0x11111111111111111111111111111111",
-    "owner": "0x0000000000000000000000000000000000000001",
-    "market_id": 0,
-    "tx_hash": "0xACCEPTEDTX...",
-    "created_tx_hash": "0xACCEPTEDTX...",
-    "updated_tx_hash": "0xACCEPTEDTX..."
-  }
-}
-```
-
-Null-OID early-failure response (live-only):
-
-```json
-{
-  "found": true,
-  "query_height": 180001,
-  "app_hash": "0x...",
-  "order": {
-    "status": "badnonce",
-    "market_id": 0,
-    "oid": null,
-    "cloid": "0x22222222222222222222222222222222",
-    "updated_tx_hash": "0x...",
-    "updated_height": 180001
   }
 }
 ```

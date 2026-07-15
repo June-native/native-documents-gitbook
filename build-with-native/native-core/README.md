@@ -12,66 +12,58 @@ layout:
   pagination:
     visible: true
   metadata:
-    visible: true
+    visible: false
   tags:
     visible: true
   actions:
     visible: true
 ---
 
-# Native Core (Market Makers)
+# Native Core API
 
-{% hint style="info" %}
-_Last updated: 2026-06-11 (_&#x76;0.&#x35;_)_
-{% endhint %}
-
-This document describes the Native Core business API. Clients submit signed business actions with `POST /trade` and read business state with `POST /info`.
+The Native Core API is the direct integration surface for the on-chain CLOB. Clients submit signed business actions with `POST /trade` and read business state with `POST /info`. It serves market makers, trading bots, AI agents, and anyone integrating directly with Native Core.
 
 Operational, recovery, and node-private interfaces are intentionally not part of this contract.
+
+{% hint style="warning" %}
+**Testnet only.** Native Core is currently available on **testnet only**, at `https://api-test.native.org`. Everything in this section targets testnet.
+{% endhint %}
+
+## Start here
+
+New to Native Core? The guides take you from zero to a working integration — start with your first order over REST:
+
+{% content-ref url="trade-over-rest.md" %}
+[trade-over-rest.md](trade-over-rest.md)
+{% endcontent-ref %}
+
+{% content-ref url="guides.md" %}
+[guides.md](guides.md)
+{% endcontent-ref %}
+
+Prefer a client library? The official Python SDK wraps both endpoints, signs `/trade` for you, and ships an MCP server for AI agents:
+
+{% content-ref url="python-sdk/" %}
+[python-sdk](python-sdk/)
+{% endcontent-ref %}
 
 ## Conventions
 
 * `API_URL` examples use `https://api-test.native.org`.
 * Hex values are `0x`-prefixed lowercase strings unless noted otherwise.
-* Protocol numeric fields in signed actions are decimal strings.
+* Protocol numeric fields in signed actions are decimal strings; integer-valued fields (ids, nonces) also accept an unsigned JSON integer, while decimal price/quantity/amount fields must be strings.
 * Business query responses include `query_height` and `app_hash` when a query view is available. `query_height` is the execution height represented by the published read view.
-* `POST /trade` and `POST /info` accept an optional `x-trace-id` HTTP header for request correlation. When the header is absent or invalid, the gateway generates one. The response always includes the trace id in `x-trace-id`.
-* `POST /trade` returns admission success or rejection. Public clients confirm effects through business queries such as `orderStatus`, `openOrders`, `userFills`, `userBalances`, `spotCreditPositions`, `spotCreditAccount`, `batchOrderStatus`, `quoteAssets`, `accountingWithdrawTokens`, `withdraws`, `queryStatus`, `oracleStatus`, and `markPrices`.
+* `POST /trade` accepts an optional `x-trace-id` HTTP header for request correlation; when it is absent or invalid the API mints one, and the `/trade` response always echoes it in `x-trace-id`. `POST /info` does not process or return `x-trace-id`.
+* `POST /trade` is **synchronous**: it waits for the transaction's execution outcome and returns `submission_status` — `accepted` (the transaction landed and executed), `rejected` (refused, or failed at execution), or `timeout` (outcome not observed within the wait budget) — with a `tx_hash` and, on a non-success, an `error.code`. It reports that a write **landed**, not an order's fill state: read `orderStatus` (or `openOrders` / `userFills`) to see whether an order rested or filled, and to reconcile a `timeout` by `cloid`.
 
-## Transaction Signing
+## Reference & concepts
 
-Native Core transactions require signing. Read more:
+The exhaustive contract — every endpoint, field, and error code — and the models it assumes:
 
-{% content-ref url="transaction-signing.md" %}
-[transaction-signing.md](transaction-signing.md)
+{% content-ref url="reference.md" %}
+[reference.md](reference.md)
 {% endcontent-ref %}
 
-## Decimal Units
-
-Native Core executes on integers only. Read more:
-
-{% content-ref url="decimals-units.md" %}
-[decimals-units.md](decimals-units.md)
+{% content-ref url="concepts.md" %}
+[concepts.md](concepts.md)
 {% endcontent-ref %}
-
-## POST /trade
-
-{% content-ref url="post-trade.md" %}
-[post-trade.md](post-trade.md)
-{% endcontent-ref %}
-
-## POST /info
-
-{% content-ref url="post-info.md" %}
-[post-info.md](post-info.md)
-{% endcontent-ref %}
-
-## Changelog
-
-```
-2026-06-11: v0.5 - add withdraw/settle/repay actions with EIP-712 signing, x-trace-id, queryStatus/accountingWithdrawTokens/withdraws/batchOrderStatus info queries, assets withdraw fees, and revised /trade error codes.
-2026-05-30: v0.4 - add cancelAll action, trading-fee fields on userFills, orderStatus pending/null-OID overlay, assets.issuer, expanded /trade error codes, and signing example refresh.
-2026-05-13: v0.3 - admission precheck and margin controls, migrate quantity precision to markets, and add quote-asset minimum/allowlist admin and query APIs (plus related fixes).
-2026-05-13: v0.2 - add decimals related, put sections into subpages
-2026-05-12: v0.1 - initial base, with tx signing
-```

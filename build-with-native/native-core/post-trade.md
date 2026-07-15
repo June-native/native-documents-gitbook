@@ -27,13 +27,15 @@ Request envelope fields:
 
 | Field              | Required              | Description                                                                                                                                                                                                                                          |
 | ------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `action`           | yes                   | Action object. Public top-level types: `order`, `cancel`, `cancelAll`, `modify`, `batch`, `withdraw`, `settle`, and `repay`. Internal operator/accounting writes are documented in `docs/internal-api.md`. See the full public list below.         |
+| `action`           | yes                   | Action object. Public top-level types: `order`, `cancel`, `cancelAll`, `modify`, `batch`, `withdraw`, `settle`, `repay`, `approveAgent`, and `revokeAgent`. Internal operator/accounting writes are not part of this public contract. See the full public list below.         |
 | `nonce`            | yes                   | Decimal string `u64` Unix millisecond timestamp nonce. Use current `Date.now()`/Unix ms; if sending multiple requests in the same millisecond for the same signer, increment locally so each signed nonce is unique and monotonically nondecreasing. |
 | `agent_epoch`      | no                    | Decimal string `u64`; required only for agent-signed requests. Omit for owner-signed requests.                                                                                                                                                       |
-| `expires_after_ms` | no                    | Decimal string `u64` Unix milliseconds. Expired transactions are rejected during execution.                                                                                                                                                          |
-| `auth_scheme`      | no                    | `"legacy"` (default) or `"eip712"`. Public `withdraw`, `settle`, and `repay` require `"eip712"`; public trading actions require `"legacy"`. See [EIP-712 signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712).                        |
+| `expires_after_ms` | no                    | Decimal string `u64` Unix milliseconds. An envelope already past `expires_after_ms` at the gateway clock is fast-failed with `submission_status: "rejected"`, `error.code: "ExpiredTx"` (before the node hop); execution also enforces expiry against the committed block timestamp.                                                                                                                                                          |
+| `auth_scheme`      | no                    | `"legacy"` (default) or `"eip712"`. Public `withdraw`, `settle`, `repay`, `approveAgent`, and `revokeAgent` require `"eip712"`; public trading actions (`order`/`cancel`/`cancelAll`/`modify`/`batch`) require `"legacy"`. See [EIP-712 signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712).                        |
 | `signature`        | yes for public actions | `0x`-prefixed 65-byte recoverable secp256k1 signature. Legacy v1, or — when `auth_scheme="eip712"` — an EIP-712 v4 single signature. Mutually exclusive with `signatures`.                                                                          |
-| `signatures`       | no for public actions | Array of `0x`-prefixed 65-byte signatures for an internal multisig request. Public actions reject this field with `signatures_not_allowed_for_action`; internal multisig submissions are documented in `docs/internal-api.md`. Mutually exclusive with `signature`. |
+| `signatures`       | no for public actions | Array of `0x`-prefixed 65-byte signatures for an internal multisig request. Public actions reject this field with `signatures_not_allowed_for_action`; internal multisig submissions are not part of this public contract. Mutually exclusive with `signature`. |
+
+The envelope is **strict**: exactly one of `signature` or `signatures` must be present (neither or both → `must provide exactly one of signature or signatures`), and any field not in the table above is rejected as `invalid_json`. Numeric fields (`nonce`, `agent_epoch`, `expires_after_ms`) accept a decimal string **or** an unsigned JSON integer, with the string form preferred above 2^53. Only `action`, `nonce`, `agent_epoch`, and `expires_after_ms` are folded into the signed payload; `auth_scheme`, `signature`, and `signatures` are transport fields that select and carry the proof (see [Transaction Signing](transaction-signing.md)).
 
 Public actions are single-signature; sending `signatures` with a public action is rejected with `signatures_not_allowed_for_action`. The transaction **authority** used for nonce/rate-limit and `txStatusByCloid` is the recovered signer.
 
@@ -82,6 +84,67 @@ Protected market order example:
   "quantity": "1.0000"
 }
 ```
+
+`POST /trade` is **synchronous**: the request blocks while the transaction is admitted, executed on-chain, and the outcome is read back — typically well under a second, bounded by a wait budget (~3s). The result is in the body's `submission_status`; `tx_hash` is present once canonical bytes are assembled, and a non-successful outcome carries `error.code`.
+
+Response envelope:
+
+```jsonc
+{
+  "submission_status": "<status>",   // always present
+  "tx_hash": "0x…",                  // present once canonical bytes exist; omitted on a request-shaping reject
+  "error": {                         // present only on a non-successful outcome
+    "code": "<code>",
+    "retry_after_ms": 1000           // present only on RateLimited / PlaceOrderSuspended / Handoff*
+  }
+}
+```
+
+`submission_status` is one of exactly three values:
+
+* `accepted` — the transaction landed and executed. For an order that means it rested, filled, partially filled, or was cancelled by its own time-in-force / self-trade rules (an IOC/FOK that didn't fully fill, a self-trade-prevention cancel, or a market order that found no liquidity); for a non-order action (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`) it means the action committed. There is no `error`. **`/trade` reports that the order landed, not its fill state — read [`orderStatus`](post-info.md#orderstatus) to see whether it rested or filled.**
+* `rejected` — the write was refused (request-shaping, rate limit, expiry, place-order suspension, or node admission) **or** it failed at execution. `error.code` carries the reason; `tx_hash` is present once canonical bytes exist.
+* `timeout` — the outcome was not observed within the wait budget, or the submission could not be routed to the active node. The transaction **may still commit**; reconcile by `cloid` via [`orderStatus`](post-info.md#orderstatus) / [`txStatusByCloid`](post-info.md#orderstatus) — never blindly resubmit.
+
+{% tabs %}
+{% tab title="Accepted" %}
+```json
+{
+  "submission_status": "accepted",
+  "tx_hash": "0x..."
+}
+```
+
+The transaction landed and executed. Read [`orderStatus`](post-info.md#orderstatus) to see whether the order rested or filled — the `/trade` response does not carry the fill state.
+{% endtab %}
+{% tab title="Rejected" %}
+```json
+{
+  "submission_status": "rejected",
+  "tx_hash": "0x...",
+  "error": {
+    "code": "MinTradeSpotNtl"
+  }
+}
+```
+
+The example is a node-admission reject (CamelCase, returned verbatim): the order notional was below the market's quote-asset minimum. An execution-layer rejection instead carries a lowercase code — e.g. `error.code: "tick"` for a price off the market's tick grid.
+{% endtab %}
+{% tab title="Timeout" %}
+```json
+{
+  "submission_status": "timeout",
+  "tx_hash": "0x..."
+}
+```
+
+The outcome was not observed in time (a slow block or a routing failure). Reconcile by `cloid`; do not resubmit under a fresh nonce.
+{% endtab %}
+{% endtabs %}
+
+Request-shaping rejections (e.g. `invalid_quantity_precision`) carry no `tx_hash` because canonical bytes were never assembled; admission and execution rejections include one.
+
+Beyond per-action outcomes, the gateway can refuse a write for operational reasons: `RateLimited` (HTTP 429 — 50 requests/second per signer, with `error.retry_after_ms`), `PlaceOrderSuspended` (HTTP 503 — place-order actions only while the write path is degraded; `cancel`/`cancelAll` are always accepted so you can reduce exposure), `ExpiredTx` (HTTP 200), and the routing codes `HandoffTimeout` / `HandoffBufferFull:{request_count|bytes|signer}` / `HandoffMultipleActive` (HTTP 503) and `node_unreachable` (HTTP 504), which come back as `submission_status: "timeout"`. A request body over 256 KiB is rejected with HTTP 413. See the full `/trade` error-code table in [error-responses.md](error-responses.md).
 
 ### cancel
 
@@ -244,9 +307,13 @@ Withdraw consumes a windowed-unique business nonce with 3-day retention: a nonce
 
 Node admission also fail-fast rejects withdraw actions that the current committed state already proves invalid: missing accounting config, missing asset/config, invalid account shape, duplicate committed business nonce, withdraw amount/fee/minimum failures, or insufficient withdraw cash. Once a withdraw is accepted into ingress, its business nonce is also held in a live-only pending overlay, so a concurrent replay of the same business nonce is rejected before block inclusion. This overlay is not canonical state and is retired after the accepted transaction's result publishes to QueryView.
 
-Gateway parse errors include `missing_cloid` and `invalid_cloid`. Historical WAL records encoded before this field existed still replay without a cloid and are not queryable by `txStatusByCloid`.
+Parse errors include `missing_cloid` and `invalid_cloid`. Historical WAL records encoded before this field existed still replay without a cloid and are not queryable by `txStatusByCloid`.
 
 ### settle
+
+{% hint style="info" %}
+`settle` and `repay` move value between the two account types. A `SpotCreditAccount` is the **credit account**; a balance-mode / cash account is the default **spot account**. See [Account Types](account-types.md).
+{% endhint %}
 
 SpotCreditAccount de-risking (tag 33). The signer must be an **Active** `SpotCreditAccount` (the margin owner). It moves `amount` of `asset_id` out of the signer's long margin position (`actual_qty > 0`) into `cash_account`'s **available** balance, requiring the signer's post-position `available_usd >= 0`. `cash_account` may be **any existing balance-mode account** (it must not be a SpotCreditAccount). `asset_id`/`amount` are raw atoms. `cloid` is a **required** 16-byte hex client operation id. Must use `signature`; `signatures` is rejected (`signatures_not_allowed_for_action`).
 
@@ -267,7 +334,7 @@ Requires `auth_scheme:"eip712"`. See [EIP-712 signing](transaction-signing.md#ei
 }
 ```
 
-Gateway parse errors: `missing_cloid` (cloid absent), `invalid_cloid` (not 16 bytes), `invalid_cash_account` (not a 20-byte hex address), `invalid_asset_id`. Execution errors include `InvalidSettle` (signer not a credit account, `cash_account` missing/credit, zero amount, no settleable long, or over-settle), `SpotCreditAccountFrozen` (frozen signer), `OracleMarkPriceMissing` (a residual nonzero-net asset lacks a fresh mark), and `InsufficientSpotCredit` (post `available_usd < 0`). A full settle that clears the asset's net to zero needs no mark.
+Parse errors: `missing_cloid` (cloid absent), `invalid_cloid` (not 16 bytes), `invalid_cash_account` (not a 20-byte hex address), `invalid_asset_id`. Execution errors include `InvalidSettle` (signer not a credit account, `cash_account` missing/credit, zero amount, no settleable long, or over-settle), `SpotCreditAccountFrozen` (frozen signer), `OracleMarkPriceMissing` (a residual nonzero-net asset lacks a fresh mark), and `InsufficientSpotCredit` (post `available_usd < 0`). A full settle that clears the asset's net to zero needs no mark.
 
 Node admission may return these same settle errors before block inclusion when the current committed state already proves the settle invalid. Execution remains authoritative for any transaction accepted into ingress.
 
@@ -292,8 +359,56 @@ Requires `auth_scheme:"eip712"`. See [EIP-712 signing](transaction-signing.md#ei
 }
 ```
 
-Gateway parse errors: `missing_cloid`, `invalid_cloid`, `invalid_margin_account`, `invalid_asset_id`. Execution errors include `InvalidRepay` (signer is a credit account, `margin_account` missing/non-credit, zero amount, no short, or over-repay past zero) and `InsufficientSpotBalance` (signer's cash is too low).
+Parse errors: `missing_cloid`, `invalid_cloid`, `invalid_margin_account`, `invalid_asset_id`. Execution errors include `InvalidRepay` (signer is a credit account, `margin_account` missing/non-credit, zero amount, no short, or over-repay past zero) and `InsufficientSpotBalance` (signer's cash is too low).
 
 Node admission may return these same repay errors before block inclusion when the current committed state already proves the repay invalid. Execution remains authoritative for any transaction accepted into ingress.
 
 Settle/repay carry **no** business nonce and provide **no** idempotency: the `cloid` is used only for `txStatusByCloid` lookups within the recent query window (see [txStatusByCloid](post-info.md#orderstatus)). The envelope `nonce` is the only replay protection — the same `cloid` resubmitted under a new envelope `nonce` is a distinct transaction. The lookup is keyed on the **recovered signer** (settle → margin owner; repay → cash owner); a counterparty cannot find the tx by `cloid`.
+
+### approveAgent
+
+Approves an agent (API-wallet) signing key on one of the owner's agent slots. **Owner-signed**: sign with the main wallet under `auth_scheme:"eip712"` — an API-wallet key cannot sign it. Carries no `agent_epoch`, takes exactly one `signature`, and cannot appear inside a `batch`. After approval, subsequent agent-signed writes reference the slot's current epoch via `agent_epoch` (read it from [userAgents](post-info.md#useragents)).
+
+| Field      | Required | Values                                                        |
+| ---------- | -------- | ------------------------------------------------------------- |
+| `type`     | yes      | `"approveAgent"`                                              |
+| `slot_id`  | yes      | Owner agent slot, `0`–`3`.                                    |
+| `agent`    | yes      | `0x`-prefixed 20-byte agent (API-wallet) signing address.    |
+
+```json
+{
+  "action": {
+    "type": "approveAgent",
+    "slot_id": "0",
+    "agent": "0xcccccccccccccccccccccccccccccccccccccccc"
+  },
+  "nonce": "1717000000007",
+  "auth_scheme": "eip712",
+  "signature": "0x..."
+}
+```
+
+Parse errors: `invalid_agent_slot` (slot outside `0`–`3`), `invalid_agent` (not a 20-byte hex address). A legacy signature is rejected with `legacy_signature_not_accepted`; supplying `agent_epoch` is rejected with `eip712_agent_epoch_not_allowed`.
+
+### revokeAgent
+
+Clears the agent approval on one owner slot. **Owner-signed** under `auth_scheme:"eip712"`, same constraints as `approveAgent` (no `agent_epoch`, single signature, not batchable). After revocation, agent-signed writes from that key are rejected by node admission.
+
+| Field     | Required | Values                    |
+| --------- | -------- | ------------------------- |
+| `type`    | yes      | `"revokeAgent"`           |
+| `slot_id` | yes      | Owner agent slot, `0`–`3`. |
+
+```json
+{
+  "action": {
+    "type": "revokeAgent",
+    "slot_id": "0"
+  },
+  "nonce": "1717000000008",
+  "auth_scheme": "eip712",
+  "signature": "0x..."
+}
+```
+
+Parse errors: `invalid_agent_slot`. Same EIP-712 gating as `approveAgent`.
