@@ -58,6 +58,7 @@
     * [POST /trade](build-with-native/native-core/post-trade.md)
     * [Transaction Signing](build-with-native/native-core/transaction-signing.md)
     * [Error Responses](build-with-native/native-core/error-responses.md)
+    * [WebSocket (coming soon)](build-with-native/native-core/websocket.md)
   * [Concepts](build-with-native/native-core/concepts.md)
     * [Notation](build-with-native/native-core/notation.md)
     * [Account Types](build-with-native/native-core/account-types.md)
