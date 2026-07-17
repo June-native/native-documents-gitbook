@@ -146,7 +146,7 @@ curl -sS -X POST "$API_URL/trade" \
 
 ## Rate limits & errors
 
-Rate limiting is **authority-scoped** — keyed on the recovered signer, so one API wallet is one bucket (see [Nonces & API Wallets](nonces-and-api-wallets.md)). The limit is **50 requests/second per signer** over a 1-second sliding window; over-quota writes are rejected with HTTP `429`, `error.code: "RateLimited"`, and an `error.retry_after_ms` back-off hint. It is the one rejection that is safe to resend, after backing off. Request bodies over **64 KiB** (`/info`) or **256 KiB** (`/trade`) are rejected with HTTP `413`.
+Rate limiting is **authority-scoped** — keyed on the recovered signer, so one API wallet is one bucket (see [Nonces & API Wallets](nonces-and-api-wallets.md)). The limit is **1000 requests/second per signer** over a 1-second sliding window; over-quota writes are rejected with HTTP `429`, `error.code: "RateLimited"`, and an `error.retry_after_ms` back-off hint. It is the one rejection that is safe to resend, after backing off. Request bodies over **64 KiB** (`/info`) or **256 KiB** (`/trade`) are rejected with HTTP `413`.
 
 The `/trade` error model keys on the **response body, not the HTTP status**. The API returns the same trade-response shape for HTTP 200 / 400 / 429 / 503 / 504. Because `/trade` is synchronous, `submission_status` is one of `accepted` (the transaction landed and executed), `rejected` (refused, or failed at execution — `error.code` says why), or `timeout` (outcome not observed; may still land — reconcile by `cloid`). A business rejection is **data**, not a transport error. To learn whether an order rested or filled, read [`orderStatus`](post-info.md#orderstatus); `/trade` only reports that it landed.
 
