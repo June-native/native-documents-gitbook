@@ -4,7 +4,7 @@
 
 Standard maker and taker fees are applied:
 
-<table><thead><tr><th width="273.0078125">Markets</th><th>Taker Fee</th><th>Maker Fee</th></tr></thead><tbody><tr><td>Stablecoin &#x26; softpeg pairs</td><td>0%</td><td>0%</td></tr><tr><td>All others</td><td>0.1%</td><td>0.02%</td></tr></tbody></table>
+<table><thead><tr><th width="273.0078125">Markets</th><th>Taker Fee</th><th>Maker Fee</th></tr></thead><tbody><tr><td>Stablecoin &#x26; softpeg pairs</td><td>0%</td><td>0%</td></tr><tr><td>All others</td><td>0.05%</td><td>0.02%</td></tr></tbody></table>
 
 Fee rebates and fee discounts are coming soon.
 
