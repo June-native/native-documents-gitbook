@@ -60,7 +60,7 @@ An API wallet is just an **agent keypair you generate locally**, authorized on o
 
 The typed-data fields are in [Transaction signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712); the action reference is [`approveAgent`](post-trade.md#approveagent). After approval, read the slot's `agent_epoch` from [`userAgents`](post-info.md#useragents) — agent-signed `/trade` writes carry it.
 
-The **Native web app** does these same steps for you — generate the key, submit the `approveAgent` — and hands you a one-time **connection bundle**. Either way you end up holding the same three values:
+Prefer a UI? The **[Native web app](https://app-uat.native.org/markets/ETH-USDT?agentWallets=agents)** does these same steps for you — connect your main wallet and it generates the agent key, submits the `approveAgent`, and hands you a one-time **connection bundle**. Either way you end up holding the same three values:
 
 ```jsonc
 {
@@ -131,7 +131,7 @@ Every `/trade` write is a **client-signed transaction**. The API reconstructs a 
 
 * **Trading actions** (`order`, `cancel`, `cancelAll`, `modify`, `batch`) use the default legacy binary scheme (`auth_scheme: "legacy"`) and are signed by the **API wallet** key.
 * **Owner `/trade` actions** (`withdraw` / `settle` / `repay`) are **EIP-712** (`auth_scheme: "eip712"`) and are signed by your **main wallet** — not with the API wallet, and not part of a bot's hot path.
-* **Agent approval** (`approveAgent` / `revokeAgent`) is also a main-wallet EIP-712 signature — it is how you create or revoke the API wallet. This is normally done in the Native web app, though both are `/trade` action types the API accepts directly.
+* **Agent approval** (`approveAgent` / `revokeAgent`) is also a main-wallet EIP-712 signature — it is how you create or revoke the API wallet. Do it in the [Native web app](https://app-uat.native.org/markets/ETH-USDT?agentWallets=agents) or sign it yourself — both are `/trade` action types the API accepts directly.
 
 The exact payload layout, encoding rules, and EIP-712 typed-data schemes are here:
 
