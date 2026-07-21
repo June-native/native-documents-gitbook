@@ -4,7 +4,7 @@ description: The owner-signed actions — approve or revoke an API wallet, withd
 
 # Manage agents & funds
 
-A handful of actions move value or manage who can trade for you. They are **owner-signed**: your main wallet signs them under `auth_scheme: "eip712"`, never the API wallet. You normally do these in the [Native web app](https://app.native.org/markets/ETH-USDT?network=mainnet&agentWallets=agents), but each is a real `POST /trade` action the API accepts directly.
+A handful of actions move value or manage who can trade for you. They are **owner-signed**: your main wallet signs them under `auth_scheme: "eip712"`, never the API wallet. Each is a real `POST /trade` action the API accepts directly — sign it with your main wallet — or do it through the Native web app.
 
 The API wallet's own allowlist is only `order` / `cancel` / `cancelAll` / `modify` / `batch` — it can trade, never move funds. See [Nonces & API Wallets](nonces-and-api-wallets.md).
 

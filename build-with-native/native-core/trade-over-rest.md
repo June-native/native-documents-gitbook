@@ -10,10 +10,11 @@ The examples below use mainnet, `API_URL=https://api.native.org`. To integrate a
 
 ## 1. Get an API wallet
 
-Fund and provision in the [Native web app](https://app.native.org/markets/ETH-USDT?network=mainnet&agentWallets=agents) — not the API:
+An API wallet is an agent keypair you generate locally, authorized by one owner-signed `approveAgent`. Provision it directly against the API — see [creating an API wallet](api-access.md#access-model-api-wallets) for the full flow:
 
-1. Connect your **main wallet** and deposit the quote asset you'll trade. Your trading account is created on the first deposit.
-2. Click **Create API wallet** and copy the one-time connection bundle:
+1. Generate an agent keypair locally; its 20-byte address is the `agent`.
+2. Deposit the quote asset you'll trade from your main wallet — your account is created on the first deposit.
+3. Your main wallet signs one `approveAgent` (EIP-712) authorizing the agent. The Native web app can do this for you and return the same values as a one-time connection bundle:
 
 ```jsonc
 {

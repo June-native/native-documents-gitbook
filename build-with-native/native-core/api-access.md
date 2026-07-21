@@ -37,25 +37,36 @@ The chain id is folded into every signed `/trade` payload and must match the env
 API_URL=https://api.native.org
 ```
 
-You fund a trading account by depositing assets from your main wallet in the web app. See the [access model](#access-model-api-wallets) below for depositing and creating the API wallet.
+You fund a trading account by depositing assets from your main wallet. See the [access model](#access-model-api-wallets) below for depositing and creating the API wallet.
 
 ## Access model — API wallets
 
 Writes are authorized by an **API wallet**: a protocol-level *agent* key scoped only to placing and cancelling orders. An API wallet can trade your account's balance, but it can **never** move funds off Native — deposits, withdrawals, and agent approval all require your main wallet. That scoping (and the fact that it is revocable) is what makes it safe to run in an unattended bot.
 
-You create one in the **[Native web app](https://app.native.org/markets/ETH-USDT?network=mainnet&agentWallets=agents)**, not through the API — that link opens the **API wallets** panel directly:
+An API wallet is just an **agent keypair you generate locally**, authorized on one of your account's agent slots (`0`–`3`) by a single owner-signed `approveAgent`. Set it up directly against the API — no browser required:
 
-1. Connect your **main wallet** and deposit the quote asset you'll trade. Your trading account is created on the first deposit.
-2. In the **API wallets** panel, click **Create API wallet**. Your main wallet signs one `approveAgent`, and the app shows a one-time **connection bundle** containing the agent key. Copy it now; it is shown once.
-3. Revoke or rotate the API wallet in the app at any time.
+1. **Generate an agent keypair** locally (any secp256k1 key). The private key is your only signing secret; it never leaves your process. Its 20-byte address is the `agent`.
+2. **Fund the account.** Deposit the quote asset you'll trade from your main wallet — the per-chain deposit contract addresses are in [`accountingDepositContracts`](post-info.md#accountingdepositcontracts). Your trading account is created on the first deposit.
+3. **Approve the agent.** Your main wallet signs one `approveAgent` under `auth_scheme:"eip712"` and you `POST /trade` it:
 
-The connection bundle is a small JSON object:
+```json
+{
+  "action": { "type": "approveAgent", "slot_id": "0", "agent": "0x…agentAddress" },
+  "nonce": "1717000000007",
+  "auth_scheme": "eip712",
+  "signature": "0x…"
+}
+```
+
+The typed-data fields are in [Transaction signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712); the action reference is [`approveAgent`](post-trade.md#approveagent). After approval, read the slot's `agent_epoch` from [`userAgents`](post-info.md#useragents) — agent-signed `/trade` writes carry it.
+
+The **Native web app** does these same steps for you — generate the key, submit the `approveAgent` — and hands you a one-time **connection bundle**. Either way you end up holding the same three values:
 
 ```jsonc
 {
-  "network": "mainnet",       // which network the wallet was created on
+  "network": "mainnet",       // the network the wallet is bound to
   "accountAddress": "0x…",    // your main wallet — the account the bot trades on
-  "agentPrivateKey": "0x…"    // the only signing secret; the SDK signs /trade with this
+  "agentPrivateKey": "0x…"    // the only signing secret; sign /trade with this
 }
 ```
 
