@@ -15,10 +15,6 @@ Reads are poll-based over `POST /info`. This page is the front door for anyone i
 **Streaming coming soon.** Today all reads are poll-based over `POST /info`. A WebSocket streaming API for live market data and order updates is on the roadmap.
 {% endhint %}
 
-{% hint style="warning" %}
-**Testnet only.** Native Core is currently available on **testnet only**, at `https://api-test.native.org`. Everything on this page targets testnet.
-{% endhint %}
-
 There are two ways to integrate:
 
 * **Call the API directly** — the two REST endpoints documented on this page. Full control, any language.
@@ -26,23 +22,30 @@ There are two ways to integrate:
 
 Signing `/trade` by hand means building a canonical binary payload with recoverable secp256k1 signatures and per-signer monotonic nonces — fully specified below for building your own client. The Python SDK implements it for you.
 
-## Environment
+## Environments
 
-The API is served over HTTPS. The examples below use:
+The API is served over HTTPS. Native Core runs on **mainnet**, with a **testnet** for integration and testing. Each environment has its own base URL and signing chain id:
+
+| Environment | Base URL | `network` | Chain id (signing) |
+| --- | --- | --- | --- |
+| **Mainnet** | `https://api.native.org` | `mainnet` | `696969` |
+| Testnet | `https://api-test.native.org` | `testnet` | `969696` |
+
+The chain id is folded into every signed `/trade` payload and must match the environment you target — sign for the wrong one and the API recovers a different authority and rejects the write (see [Transaction signing](transaction-signing.md)). The examples below use mainnet:
 
 ```bash
-API_URL=https://api-test.native.org
+API_URL=https://api.native.org
 ```
 
-You fund a trading account by depositing **Arbitrum Sepolia** testnet assets from your main wallet in the web app (there is no faucet — bring your own). See the [access model](#access-model-api-wallets) below for depositing and creating the API wallet.
+You fund a trading account by depositing assets from your main wallet in the web app. See the [access model](#access-model-api-wallets) below for depositing and creating the API wallet.
 
 ## Access model — API wallets
 
 Writes are authorized by an **API wallet**: a protocol-level *agent* key scoped only to placing and cancelling orders. An API wallet can trade your account's balance, but it can **never** move funds off Native — deposits, withdrawals, and agent approval all require your main wallet. That scoping (and the fact that it is revocable) is what makes it safe to run in an unattended bot.
 
-You create one in the **[Native web app](https://app-uat.native.org/markets/ETH-USDT?network=testnet&agentWallets=agents)** (testnet), not through the API — that link opens the **API wallets** panel directly:
+You create one in the **[Native web app](https://app.native.org/markets/ETH-USDT?network=mainnet&agentWallets=agents)**, not through the API — that link opens the **API wallets** panel directly:
 
-1. Connect your **main wallet** and deposit **Arbitrum Sepolia** testnet assets. There is no faucet — bring your own. Your trading account is created on the first deposit.
+1. Connect your **main wallet** and deposit the quote asset you'll trade. Your trading account is created on the first deposit.
 2. In the **API wallets** panel, click **Create API wallet**. Your main wallet signs one `approveAgent`, and the app shows a one-time **connection bundle** containing the agent key. Copy it now; it is shown once.
 3. Revoke or rotate the API wallet in the app at any time.
 
@@ -50,7 +53,7 @@ The connection bundle is a small JSON object:
 
 ```jsonc
 {
-  "network": "testnet",       // which network to use
+  "network": "mainnet",       // which network the wallet was created on
   "accountAddress": "0x…",    // your main wallet — the account the bot trades on
   "agentPrivateKey": "0x…"    // the only signing secret; the SDK signs /trade with this
 }

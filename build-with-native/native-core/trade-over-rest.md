@@ -6,20 +6,18 @@ description: Zero to a live order over REST — the fastest path to your first N
 
 One signed request per call, and the call blocks for the outcome — no socket to manage. This page takes you from nothing to a working order.
 
-{% hint style="warning" %}
-**Testnet only.** Native Core is currently available on **testnet only**. The examples below use `API_URL=https://api-test.native.org`.
-{% endhint %}
+The examples below use mainnet, `API_URL=https://api.native.org`. To integrate against testnet, swap in `https://api-test.native.org` and sign with the testnet chain id — see [environments](api-access.md#environments).
 
 ## 1. Get an API wallet
 
-Fund and provision in the [Native web app](https://app-uat.native.org/markets/ETH-USDT?network=testnet&agentWallets=agents) — not the API:
+Fund and provision in the [Native web app](https://app.native.org/markets/ETH-USDT?network=mainnet&agentWallets=agents) — not the API:
 
-1. Connect your **main wallet** and deposit **Arbitrum Sepolia** testnet assets (no faucet — bring your own). Your trading account is created on the first deposit.
+1. Connect your **main wallet** and deposit the quote asset you'll trade. Your trading account is created on the first deposit.
 2. Click **Create API wallet** and copy the one-time connection bundle:
 
 ```jsonc
 {
-  "network": "testnet",
+  "network": "mainnet",
   "accountAddress": "0x…",   // your account (owner) — you read and sign-as-agent against this
   "agentPrivateKey": "0x…"   // the only signing secret
 }

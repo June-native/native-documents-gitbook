@@ -11,14 +11,14 @@ Canonical unsigned payload:
 ```rust
 string("NATIVE_CORE_TX_SIGNING_V1")
 u32(1)                  // tx codec version
-u32(969696)             // Native Core chain id
+u32(696969)             // Native Core chain id (mainnet; testnet is 969696)
 u64(nonce)
 option<u64>(agent_epoch)
 option<u64>(expires_after_ms)
 action_bytes
 ```
 
-The chain id is the target deployment's Native chain id (**testnet: `969696`**). It is folded into the signed bytes but is **never sent on the wire**, so it must equal the deployment you target — signing with the wrong chain id makes the API recover a different authority and reject the write.
+The chain id is the target deployment's Native chain id (**mainnet: `696969`**, testnet: `969696`). It is folded into the signed bytes but is **never sent on the wire**, so it must equal the deployment you target — signing with the wrong chain id makes the API recover a different authority and reject the write.
 
 Encoding rules:
 
@@ -143,7 +143,7 @@ TypeScript signing helper example for Node.js with `ethers`. The example uses No
 import { SigningKey, getBytes, keccak256 } from "ethers";
 
 const NativeCore = {
-  chainId: 969_696, // Native Core testnet chain id — must match the deployment you sign for
+  chainId: 696_969, // Native Core mainnet chain id (testnet: 969_696) — must match the deployment you sign for
 
   txCodecVersion: 1,
   signingDomain: "NATIVE_CORE_TX_SIGNING_V1",

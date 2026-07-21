@@ -25,9 +25,7 @@ The Native Core API is the direct integration surface for the on-chain CLOB. Cli
 
 Operational, recovery, and node-private interfaces are intentionally not part of this contract.
 
-{% hint style="warning" %}
-**Testnet only.** Native Core is currently available on **testnet only**, at `https://api-test.native.org`. Everything in this section targets testnet.
-{% endhint %}
+Native Core runs on **mainnet** (`https://api.native.org`), with a **testnet** (`https://api-test.native.org`) for integration and testing. See [environments](api-access.md#environments) for base URLs and signing chain ids.
 
 ## Start here
 
@@ -49,7 +47,7 @@ Prefer a client library? The official Python SDK wraps both endpoints, signs `/t
 
 ## Conventions
 
-* `API_URL` examples use `https://api-test.native.org`.
+* `API_URL` examples use `https://api.native.org` (mainnet); the testnet base URL is `https://api-test.native.org`.
 * Hex values are `0x`-prefixed lowercase strings unless noted otherwise.
 * Protocol numeric fields in signed actions are decimal strings; integer-valued fields (ids, nonces) also accept an unsigned JSON integer, while decimal price/quantity/amount fields must be strings.
 * Business query responses include `query_height` and `app_hash` when a query view is available. `query_height` is the execution height represented by the published read view.

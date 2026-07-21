@@ -107,7 +107,7 @@ Market metadata validation:
 * A base/quote pair may be opened only once.
 * Market ids are unique.
 
-The testnet genesis quote allowlist is USDC asset `1` with `min_quantity="10"`, USDT asset `2` with `min_quantity="10"`, ETH asset `3` with `min_quantity="0.01"`, and BNB asset `4` with `min_quantity="0.02"`. Read the live per-quote-asset minimums from [`POST /info` `quoteAssets`](post-info.md#quoteassets).
+The genesis quote allowlist is USDC asset `1` with `min_quantity="10"`, USDT asset `2` with `min_quantity="10"`, ETH asset `3` with `min_quantity="0.01"`, and BNB asset `4` with `min_quantity="0.02"`. Read the live per-quote-asset minimums from [`POST /info` `quoteAssets`](post-info.md#quoteassets).
 
 ### Write-Time Numeric Validation
 
