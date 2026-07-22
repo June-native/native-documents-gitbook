@@ -14,7 +14,7 @@ An API wallet is an agent keypair you generate locally, authorized by one owner-
 
 1. Generate an agent keypair locally; its 20-byte address is the `agent`.
 2. Deposit the quote asset you'll trade from your main wallet — your account is created on the first deposit.
-3. Your main wallet signs one `approveAgent` (EIP-712) authorizing the agent. The **[Native web app](https://app-uat.native.org/markets/ETH-USDT?agentWallets=agents)** can do this for you and return the same values as a one-time connection bundle:
+3. Your main wallet signs one `approveAgent` (EIP-712) authorizing the agent. The **[Native web app](https://app.native.org/markets/ETH-USDT?agentWallets=agents)** can do this for you and return the same values as a one-time connection bundle:
 
 ```jsonc
 {
