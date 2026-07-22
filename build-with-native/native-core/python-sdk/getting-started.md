@@ -1,14 +1,10 @@
 ---
-description: Install the Native Core Python SDK, create an API wallet, and place your first order on testnet.
+description: Install the Native Core Python SDK, create an API wallet, and place your first order.
 ---
 
 # Getting Started
 
 The Native Core Python SDK (`native-core-python-sdk`, import `native_core`) is a thin, typed, synchronous client over Native Core's two REST endpoints: `POST /info` for reads and `POST /trade` for writes. This page takes you from `pip install` to a resting order you place and cancel yourself.
-
-{% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.2.0` and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.2.0`.
-{% endhint %}
 
 ## Install
 
@@ -16,12 +12,6 @@ Requires **Python 3.10+**. The runtime dependencies are `requests`, `eth-account
 
 ```bash
 pip install native-core-python-sdk
-```
-
-Because the SDK is pre-1.0, any release may change the API. Pin an exact version and review the changes before upgrading:
-
-```bash
-pip install native-core-python-sdk==0.2.0
 ```
 
 ## Get an API wallet

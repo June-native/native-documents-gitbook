@@ -8,10 +8,6 @@ description: >-
 
 The complete surface of `native-core-python-sdk` (import `native_core`): the `Info` and `Exchange` classes, the response and problem helpers, the exception hierarchy, the transport controls, and the constants. Every method lists the underlying API call it makes so you can cross-reference the wire behaviour.
 
-{% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.2.0` and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.2.0`.
-{% endhint %}
-
 {% hint style="info" %}
 This page is a symbol reference. For the field-level semantics of any returned JSON, follow the linked wire reference: reads resolve to [`POST /info`](../post-info.md), writes to [`POST /trade`](../post-trade.md). See also [Decimal units](../decimals-units.md) for raw/display conversion and [Transaction signing](../transaction-signing.md) for the signature the SDK builds for you.
 {% endhint %}

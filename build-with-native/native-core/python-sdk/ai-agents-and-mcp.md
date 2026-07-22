@@ -6,10 +6,6 @@ description: Wire an AI agent to trade on Native Core — the safety contract, t
 
 The Native Core Python SDK is built to be driven by an AI agent, not just a person. This page is the agent-integration centerpiece: one safety contract, then two ways to connect — a bundled MCP server that needs no glue code, or the SDK called directly from your own agent loop.
 
-{% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.2.0` and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.2.0`.
-{% endhint %}
-
 ## Why Native Core is agent-friendly
 
 The API and the SDK are shaped so an autonomous model can trade without ever holding a fund-moving key or parsing prose to know what happened.
