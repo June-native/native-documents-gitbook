@@ -1,10 +1,8 @@
 ---
-description: Habits that keep a Native Core integration correct and safe under load.
+description: The core habits a live Native Core integration should follow.
 ---
 
 # Best practices
-
-A short list of habits that keep a live integration correct. Each links to the reference for the detail.
 
 ## Orders & cancels
 
