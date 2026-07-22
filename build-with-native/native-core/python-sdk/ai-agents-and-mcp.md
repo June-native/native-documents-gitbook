@@ -128,7 +128,7 @@ If your agent does its own tool-calling (not MCP), call the SDK directly and han
 ```python
 from native_core import Exchange
 
-exchange = Exchange.from_bundle(BUNDLE)   # a testnet bundle
+exchange = Exchange.from_bundle(BUNDLE)   # your connection bundle
 order = exchange.place(MARKET, is_buy=True, sz=sz, limit_px=px, tif="gtc")
 
 # Resolve the real outcome by cloid — never resubmit on an uncertain one.

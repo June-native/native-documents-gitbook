@@ -64,7 +64,7 @@ It turns the two misconfigs that would otherwise surface as empty query results 
 | `info/query_balances_info.py` | Read-only: your spot balances, available and locked per asset (`user_balances`). |
 | `info/query_open_order_info.py` | Read-only: your resting orders in one market (`open_orders`). |
 
-The trading scripts default to testnet and `ETH/USDT` — edit the `MARKET` constant to trade a different market. Run them from the repo root:
+The trading scripts default to testnet (the base-url default in `example_utils.setup()`) and to `ETH/USDT`. Pass `setup(base_url=constants.MAINNET_API_URL)` to run on mainnet, or edit the `MARKET` constant for another market. Run them from the repo root:
 
 ```bash
 python examples/info/query_markets_info.py     # read-only tour, no orders
@@ -87,7 +87,7 @@ from native_core import Info
 BUNDLE = "bundle.json"   # your saved connection bundle (see getting-started.md)
 MARKET = "ETH/USDT"
 
-info = Info.from_bundle(BUNDLE)   # picks the testnet endpoint from the bundle's network
+info = Info.from_bundle(BUNDLE)   # picks the endpoint from the bundle's network
 
 # List the tradable markets and their precision.
 for m in info.markets()["markets"]:

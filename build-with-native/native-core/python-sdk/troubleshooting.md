@@ -17,7 +17,7 @@ A business rejection is **data on the response body**, not an exception (read it
 | `LocalValidationError: wallet 0x… is not an active agent for owner 0x…` (at construction) | The API wallet is not an approved agent on that account — it was revoked or replaced, or the `owner` is wrong. | Confirm with `info.agent_status(owner, agent)` / `info.user_agents(owner)`; create a fresh API wallet in the web app if the key was rotated. |
 | `DirectSignerIsActiveAgent` (rejected) | You built `Exchange(wallet, base_url)` with an API wallet key but no `owner`, so the SDK signed as a direct owner — but the API knows the key is an active agent, which may never sign as an owner. | Pass `owner=<accountAddress>`, or use `Exchange.from_bundle(bundle)`, which sets the owner for you. |
 | `AgentEpochMismatch` (rejected) | The signed `agent_epoch` was stale relative to the on-chain approval. | The SDK re-resolves the epoch from `userAgents` and retries **once** automatically. If it persists, the API wallet was revoked or re-approved — create a new one in the app. |
-| `InsufficientSpotBalance` (rejected) | The account is not funded in the market's quote asset. | Deposit from your main wallet in the web app (no faucet — bring Arbitrum Sepolia testnet assets). The account is created on the first deposit. |
+| `InsufficientSpotBalance` (rejected) | The account is not funded in the market's quote asset. | Deposit the quote asset from your main wallet in the web app; the account is created on the first deposit. |
 | `SubmissionUncertain` (raised) · `submission_status: "timeout"` | The write was signed and sent, then the wire timed out — the order **may still have landed**. `SubmissionUncertain` carries `.cloid` and `.nonce`; `next_action` returns `RECONCILE_BY_CLOID`. | Resolve the real outcome by cloid: `info.reconcile_by_cloid(user, market, cloid)` (or `wait_for_order`). **Never** resubmit under a fresh nonce — double-fill risk. |
 | `submission_status: "rejected"` (with an `error.code`) | A business rejection: your input or account state was refused. It is data, not an exception; `next_action` returns `FIX_AND_RESUBMIT`. | Read `error_code(resp)`, fix the cause, then submit a fresh order. |
 | `NetworkError` (raised) | A transport failure (timeout, connection, DNS) before any response arrived. On a **read**, nothing was submitted. | Retry the read. On a **write**, a transport failure surfaces as `SubmissionUncertain` instead — reconcile by cloid, never blind-resubmit. |
@@ -30,7 +30,7 @@ A wire timeout is the one outcome you must not retry blindly. Catch it, then set
 ```python
 from native_core import Exchange, SubmissionUncertain
 
-exchange = Exchange.from_bundle("bundle.json")   # a testnet bundle
+exchange = Exchange.from_bundle("bundle.json")   # your connection bundle
 MARKET = "ETH/USDT"
 
 try:

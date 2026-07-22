@@ -95,7 +95,7 @@ from decimal import Decimal
 
 from native_core import Exchange, is_accepted, order_state
 
-exchange = Exchange.from_bundle("bundle.json")   # testnet bundle: picks the endpoint, loads the key
+exchange = Exchange.from_bundle("bundle.json")   # from your bundle: picks the endpoint, loads the key
 info = exchange.info
 MARKET = "ETH/USDT"
 
@@ -192,7 +192,8 @@ Exposed under `native_core.constants`.
 
 | Constant | Value | Notes |
 | --- | --- | --- |
-| `TESTNET_API_URL` | `https://api-test.native.org` | The endpoint the SDK talks to |
+| `MAINNET_API_URL` | `https://api.native.org` | Mainnet gateway base URL |
+| `TESTNET_API_URL` | `https://api-test.native.org` | Testnet gateway base URL |
 | `NETWORK_URLS` | network name → endpoint URL | The bundle's `network` field maps through this |
 
 ## See also

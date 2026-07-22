@@ -13,7 +13,7 @@ The SDK is a thin, typed, synchronous client over the two Native Core endpoints.
 ```python
 from native_core import Exchange, is_accepted
 
-exchange = Exchange.from_bundle("bundle.json")   # a testnet bundle
+exchange = Exchange.from_bundle("bundle.json")   # your connection bundle
 resp = exchange.order("ETH/USDT", is_buy=True, sz="0.01", limit_px="1000.00", tif="gtc")
 
 assert is_accepted(resp)                          # landed & executed — but not necessarily filled
