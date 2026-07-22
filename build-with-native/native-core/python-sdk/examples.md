@@ -4,10 +4,6 @@ description: Runnable scripts that ship with the Native Core Python SDK, plus tw
 
 # Examples
 
-{% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.2.0` and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.2.0`.
-{% endhint %}
-
 The SDK ships a folder of runnable scripts under `examples/` in the source distribution (the `.tar.gz` on PyPI). They all read `examples/config.json` — a two-field file you copy from the template and fill in with your API wallet key:
 
 ```json
@@ -26,7 +22,7 @@ The read-only scripts under `examples/info/` place no orders, but they still rea
 
 ## Get the examples
 
-The runnable scripts live in `examples/`. `pip install native-core-python-sdk==0.2.0` ships most of them inside the source distribution, but the complete folder — including `market_maker_bot.py` — lives only in the repo, which is excluded from the published PyPI package. Clone it from the [Native GitHub org](https://github.com/Native-org) to get everything, set up the config as above, and run any script from the repo root:
+The runnable scripts live in `examples/`. `pip install native-core-python-sdk==1.0.0` ships most of them inside the source distribution, but the complete folder — including `market_maker_bot.py` — lives only in the repo, which is excluded from the published PyPI package. Clone it from the [Native GitHub org](https://github.com/Native-org) to get everything, set up the config as above, and run any script from the repo root:
 
 ```bash
 git clone https://github.com/Native-org/native-core-python-sdk.git
@@ -68,7 +64,7 @@ It turns the two misconfigs that would otherwise surface as empty query results 
 | `info/query_balances_info.py` | Read-only: your spot balances, available and locked per asset (`user_balances`). |
 | `info/query_open_order_info.py` | Read-only: your resting orders in one market (`open_orders`). |
 
-The trading scripts default to testnet and `ETH/USDT` — edit the `MARKET` constant to trade a different market. Run them from the repo root:
+The trading scripts default to testnet (the base-url default in `example_utils.setup()`) and to `ETH/USDT`. Pass `setup(base_url=constants.MAINNET_API_URL)` to run on mainnet, or edit the `MARKET` constant for another market. Run them from the repo root:
 
 ```bash
 python examples/info/query_markets_info.py     # read-only tour, no orders
@@ -91,7 +87,7 @@ from native_core import Info
 BUNDLE = "bundle.json"   # your saved connection bundle (see getting-started.md)
 MARKET = "ETH/USDT"
 
-info = Info.from_bundle(BUNDLE)   # picks the testnet endpoint from the bundle's network
+info = Info.from_bundle(BUNDLE)   # picks the endpoint from the bundle's network
 
 # List the tradable markets and their precision.
 for m in info.markets()["markets"]:
@@ -222,6 +218,6 @@ finally:
 ## See also
 
 * [getting-started.md](getting-started.md) — create an API wallet, save the bundle, and run your first trade.
-* [PyPI project](https://pypi.org/project/native-core-python-sdk/) — `pip install native-core-python-sdk==0.2.0`.
+* [PyPI project](https://pypi.org/project/native-core-python-sdk/) — `pip install native-core-python-sdk==1.0.0`.
 * [Native GitHub org](https://github.com/Native-org) — clone the SDK repo for the full `examples/` folder, including `market_maker_bot.py`.
 * Wire references: [`POST /trade`](../post-trade.md), [`POST /info`](../post-info.md), [Transaction signing](../transaction-signing.md), [Decimals & Units](../decimals-units.md).

@@ -6,10 +6,6 @@ description: Common Native Core Python SDK errors — the surfaced string, what 
 
 A business rejection is **data on the response body**, not an exception (read it with `error_code`, `is_rejected`, `next_action`). The SDK raises only for problems it catches before signing (`LocalValidationError`), a transport failure (`NetworkError`), a signed-then-timed-out write (`SubmissionUncertain`), or a non-trade 4xx/5xx body (`ClientError` / `ServerError`). This page maps the symptom you actually see — a raised exception or a surfaced `error.code` — to its cause and fix.
 
-{% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.2.0` and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.2.0`.
-{% endhint %}
-
 ## Common errors
 
 | You see (surfaced string / class) | Meaning | Fix |
@@ -21,7 +17,7 @@ A business rejection is **data on the response body**, not an exception (read it
 | `LocalValidationError: wallet 0x… is not an active agent for owner 0x…` (at construction) | The API wallet is not an approved agent on that account — it was revoked or replaced, or the `owner` is wrong. | Confirm with `info.agent_status(owner, agent)` / `info.user_agents(owner)`; create a fresh API wallet in the web app if the key was rotated. |
 | `DirectSignerIsActiveAgent` (rejected) | You built `Exchange(wallet, base_url)` with an API wallet key but no `owner`, so the SDK signed as a direct owner — but the API knows the key is an active agent, which may never sign as an owner. | Pass `owner=<accountAddress>`, or use `Exchange.from_bundle(bundle)`, which sets the owner for you. |
 | `AgentEpochMismatch` (rejected) | The signed `agent_epoch` was stale relative to the on-chain approval. | The SDK re-resolves the epoch from `userAgents` and retries **once** automatically. If it persists, the API wallet was revoked or re-approved — create a new one in the app. |
-| `InsufficientSpotBalance` (rejected) | The account is not funded in the market's quote asset. | Deposit from your main wallet in the web app (no faucet — bring Arbitrum Sepolia testnet assets). The account is created on the first deposit. |
+| `InsufficientSpotBalance` (rejected) | The account is not funded in the market's quote asset. | Deposit the quote asset from your main wallet in the web app; the account is created on the first deposit. |
 | `SubmissionUncertain` (raised) · `submission_status: "timeout"` | The write was signed and sent, then the wire timed out — the order **may still have landed**. `SubmissionUncertain` carries `.cloid` and `.nonce`; `next_action` returns `RECONCILE_BY_CLOID`. | Resolve the real outcome by cloid: `info.reconcile_by_cloid(user, market, cloid)` (or `wait_for_order`). **Never** resubmit under a fresh nonce — double-fill risk. |
 | `submission_status: "rejected"` (with an `error.code`) | A business rejection: your input or account state was refused. It is data, not an exception; `next_action` returns `FIX_AND_RESUBMIT`. | Read `error_code(resp)`, fix the cause, then submit a fresh order. |
 | `NetworkError` (raised) | A transport failure (timeout, connection, DNS) before any response arrived. On a **read**, nothing was submitted. | Retry the read. On a **write**, a transport failure surfaces as `SubmissionUncertain` instead — reconcile by cloid, never blind-resubmit. |
@@ -34,7 +30,7 @@ A wire timeout is the one outcome you must not retry blindly. Catch it, then set
 ```python
 from native_core import Exchange, SubmissionUncertain
 
-exchange = Exchange.from_bundle("bundle.json")   # a testnet bundle
+exchange = Exchange.from_bundle("bundle.json")   # your connection bundle
 MARKET = "ETH/USDT"
 
 try:
@@ -72,8 +68,8 @@ if is_retryable(resp):                      # True only for RateLimited
 
 * **Pass `str` or `Decimal`, never `float`.** `"0.01"` or `Decimal("0.01")`, not `0.01`. A `float` raises `LocalValidationError` before signing; the SDK never rounds silently.
 * **One `Exchange` per API wallet.** The nonce is a per-instance, lock-guarded, monotonic ms counter — a single instance is safe to share across threads. Two instances (or two processes) on the same key hand out colliding nonces and draw seemingly random rejections.
-* **Testnet only.** This release runs on testnet — build from a `testnet` bundle.
-* **The account must be funded to trade.** Deposit from your main wallet in the web app first (no faucet — bring Arbitrum Sepolia testnet assets); the account is created on the first deposit. Otherwise orders come back `InsufficientSpotBalance`.
+* **Match the network.** Build from the bundle whose `network` (`mainnet` or `testnet`) you mean to trade — a key signed for one network is rejected on the other.
+* **The account must be funded to trade.** Deposit from your main wallet in the web app first — the account is created on the first deposit (on testnet there's no faucet; bring Arbitrum Sepolia assets). Otherwise orders come back `InsufficientSpotBalance`.
 * **`accepted` is not `filled`.** A raw `order()` / `market_order()` returning `submission_status: "accepted"` means the transaction **landed and executed** — not that the order rested or filled. Read the real state by cloid with `reconcile_by_cloid` (or `wait_for_open` for a resting order).
 
 ## See also

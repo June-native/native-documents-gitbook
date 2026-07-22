@@ -8,10 +8,6 @@ description: >-
 
 The complete surface of `native-core-python-sdk` (import `native_core`): the `Info` and `Exchange` classes, the response and problem helpers, the exception hierarchy, the transport controls, and the constants. Every method lists the underlying API call it makes so you can cross-reference the wire behaviour.
 
-{% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.2.0` and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.2.0`.
-{% endhint %}
-
 {% hint style="info" %}
 This page is a symbol reference. For the field-level semantics of any returned JSON, follow the linked wire reference: reads resolve to [`POST /info`](../post-info.md), writes to [`POST /trade`](../post-trade.md). See also [Decimal units](../decimals-units.md) for raw/display conversion and [Transaction signing](../transaction-signing.md) for the signature the SDK builds for you.
 {% endhint %}
@@ -99,7 +95,7 @@ from decimal import Decimal
 
 from native_core import Exchange, is_accepted, order_state
 
-exchange = Exchange.from_bundle("bundle.json")   # testnet bundle: picks the endpoint, loads the key
+exchange = Exchange.from_bundle("bundle.json")   # from your bundle: picks the endpoint, loads the key
 info = exchange.info
 MARKET = "ETH/USDT"
 
@@ -196,7 +192,8 @@ Exposed under `native_core.constants`.
 
 | Constant | Value | Notes |
 | --- | --- | --- |
-| `TESTNET_API_URL` | `https://api-test.native.org` | The endpoint the SDK talks to |
+| `MAINNET_API_URL` | `https://api.native.org` | Mainnet gateway base URL |
+| `TESTNET_API_URL` | `https://api-test.native.org` | Testnet gateway base URL |
 | `NETWORK_URLS` | network name → endpoint URL | The bundle's `network` field maps through this |
 
 ## See also

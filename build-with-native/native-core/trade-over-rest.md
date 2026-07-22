@@ -6,26 +6,17 @@ description: Zero to a live order over REST — the fastest path to your first N
 
 One signed request per call, and the call blocks for the outcome — no socket to manage. This page takes you from nothing to a working order.
 
-{% hint style="warning" %}
-**Testnet only.** Native Core is currently available on **testnet only**. The examples below use `API_URL=https://api-test.native.org`.
-{% endhint %}
+The examples below use mainnet, `API_URL=https://api.native.org`. To integrate against testnet, swap in `https://api-test.native.org` and sign with the testnet chain id — see [environments](api-access.md#environments).
 
 ## 1. Get an API wallet
 
-Fund and provision in the [Native web app](https://app-uat.native.org/markets/ETH-USDT?network=testnet&agentWallets=agents) — not the API:
+An API wallet is an agent keypair you generate locally, authorized by one owner-signed `approveAgent`. It places and cancels orders but can **never** move funds. Three steps — covered in full, with the connection-bundle shape, under [creating an API wallet](api-access.md#access-model-api-wallets):
 
-1. Connect your **main wallet** and deposit **Arbitrum Sepolia** testnet assets (no faucet — bring your own). Your trading account is created on the first deposit.
-2. Click **Create API wallet** and copy the one-time connection bundle:
+1. Generate an agent keypair locally; its 20-byte address is the `agent`.
+2. Deposit the quote asset you'll trade from your main wallet — your account is created on the first deposit.
+3. Approve the agent: your main wallet signs one `approveAgent` (EIP-712). The **[Native web app](https://app.native.org/markets/ETH-USDT?agentWallets=agents)** does all three for you and hands back the agent key.
 
-```jsonc
-{
-  "network": "testnet",
-  "accountAddress": "0x…",   // your account (owner) — you read and sign-as-agent against this
-  "agentPrivateKey": "0x…"   // the only signing secret
-}
-```
-
-The API wallet places and cancels orders; it can **never** move funds. See [Account Types](account-types.md) if you were granted a credit account.
+You end up holding the agent private key (your only signing secret) and your owner `accountAddress`. See [Account Types](account-types.md) if you were granted a credit account.
 
 ## 2. Find your market
 
@@ -79,15 +70,15 @@ Always set a `cloid` — it is how you reconcile a `timeout` (step 5). Send `pri
 
 `/trade` is synchronous: the call blocks (~1s) and returns the result in `submission_status`.
 
-| `submission_status` | Meaning | Do next |
-| --- | --- | --- |
-| `accepted` | The order landed and executed. | To see whether it rested or filled, read [`orderStatus`](post-info.md#orderstatus). |
-| `rejected` | Refused, or failed at execution. `error.code` says why. | Fix the cause and submit a **fresh** action. If `RateLimited`, back off `error.retry_after_ms` and resend the same one. |
-| `timeout` | The outcome was not observed in time. **May still land.** | Reconcile by `cloid`; never resubmit under a new nonce. |
-
 ```json
 { "submission_status": "accepted", "tx_hash": "0x…" }
 ```
+
+`accepted` means the order **landed and executed** — not necessarily filled. Read [`orderStatus`](post-info.md#orderstatus) to see whether it rested or filled. The other two outcomes — `rejected` and `timeout` — each need their own handling, and only a `timeout` can double-fill you if you resubmit. The full decision playbook is one page:
+
+{% content-ref url="handle-timeouts.md" %}
+[handle-timeouts.md](handle-timeouts.md)
+{% endcontent-ref %}
 
 That is a full round trip. The order is working — list it with [`openOrders`](post-info.md#openorders), and cancel with a [`cancel`](post-trade.md#cancel) action.
 

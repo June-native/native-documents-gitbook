@@ -54,6 +54,7 @@
     * [Read market data](build-with-native/native-core/read-market-data.md)
     * [Manage agents & funds](build-with-native/native-core/manage-agents-and-funds.md)
     * [Handle outcomes & timeouts](build-with-native/native-core/handle-timeouts.md)
+    * [Best practices](build-with-native/native-core/best-practices.md)
   * [Reference](build-with-native/native-core/reference.md)
     * [API Access](build-with-native/native-core/api-access.md)
     * [POST /info](build-with-native/native-core/post-info.md)

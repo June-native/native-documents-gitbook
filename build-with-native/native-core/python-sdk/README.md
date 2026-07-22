@@ -10,10 +10,6 @@ description: A thin, typed, synchronous Python client over Native Core's POST /i
 pip install native-core-python-sdk
 ```
 
-{% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.2.0` and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.2.0`.
-{% endhint %}
-
 ## What it is
 
 Two classes, split by direction. `Info` handles reads (market data, balances, order status); `Exchange` handles writes (place, cancel, modify, batch) and owns an internal `Info` as `exchange.info`. Both build from a connection bundle you create once in the web app:
@@ -33,7 +29,7 @@ info = exchange.info                             # reads share the same client
 
 * **Not async or concurrent.** Calls block. Wrap them in your own executor if you need concurrency, and share **one** `Exchange` per API wallet across threads (the nonce is a per-instance, lock-guarded, monotonic counter; two instances on one key collide nonces).
 * **It cannot move funds.** The SDK signs with an API wallet, a protocol-level agent key scoped only to placing and cancelling orders. Deposits, withdrawals, and approving or revoking the API wallet happen in the Native web app with your main wallet — never in the SDK.
-* **Testnet only.** This release trades on testnet.
+* **Mainnet and testnet.** It trades on whichever network your connection bundle names.
 
 ## In this section
 

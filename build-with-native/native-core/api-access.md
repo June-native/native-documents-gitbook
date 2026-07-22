@@ -15,10 +15,6 @@ Reads are poll-based over `POST /info`. This page is the front door for anyone i
 **Streaming coming soon.** Today all reads are poll-based over `POST /info`. A WebSocket streaming API for live market data and order updates is on the roadmap.
 {% endhint %}
 
-{% hint style="warning" %}
-**Testnet only.** Native Core is currently available on **testnet only**, at `https://api-test.native.org`. Everything on this page targets testnet.
-{% endhint %}
-
 There are two ways to integrate:
 
 * **Call the API directly** — the two REST endpoints documented on this page. Full control, any language.
@@ -26,33 +22,51 @@ There are two ways to integrate:
 
 Signing `/trade` by hand means building a canonical binary payload with recoverable secp256k1 signatures and per-signer monotonic nonces — fully specified below for building your own client. The Python SDK implements it for you.
 
-## Environment
+## Environments
 
-The API is served over HTTPS. The examples below use:
+The API is served over HTTPS. Native Core runs on **mainnet**, with a **testnet** for integration and testing. Each environment has its own base URL and signing chain id:
+
+| Environment | Base URL | `network` | Chain id (signing) |
+| --- | --- | --- | --- |
+| **Mainnet** | `https://api.native.org` | `mainnet` | `696969` |
+| Testnet | `https://api-test.native.org` | `testnet` | `969696` |
+
+The chain id is folded into every signed `/trade` payload and must match the environment you target — sign for the wrong one and the API recovers a different authority and rejects the write (see [Transaction signing](transaction-signing.md)). The examples below use mainnet:
 
 ```bash
-API_URL=https://api-test.native.org
+API_URL=https://api.native.org
 ```
 
-You fund a trading account by depositing **Arbitrum Sepolia** testnet assets from your main wallet in the web app (there is no faucet — bring your own). See the [access model](#access-model-api-wallets) below for depositing and creating the API wallet.
+You fund a trading account by depositing assets from your main wallet. See the [access model](#access-model-api-wallets) below for depositing and creating the API wallet.
 
 ## Access model — API wallets
 
 Writes are authorized by an **API wallet**: a protocol-level *agent* key scoped only to placing and cancelling orders. An API wallet can trade your account's balance, but it can **never** move funds off Native — deposits, withdrawals, and agent approval all require your main wallet. That scoping (and the fact that it is revocable) is what makes it safe to run in an unattended bot.
 
-You create one in the **[Native web app](https://app-uat.native.org/markets/ETH-USDT?network=testnet&agentWallets=agents)** (testnet), not through the API — that link opens the **API wallets** panel directly:
+An API wallet is just an **agent keypair you generate locally**, authorized on one of your account's agent slots (`0`–`3`) by a single owner-signed `approveAgent`. Set it up directly against the API — no browser required:
 
-1. Connect your **main wallet** and deposit **Arbitrum Sepolia** testnet assets. There is no faucet — bring your own. Your trading account is created on the first deposit.
-2. In the **API wallets** panel, click **Create API wallet**. Your main wallet signs one `approveAgent`, and the app shows a one-time **connection bundle** containing the agent key. Copy it now; it is shown once.
-3. Revoke or rotate the API wallet in the app at any time.
+1. **Generate an agent keypair** locally (any secp256k1 key). The private key is your only signing secret; it never leaves your process. Its 20-byte address is the `agent`.
+2. **Fund the account.** Deposit a supported asset from your main wallet — the per-chain deposit contracts are in [`accountingDepositContracts`](post-info.md#accountingdepositcontracts), and the supported assets, their `asset_id`s, and minimums in [`assets`](post-info.md#assets) / [`accountingWithdrawTokens`](post-info.md#accountingwithdrawtokens). Your trading account is created on the first deposit.
+3. **Approve the agent.** Your main wallet signs one `approveAgent` under `auth_scheme:"eip712"` and you `POST /trade` it:
 
-The connection bundle is a small JSON object:
+```json
+{
+  "action": { "type": "approveAgent", "slot_id": "0", "agent": "0x…agentAddress" },
+  "nonce": "1717000000007",
+  "auth_scheme": "eip712",
+  "signature": "0x…"
+}
+```
+
+The typed-data fields are in [Transaction signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712); the action reference is [`approveAgent`](post-trade.md#approveagent). After approval, read the slot's `agent_epoch` from [`userAgents`](post-info.md#useragents) — agent-signed `/trade` writes carry it.
+
+Prefer a UI? The **[Native web app](https://app.native.org/markets/ETH-USDT?agentWallets=agents)** does these same steps for you — connect your main wallet and it generates the agent key, submits the `approveAgent`, and hands you a one-time **connection bundle**. Either way you end up holding the same three values:
 
 ```jsonc
 {
-  "network": "testnet",       // which network to use
+  "network": "mainnet",       // the network the wallet is bound to
   "accountAddress": "0x…",    // your main wallet — the account the bot trades on
-  "agentPrivateKey": "0x…"    // the only signing secret; the SDK signs /trade with this
+  "agentPrivateKey": "0x…"    // the only signing secret; sign /trade with this
 }
 ```
 
@@ -117,7 +131,7 @@ Every `/trade` write is a **client-signed transaction**. The API reconstructs a 
 
 * **Trading actions** (`order`, `cancel`, `cancelAll`, `modify`, `batch`) use the default legacy binary scheme (`auth_scheme: "legacy"`) and are signed by the **API wallet** key.
 * **Owner `/trade` actions** (`withdraw` / `settle` / `repay`) are **EIP-712** (`auth_scheme: "eip712"`) and are signed by your **main wallet** — not with the API wallet, and not part of a bot's hot path.
-* **Agent approval** (`approveAgent` / `revokeAgent`) is also a main-wallet EIP-712 signature — it is how you create or revoke the API wallet. This is normally done in the Native web app, though both are `/trade` action types the API accepts directly.
+* **Agent approval** (`approveAgent` / `revokeAgent`) is also a main-wallet EIP-712 signature — it is how you create or revoke the API wallet. Do it in the [Native web app](https://app.native.org/markets/ETH-USDT?agentWallets=agents) or sign it yourself — both are `/trade` action types the API accepts directly.
 
 The exact payload layout, encoding rules, and EIP-712 typed-data schemes are here:
 
@@ -146,11 +160,14 @@ curl -sS -X POST "$API_URL/trade" \
 
 ## Rate limits & errors
 
-Rate limiting is **authority-scoped** — keyed on the recovered signer, so one API wallet is one bucket (see [Nonces & API Wallets](nonces-and-api-wallets.md)). The limit is **1000 requests/second per signer** over a 1-second sliding window; over-quota writes are rejected with HTTP `429`, `error.code: "RateLimited"`, and an `error.retry_after_ms` back-off hint. It is the one rejection that is safe to resend, after backing off. Request bodies over **64 KiB** (`/info`) or **256 KiB** (`/trade`) are rejected with HTTP `413`.
+Two rate limits apply, both returning HTTP `429` with `error.code: "RateLimited"`:
 
-The `/trade` error model keys on the **response body, not the HTTP status**. The API returns the same trade-response shape for HTTP 200 / 400 / 429 / 503 / 504. Because `/trade` is synchronous, `submission_status` is one of `accepted` (the transaction landed and executed), `rejected` (refused, or failed at execution — `error.code` says why), or `timeout` (outcome not observed; may still land — reconcile by `cloid`). A business rejection is **data**, not a transport error. To learn whether an order rested or filled, read [`orderStatus`](post-info.md#orderstatus); `/trade` only reports that it landed.
+* **Reads (`/info`)** are limited to **1 request/second per IP**. Over-quota reads return `{"error":{"code":"RateLimited","message":"ip rate limit exceeded, retry after <ms>ms"}}` — back off and keep polling within the budget.
+* **Writes (`/trade`)** are limited to **1000 requests/second per signer** — keyed on the recovered [authority](nonces-and-api-wallets.md), so one API wallet is one bucket — over a 1-second sliding window. Over-quota writes come back in the trade-response shape with an `error.retry_after_ms` hint.
 
-Two outcomes decide whether you may resend: a `rejected` + `RateLimited` (throttled, never admitted) is the **only** safe resend — back off `error.retry_after_ms` and resend the same signed action; a `timeout` is indeterminate and must **never** be resent under a new nonce — reconcile by `cloid` instead. For the full outcome table, the codes you actually hit, and their fixes, see:
+Request bodies over **64 KiB** (`/info`) or **256 KiB** (`/trade`) are rejected with HTTP `413`.
+
+The `/trade` error model keys on the **response body, not the HTTP status** — the API returns the same trade-response shape for HTTP 200 / 400 / 429 / 503 / 504, so a business rejection is **data**, not a transport error. Branch on `submission_status`, never the status line. What each outcome means and how to act on it is the [Handle outcomes & timeouts](handle-timeouts.md) playbook; every code and its fix is in:
 
 {% content-ref url="error-responses.md" %}
 [error-responses.md](error-responses.md)

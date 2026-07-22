@@ -1,14 +1,10 @@
 ---
-description: Install the Native Core Python SDK, create an API wallet, and place your first order on testnet.
+description: Install the Native Core Python SDK, create an API wallet, and place your first order.
 ---
 
 # Getting Started
 
 The Native Core Python SDK (`native-core-python-sdk`, import `native_core`) is a thin, typed, synchronous client over Native Core's two REST endpoints: `POST /info` for reads and `POST /trade` for writes. This page takes you from `pip install` to a resting order you place and cancel yourself.
-
-{% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.2.0` and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.2.0`.
-{% endhint %}
 
 ## Install
 
@@ -18,18 +14,12 @@ Requires **Python 3.10+**. The runtime dependencies are `requests`, `eth-account
 pip install native-core-python-sdk
 ```
 
-Because the SDK is pre-1.0, any release may change the API. Pin an exact version and review the changes before upgrading:
-
-```bash
-pip install native-core-python-sdk==0.2.0
-```
-
 ## Get an API wallet
 
 The SDK trades with an **API wallet**: a protocol-level *agent* key scoped only to placing and cancelling orders. It can never move funds — deposits, withdrawals, and the approval itself are signed by your main wallet in the web app, not by the SDK. You create the API wallet once, in the Native web app:
 
-1. **Connect your main wallet.** Open the **[Native web app](https://app-uat.native.org/markets/ETH-USDT?network=testnet&agentWallets=agents)** (testnet) — that link opens the **API wallets** panel directly — and connect the wallet that will own the trading account.
-2. **Deposit to create the account.** There is no faucet — bring your own **Arbitrum Sepolia** testnet assets and deposit them from your main wallet. Your trading account is created on the **first deposit**.
+1. **Connect your main wallet.** Open the **[Native web app](https://app.native.org/markets/ETH-USDT?agentWallets=agents)** — that link opens the **API wallets** panel directly — and connect the wallet that will own the trading account.
+2. **Deposit to create the account.** Deposit a supported asset from your main wallet. Your trading account is created on the **first deposit**.
 3. **Create the API wallet.** Open the API wallets panel and choose *Create API wallet*. Your main wallet signs a single `approveAgent`, and the app returns a one-time **connection bundle** that contains the agent's private key.
 4. **Save the bundle.** The private key is shown **once**. Copy the whole bundle and save it to a file — `bundle.json` is what the quickstart below loads.
 
@@ -45,7 +35,7 @@ The bundle is a small JSON object. Hand it to the SDK as a file path, a `dict`, 
 
 ```jsonc
 {
-  "network": "testnet",       // which network to use — must be "testnet"
+  "network": "mainnet",       // which network to use — "mainnet" or "testnet"
   "accountAddress": "0x…",    // your main wallet (the owner the bot trades on)
   "agentPrivateKey": "0x…",   // the API wallet key the SDK signs with — the ONLY secret
   "agentEpoch": "10"          // optional; the SDK ignores it and re-resolves the epoch live
@@ -56,7 +46,7 @@ The bundle is a small JSON object. Hand it to the SDK as a file path, a `dict`, 
 
 ## Quickstart
 
-Load the bundle, confirm the API wallet is approved, place a resting GTC bid well below the market so it does not fill, verify it rests, then cancel it. This runs on **testnet** against a funded account with a valid `bundle.json`.
+Load the bundle, confirm the API wallet is approved, place a resting GTC bid well below the market so it does not fill, verify it rests, then cancel it. This runs on **mainnet** against a funded account with a valid `bundle.json`.
 
 ```python
 from decimal import Decimal
@@ -66,7 +56,7 @@ from native_core import Exchange, is_accepted, order_state
 BUNDLE = "bundle.json"   # a file path, or the dict / JSON string itself
 MARKET = "ETH/USDT"
 
-exchange = Exchange.from_bundle(BUNDLE)   # picks the testnet endpoint, loads the key, sets the owner
+exchange = Exchange.from_bundle(BUNDLE)   # picks the endpoint from the bundle, loads the key, sets the owner
 info = exchange.info                      # Exchange owns an internal Info
 
 # Confirm the API wallet is approved on the owner before trading.

@@ -21,3 +21,7 @@ Start here if you're integrating from scratch. Each guide is a short, linear wal
 {% content-ref url="handle-timeouts.md" %}
 [handle-timeouts.md](handle-timeouts.md)
 {% endcontent-ref %}
+
+{% content-ref url="best-practices.md" %}
+[best-practices.md](best-practices.md)
+{% endcontent-ref %}

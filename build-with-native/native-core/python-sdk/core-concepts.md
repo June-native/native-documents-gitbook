@@ -6,10 +6,6 @@ description: The core ideas the Native Core Python SDK is built on — read this
 
 The SDK is a thin, typed, synchronous client over the two Native Core endpoints. `Info` wraps [`POST /info`](../post-info.md) (market data, balances, order status); `Exchange` wraps [`POST /trade`](../post-trade.md) (one signed action per call) and owns an internal `Info` as `exchange.info`. Both return the API's raw JSON as plain dicts. This page expands the core ideas every integration leans on. It does not re-document the wire fields — for those, see the [`POST /trade`](../post-trade.md) and [`POST /info`](../post-info.md) references.
 
-{% hint style="warning" %}
-**Testnet only · pre-1.0.** The Native Core Python SDK is `v0.2.0` and currently runs on **testnet only**. The API may change before 1.0; pin an exact version: `pip install native-core-python-sdk==0.2.0`.
-{% endhint %}
-
 ## Accepted is not filled
 
 `order()` and `market_order()` return `{"submission_status": "accepted", "tx_hash": "…"}` once the transaction has **landed and executed**. But `accepted` does not say whether the order rested or filled — it also covers a benign IOC/FOK cancel or a no-liquidity market order. The `/trade` response omits the `oid` and fill amount, so read the order's status to learn the lifecycle and fill.
@@ -17,7 +13,7 @@ The SDK is a thin, typed, synchronous client over the two Native Core endpoints.
 ```python
 from native_core import Exchange, is_accepted
 
-exchange = Exchange.from_bundle("bundle.json")   # a testnet bundle
+exchange = Exchange.from_bundle("bundle.json")   # your connection bundle
 resp = exchange.order("ETH/USDT", is_buy=True, sz="0.01", limit_px="1000.00", tif="gtc")
 
 assert is_accepted(resp)                          # landed & executed — but not necessarily filled
@@ -150,9 +146,9 @@ print(exchange.effective_account)                  # the account orders act on: 
 
 If the API wallet is not an approved agent on that owner, the constructor raises `LocalValidationError`; `agent_info()` reports it as data instead of throwing. Deposits, withdrawals, and `approveAgent` / `revokeAgent` are signed by your **main wallet in the web app**, never in the SDK.
 
-## Testnet only
+## Networks
 
-This release runs on **testnet** (`https://api-test.native.org`) and nothing else. The bundle's `network` is `testnet`, and `from_bundle` picks the endpoint from it. An API wallet is created and approved on the testnet site, and is bound to that network.
+The SDK runs on both **mainnet** (`https://api.native.org`) and **testnet** (`https://api-test.native.org`). The bundle's `network` field selects which, and `from_bundle` picks the endpoint from it. An API wallet is created and approved on that network's site and is bound to it — a key signed for one network is rejected on the other.
 
 ## Polling & freshness
 

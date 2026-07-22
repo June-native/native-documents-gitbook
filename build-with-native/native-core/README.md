@@ -25,9 +25,7 @@ The Native Core API is the direct integration surface for the on-chain CLOB. Cli
 
 Operational, recovery, and node-private interfaces are intentionally not part of this contract.
 
-{% hint style="warning" %}
-**Testnet only.** Native Core is currently available on **testnet only**, at `https://api-test.native.org`. Everything in this section targets testnet.
-{% endhint %}
+Native Core runs on **mainnet** (`https://api.native.org`), with a **testnet** (`https://api-test.native.org`) for integration and testing. See [environments](api-access.md#environments) for base URLs and signing chain ids.
 
 ## Start here
 
@@ -49,12 +47,11 @@ Prefer a client library? The official Python SDK wraps both endpoints, signs `/t
 
 ## Conventions
 
-* `API_URL` examples use `https://api-test.native.org`.
+* `API_URL` examples use `https://api.native.org` (mainnet); for testnet and signing chain ids, see [environments](api-access.md#environments).
 * Hex values are `0x`-prefixed lowercase strings unless noted otherwise.
 * Protocol numeric fields in signed actions are decimal strings; integer-valued fields (ids, nonces) also accept an unsigned JSON integer, while decimal price/quantity/amount fields must be strings.
-* Business query responses include `query_height` and `app_hash` when a query view is available. `query_height` is the execution height represented by the published read view.
-* `POST /trade` accepts an optional `x-trace-id` HTTP header for request correlation; when it is absent or invalid the API mints one, and the `/trade` response always echoes it in `x-trace-id`. `POST /info` does not process or return `x-trace-id`.
-* `POST /trade` is **synchronous**: it waits for the transaction's execution outcome and returns `submission_status` — `accepted` (the transaction landed and executed), `rejected` (refused, or failed at execution), or `timeout` (outcome not observed within the wait budget) — with a `tx_hash` and, on a non-success, an `error.code`. It reports that a write **landed**, not an order's fill state: read `orderStatus` (or `openOrders` / `userFills`) to see whether an order rested or filled, and to reconcile a `timeout` by `cloid`.
+* Business query responses carry `query_height` and `app_hash` when a query view is available — the execution height represented by the published read view.
+* `POST /trade` is **synchronous**: it blocks for the execution outcome and returns `submission_status` (`accepted` / `rejected` / `timeout`) with a `tx_hash`. It reports that a write **landed**, not an order's fill state — read the outcome per the [Handle outcomes & timeouts](handle-timeouts.md) playbook.
 
 ## Reference & concepts
 
