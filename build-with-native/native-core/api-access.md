@@ -163,13 +163,11 @@ curl -sS -X POST "$API_URL/trade" \
 Two rate limits apply, both returning HTTP `429` with `error.code: "RateLimited"`:
 
 * **Reads (`/info`)** are limited to **1 request/second per IP**. Over-quota reads return `{"error":{"code":"RateLimited","message":"ip rate limit exceeded, retry after <ms>ms"}}` — back off and keep polling within the budget.
-* **Writes (`/trade`)** are limited to **1000 requests/second per signer** — keyed on the recovered authority, so one API wallet is one bucket (see [Nonces & API Wallets](nonces-and-api-wallets.md)) — over a 1-second sliding window. Over-quota writes come back in the trade-response shape with an `error.retry_after_ms` hint; this is the one rejection that is safe to resend after backing off.
+* **Writes (`/trade`)** are limited to **1000 requests/second per signer** — keyed on the recovered [authority](nonces-and-api-wallets.md), so one API wallet is one bucket — over a 1-second sliding window. Over-quota writes come back in the trade-response shape with an `error.retry_after_ms` hint.
 
 Request bodies over **64 KiB** (`/info`) or **256 KiB** (`/trade`) are rejected with HTTP `413`.
 
-The `/trade` error model keys on the **response body, not the HTTP status**. The API returns the same trade-response shape for HTTP 200 / 400 / 429 / 503 / 504. Because `/trade` is synchronous, `submission_status` is one of `accepted` (the transaction landed and executed), `rejected` (refused, or failed at execution — `error.code` says why), or `timeout` (outcome not observed; may still land — reconcile by `cloid`). A business rejection is **data**, not a transport error. To learn whether an order rested or filled, read [`orderStatus`](post-info.md#orderstatus); `/trade` only reports that it landed.
-
-Two outcomes decide whether you may resend: a `rejected` + `RateLimited` (throttled, never admitted) is the **only** safe resend — back off `error.retry_after_ms` and resend the same signed action; a `timeout` is indeterminate and must **never** be resent under a new nonce — reconcile by `cloid` instead. For the full outcome table, the codes you actually hit, and their fixes, see:
+The `/trade` error model keys on the **response body, not the HTTP status** — the API returns the same trade-response shape for HTTP 200 / 400 / 429 / 503 / 504, so a business rejection is **data**, not a transport error. Branch on `submission_status`, never the status line. What each outcome means and how to act on it is the [Handle outcomes & timeouts](handle-timeouts.md) playbook; every code and its fix is in:
 
 {% content-ref url="error-responses.md" %}
 [error-responses.md](error-responses.md)

@@ -28,7 +28,7 @@ description: The core habits a live Native Core integration should follow.
 ## Reads & rate limits
 
 * **Query `/info` by the owner address**, not the API-wallet address — the agent address returns nothing.
-* **`/info` is 1 request/second per IP.** Cache static metadata, poll on a fixed interval, and back off on `429`.
+* **`/info` is 1 request/second per IP.** Cache static metadata, poll on a fixed interval, and back off on `429` — see [rate limits](api-access.md#rate-limits-errors).
 
 ## Degraded states
 

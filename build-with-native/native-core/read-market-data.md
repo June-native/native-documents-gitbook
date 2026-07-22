@@ -4,9 +4,9 @@ description: Read markets, prices, order books, and your own positions over POST
 
 # Read market data
 
-Every read is a `POST /info` call, unauthenticated, dispatched on a top-level `type`. This guide points you at the query for each task; the full response shapes are in the [POST /info reference](post-info.md). Query responses carry `query_height` and `app_hash` so you know which committed state you read. `/info` is rate-limited to **1 request/second per IP** — poll within that budget; over-quota reads return HTTP `429` `RateLimited`, so back off and retry.
+Every read is a `POST /info` call, unauthenticated, dispatched on a top-level `type`. This guide points you at the query for each task; the full response shapes are in the [POST /info reference](post-info.md). Query responses carry `query_height` and `app_hash` so you know which committed state you read. `/info` is rate-limited to **1 request/second per IP** — poll within that budget and back off on `429` (see [rate limits](api-access.md#rate-limits-errors)).
 
-Mainnet: `API_URL=https://api.native.org` (testnet: `https://api-test.native.org`).
+Examples use mainnet; swap in `https://api-test.native.org` for testnet — see [environments](api-access.md#environments).
 
 {% hint style="info" %}
 **Streaming coming soon.** Reads are poll-based today; a WebSocket streaming API for live market data and order updates is on the roadmap.

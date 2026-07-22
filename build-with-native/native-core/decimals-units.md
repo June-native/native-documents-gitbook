@@ -1,8 +1,12 @@
+---
+description: How Native Core converts human decimal strings to the integer atoms it executes on.
+---
+
 # Decimals & Units
 
 Native Core executes on integers only. Public order and modify payloads accept human decimal strings for `price` and `quantity`; the write path converts them to the raw integer atoms encoded in the signed transaction bytes. Integer-only fields such as ids, timestamps, nonces, and accounting amounts remain decimal integer strings. Public query responses use asset and market decimal metadata to return human-readable display strings where that is useful.
 
-### Decimal Units
+## Decimal units
 
 Each asset has one balance decimal field:
 
@@ -46,7 +50,7 @@ Asset metadata validation:
 * `asset_id` must be unique.
 * `balance_decimals` must be `0..=18`.
 
-### Market Decimals
+## Market decimals
 
 Each market has a base asset and quote asset. Public `quantity` is a display base amount and public `price` is a display quote-per-base price. The write path uses the market's `base_quantity_decimals` and `price_decimals` to convert those display strings into raw integer atoms before assembling signed bytes.
 
@@ -109,7 +113,7 @@ Market metadata validation:
 
 The genesis quote allowlist is USDC asset `1` with `min_quantity="10"`, USDT asset `2` with `min_quantity="10"`, ETH asset `3` with `min_quantity="0.01"`, and BNB asset `4` with `min_quantity="0.02"`. Read the live per-quote-asset minimums from [`POST /info` `quoteAssets`](post-info.md#quoteassets).
 
-### Write-Time Numeric Validation
+## Write-time numeric validation
 
 `POST /trade` validates signed action numbers before reconstructing the canonical signed payload:
 
@@ -125,7 +129,7 @@ The genesis quote allowlist is USDC asset `1` with `min_quantity="10"`, USDT ass
 * quote notional is computed with widened arithmetic and must fit into `u64` quote balance atoms.
 * If the configured minimum spot notional is nonzero, the raw quote notional must be at least that minimum.
 
-### Valid / invalid examples
+## Valid / invalid examples
 
 The pairs below use an **illustrative** market with `price_decimals = 2`, `max_price_sig_figs = 5`, and `base_quantity_decimals = 4`. These are not any specific market's real values — read each market's precision from [`POST /info` `markets`](post-info.md#markets). Send the display string exactly; nothing rounds on the wire.
 
