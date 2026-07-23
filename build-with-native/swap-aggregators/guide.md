@@ -148,7 +148,7 @@ request(options, function (error, response) {
 To execute a firm quote, submit a transaction on-chain to call the Native Router with the returned call data.
 
 {% hint style="info" %}
-You can find all the deployed addresses with their ABIs here: [addresses.md](../../resources/addresses.md "mention")
+You can find all the deployed addresses with their ABIs here: [addresses.md](../../resources/addresses/README.md "mention")
 {% endhint %}
 
 Here’s an example of how to submit call data to the NativeRouter:

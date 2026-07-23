@@ -149,7 +149,15 @@
 
 ## Resources
 
-* [Addresses](resources/addresses.md)
+* [Addresses](resources/addresses/README.md)
+  * [Ethereum wNLP Addresses](resources/addresses/ethereum-wnlp-addresses.md)
+  * [BNB Smart Chain wNLP Addresses](resources/addresses/bnb-smart-chain-wnlp-addresses.md)
+  * [Arbitrum wNLP Addresses](resources/addresses/arbitrum-wnlp-addresses.md)
+  * [Base wNLP Addresses](resources/addresses/base-wnlp-addresses.md)
+  * [Monad wNLP Addresses](resources/addresses/monad-wnlp-addresses.md)
+  * [Xlayer wNLP Addresses](resources/addresses/xlayer-wnlp-addresses.md)
+  * [Robinhood wNLP Addresses](resources/addresses/robinhood-wnlp-addresses.md)
+  * [Morph wNLP Addresses](resources/addresses/morph-wnlp-addresses.md)
 * [V1 Addresses](resources/v1-addresses.md)
 * [Support Pairs](resources/support-pairs.md)
 * [Networks](resources/networks.md)
