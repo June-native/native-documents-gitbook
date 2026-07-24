@@ -4,9 +4,9 @@
 
 Standard maker and taker fees are applied:
 
-<table><thead><tr><th width="273.0078125">Markets</th><th>Taker Fee</th><th>Maker Fee</th></tr></thead><tbody><tr><td>Stablecoin &#x26; softpeg pairs</td><td>0%</td><td>0%</td></tr><tr><td>All others</td><td>0.05%</td><td>0.02%</td></tr></tbody></table>
+<table><thead><tr><th width="273.0078125">Markets</th><th>Taker Fee</th><th>Maker Fee</th></tr></thead><tbody><tr><td>Stablecoin &#x26; softpeg pairs</td><td>0%</td><td>0%</td></tr><tr><td>Majors &#x26; RWAs</td><td>0.05%</td><td>0.02%</td></tr></tbody></table>
 
-Fee rebates and fee discounts are coming soon.
+Fee rebates and fee discounts are coming soon. QQQB currently charges a 0.001% (0.1 bp) taker fee and 0% maker fee.
 
 ### Integration Partners
 
