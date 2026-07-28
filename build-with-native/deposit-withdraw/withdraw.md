@@ -83,6 +83,22 @@ import { recoverTypedDataAddress } from 'viem'
 const signer = await recoverTypedDataAddress({ domain, types, primaryType: 'Withdraw', message, signature })
 if (signer.toLowerCase() !== wallet.account.address.toLowerCase()) throw new Error('typed data mismatch')
 ```
+
+The digest is pinned and identical across implementations, so you can also assert it directly. Keep this vector in your test suite and a malformed struct can never reach production:
+
+```ts
+hashTypedData({
+  domain, types, primaryType: 'Withdraw',
+  message: {
+    nativeChainId: 969696n, authKind: 1n, authScope: 0n, nonce: 99n,
+    expiresAfterMsPresent: true, expiresAfterMs: 1700000000000n,
+    assetId: 7n, amount: 1234567n, dstChainId: 56n,
+    dstAddress: '0x1111111111111111111111111111111111111111',
+    withdrawNonce: 42n, cloidPresent: true, cloid: '0x22222222222222222222222222222222',
+  },
+})
+// 0xc657633ef3dcfd2726efbabfc56d400b307a15e8c5a88d571c39367c7c527fc3
+```
 {% endhint %}
 
 ```bash
