@@ -39,6 +39,30 @@ The fee rides the deposit transaction as `msg.value`, in the source chain's gas 
 * Overpayment is accepted and never refunded. Quote at your own spot price with a small buffer.
 * Send `msg.value: 0` for every deposit into an account that already exists.
 
+Price it from [`markPrices`](../native-core/post-info.md#markprices) — the same oracle the deposit is validated against, so your quote cannot drift out of tolerance the way an external feed can. The gas token is 18-decimal on all four chains.
+
+| Source chain             | Gas token | `asset_id` |
+| ------------------------ | --------- | ---------- |
+| Ethereum, Base, Arbitrum | ETH       | `3`        |
+| BNB Smart Chain          | BNB       | `4`        |
+
+```bash
+curl -sS -X POST "$API_URL/info" \
+  -H 'content-type: application/json' \
+  -d '{"type":"markPrices"}'
+```
+
+```json
+{ "mark_prices": [ { "asset_id": 3, "usd_atoms": 188483000000, "source_ts_ms": 1785222009197 } ] }
+```
+
+`usd_atoms` is a USD price in 8-decimal atoms, so one dollar of an 18-decimal gas token is `10**26 / usd_atoms` wei:
+
+```ts
+const usdAtoms = BigInt(markPrices.find(p => p.asset_id === gasAssetId).usd_atoms)
+const activationFeeWei = 10n ** 26n / usdAtoms
+```
+
 {% hint style="danger" %}
 A first deposit that underpays past the tolerance is a **permanent** validation failure. The tokens sit in the vault, the balance is never credited, and the order is not retried — recovering it takes manual intervention from Native. Read `accountStatus` immediately before you build the transaction, and never guess the fee to zero.
 {% endhint %}
@@ -62,7 +86,8 @@ import { vaultAbi } from './vaultAbi'
 const publicClient = createPublicClient({ chain: bsc, transport: http(RPC_URL) })
 const wallet = createWalletClient({ chain: bsc, transport: http(RPC_URL), account })
 
-const amount = parseUnits('100', 18)          // BSC USDT is 18-decimal
+const requested = parseUnits('100', 18)                // BSC USDT is 18-decimal
+const amount = requested - (requested % 10n ** 10n)    // floor to the 8-decimal grid
 const feeWei = accountExists ? 0n : activationFeeWei
 
 const [vaultPaused, tokenPaused] = await Promise.all([
@@ -83,10 +108,18 @@ const depositHash = await wallet.writeContract({
 const receipt = await publicClient.waitForTransactionReceipt({ hash: depositHash })
 ```
 
-Two on-chain rules reject a deposit before it reaches Native:
+{% hint style="danger" %}
+**Floor the amount to 8 decimal places yourself — the vault does not.** Native credits at 8 decimals (`balance_decimals`) and settlement refuses any deposit whose amount does not convert to 8 decimals exactly. The contract carries no matching check: an over-precise amount produces a **successful** transaction, and the credit is then held for manual review. Deposits are forward-only, so nothing is returned.
 
-* **Precision.** `minDepositDecimalByUnderlying(token)` returns `8` for every listed token, matching Native's `balance_decimals`. An amount carrying more than 8 decimal places reverts `InvalidAmount` — for an 18-decimal token, `amount` must be a multiple of `10^10`.
-* **Pause.** `isDepositPaused(token)` gates a single token; `emergencyPaused()` gates the whole vault. Read both before you build the transaction so the user sees a reason instead of a revert.
+```ts
+const scale = 10n ** BigInt(Math.max(0, decimals - 8))   // 10^10 for an 18-decimal token
+const amount = requested - (requested % scale)
+```
+
+Tokens with 8 decimals or fewer — WBTC, cbBTC, and USDC/USDT on Ethereum, Base and Arbitrum — cannot carry excess precision and need no adjustment. `minDepositDecimalByUnderlying(token)` returns the grid (`8` on every listed token) if you would rather read it than assume it.
+{% endhint %}
+
+The one condition the vault does gate is **pause**: `isDepositPaused(token)` covers a single token, `emergencyPaused()` the whole vault. Read both before you build the transaction so the user sees a reason instead of a revert.
 
 To fund an address other than the caller — a wallet or aggregator depositing on a user's behalf — use `depositFor`, which credits `user` instead of `msg.sender`:
 
@@ -154,14 +187,13 @@ The address page lists the account's deposits and withdrawals, which is the quic
 
 ## What can go wrong
 
-| Symptom                                                      | Cause                                                                                        | What to do                                                            |
-| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `deposit()` reverts `InvalidAmount`                          | Amount carries more than 8 decimal places                                                     | Round down to the `minDepositDecimalByUnderlying` grid                |
-| `deposit()` reverts `DepositPaused` / `UnsupportedUnderlying` | Token paused, or not listed on this vault                                                     | Read `isDepositPaused` and `getSupportedUnderlyings` before submitting |
-| `deposit()` reverts `SafeERC20FailedOperation`               | Allowance or balance too low                                                                  | Re-check the allowance you set in step 3                              |
-| Mined, still no credit well past 5 minutes                   | First deposit underpaid the activation fee — confirm with `getDepositRecord(nonce).msgValue`  | Not self-recoverable — contact Native with the source tx hash         |
-| Mined, no credit yet, account already existed                | Still inside the normal settlement delay                                                      | Keep polling; report a credit that has not landed well past 5 minutes  |
-| `429` with `RateLimited`                                     | More than 1 `/info` request per second from one IP                                            | Widen the polling interval; share one budget across loops             |
+| Symptom                                        | Cause                                                                                                                       | What to do                                                              |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `deposit()` reverts `UnsupportedUnderlying`    | Token is not listed on this vault                                                                                            | Read `getSupportedUnderlyings()` before submitting                       |
+| `deposit()` reverts with no data to decode     | Allowance or balance too low — most ERC20s revert here without a reason string, so nothing decodes                            | Re-check the allowance you set in step 3                                |
+| Mined, still no credit well past 5 minutes     | Amount was not on the 8-decimal grid, or a first deposit underpaid the activation fee — read `getDepositRecord(nonce)` and check `amount` and `msgValue` | Neither is self-recoverable — contact Native with the source tx hash     |
+| Mined, no credit yet, account already existed  | Still inside the normal settlement delay                                                                                     | Keep polling; report a credit that has not landed well past 5 minutes    |
+| `429` with `RateLimited`                       | More than 1 `/info` request per second from one IP                                                                           | Wait the `retry after` interval in the error, and share one budget across loops |
 
 ## Next steps
 

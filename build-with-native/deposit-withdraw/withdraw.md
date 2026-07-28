@@ -74,6 +74,17 @@ const signature = await wallet.signTypedData({ domain, types, primaryType: 'With
 
 The domain carries **no `chainId`**, so a wallet signs it while connected to any EVM chain. Post the wallet's raw 65-byte `r‖s‖v` signature verbatim.
 
+{% hint style="warning" %}
+Assert the recovery locally while you build the integration. Native derives the account from the recovered signer, so typed data that does not match this definition recovers a *different* address — one with no account — and the withdrawal comes back as `OwnerDoesNotExist`, never as a signature error. A wrong struct, a stray `chainId` in the domain, and a field in the wrong order all fail this way.
+
+```ts
+import { recoverTypedDataAddress } from 'viem'
+
+const signer = await recoverTypedDataAddress({ domain, types, primaryType: 'Withdraw', message, signature })
+if (signer.toLowerCase() !== wallet.account.address.toLowerCase()) throw new Error('typed data mismatch')
+```
+{% endhint %}
+
 ```bash
 curl -sS -X POST "$API_URL/trade" \
   -H 'content-type: application/json' \
@@ -133,7 +144,7 @@ const released = await publicClient.readContract({
 })
 ```
 
-`true` is terminal — poll on an interval that suits the destination chain and stop on the first `true`. For the exact credited amount, read the destination token's `Transfer` event from the vault to `dstAddress` in that block, or take `amount − withdraw_fee_atoms` from the values you already hold.
+`true` is terminal — poll on an interval that suits the destination chain and stop on the first `true`. For the exact credited amount take `amount − withdraw_fee_atoms` from the values you already hold. `/info` does not map `(asset_id, chain_id)` onto a destination ERC20 address, and matching by symbol does not work on the wrapped-native routes — `ETH` is `WETH`, `BNB` is `WBNB` — or on Arbitrum `USDT`, which is `USD₮0`. If you would rather read the token's `Transfer` event, pin the addresses for the routes you support at integration time.
 
 A withdrawal debited on Native that still shows `usedNonces == false` after a long wait is stalled, not lost. The release pipeline retries and never drops a debited withdrawal; the amount-precision rule in step 1 is the most common cause.
 
@@ -146,6 +157,7 @@ A withdrawal debited on Native that still shows `usedNonces == false` after a lo
 | `WithdrawInsufficientBalance`                           | Available balance does not cover the gross amount                        | Re-read `userBalances`; locked balance does not count                          |
 | `WithdrawDuplicateNonce`                                | `withdraw_nonce` reused, or below the 3-day pruned floor                 | Use a fresh millisecond timestamp                                              |
 | `ActionNotAllowedForSpotCreditAccount`                  | The signer is a credit account                                           | Credit accounts cannot use this path — see [Account Types](../native-core/account-types.md) |
+| `OwnerDoesNotExist` for an account you know exists      | The typed data does not match, so the recovered signer is a different address | Recover your own signature locally and compare it to the signing address |
 | `submission_status: "timeout"`                          | Outcome not observed in the wait budget — it may still commit            | Reconcile by `cloid`; never re-sign under a new nonce                          |
 | Accepted, `usedNonces` stays `false`                    | Amount is not exactly representable in the destination token's decimals  | Cap amounts at 6 decimal places; contact Native for a stalled one              |
 

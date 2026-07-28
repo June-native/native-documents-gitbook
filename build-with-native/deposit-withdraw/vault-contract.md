@@ -40,7 +40,7 @@ Pulls `amount` of `token` from `msg.sender` and credits that address's Native Co
 
 `msg.value` carries the one-time account activation fee and must be `0` for an account that already exists. The contract does not validate it — an incorrect value produces a successful transaction that later fails validation off-chain. See [Deposit](deposit.md#2-size-the-activation-fee).
 
-`amount` is in the token's own decimals and must be a whole number of units at `minDepositDecimalByUnderlying(token)` decimal places, which is `8` for every listed token. An 18-decimal token therefore requires `amount % 10**10 == 0`.
+`amount` is in the token's own decimals. The contract does **not** constrain its precision, but Native's settlement does: an amount that is not a whole number of units at 8 decimal places is accepted on-chain and then held off-chain, with no refund. Floor it before you submit — see [Deposit](deposit.md#3-approve-and-deposit).
 
 ### depositFor
 
@@ -74,7 +74,7 @@ Every deposit-blocking condition is readable before you build a transaction. Che
 | `isSupportedUnderlying(address token)`           | `bool`     | Same check for one token                                    |
 | `isDepositPaused(address token)`                 | `bool`     | Per-token deposit pause                                     |
 | `emergencyPaused()`                              | `bool`     | Vault-wide pause                                            |
-| `minDepositDecimalByUnderlying(address token)`   | `uint256`  | Maximum decimal places a deposit amount may carry — `8`     |
+| `minDepositDecimalByUnderlying(address token)`   | `uint256`  | The decimal grid Native credits on — `8`. Advisory: `deposit()` does not enforce it |
 | `wrappedNLPByUnderlying(address token)`          | `address`  | The wrapped-NLP token minted against the deposit            |
 | `depositNonce()`                                 | `uint256`  | Deposits recorded by this vault so far                      |
 | `getDepositRecord(uint256 nonce)`                | `(address token, address user, uint256 amount, uint256 msgValue)` | Look up a deposit by its nonce; `msgValue` is the activation fee it carried |
@@ -106,24 +106,21 @@ Topic 0 is `0x259af91af89c9a6b13d53607d57f43b151235f69d54d2339133e57cfb62bf4c5`.
 * `fee` is the `msg.value` the transaction carried — `0` for a deposit into an existing account.
 * `nonce` is what you match against `deposit_nonce` in [`deposits`](../native-core/post-info.md#deposits).
 
-Confirm a withdrawal with `usedNonces` and the destination token's ERC20 `Transfer`.
+Confirm a withdrawal with `usedNonces` — see [Withdraw](withdraw.md#4-watch-the-destination-chain).
 
 ## Reverts
 
-Custom errors on the deposit path, in the order you are likely to hit them:
+The custom errors the deployed build raises on the deposit path:
 
 | Error                                | Meaning                                                              |
 | ------------------------------------ | -------------------------------------------------------------------- |
 | `UnsupportedUnderlying`              | `token` is not listed on this vault                                   |
-| `InvalidUnderlying`                  | `token` is not a valid underlying for this call                       |
-| `DepositPaused`                      | Deposits are paused for `token`                                       |
-| `InvalidAmount`                      | `amount` carries more decimal places than `minDepositDecimalByUnderlying` |
 | `ZeroAmount`                         | `amount` is `0`                                                       |
 | `ZeroAddress`                        | An address argument is the zero address                               |
-| `SafeERC20FailedOperation(address)`  | The ERC20 transfer failed — usually an insufficient allowance or balance |
+| `SafeERC20FailedOperation(address)`  | The ERC20 transfer failed                                             |
 | `ReentrancyGuardReentrantCall`       | Re-entrant call into the vault                                        |
 
-Decode these with the ABI below so users see a reason rather than a four-byte selector.
+Decode these with the ABI below. Not every failure arrives as a custom error: an ERC20 that reverts without a reason string — an insufficient WETH allowance, for example — surfaces as empty revert data with nothing to decode, and the pause and ownership paths revert with a string rather than a selector. Read `emergencyPaused()`, `isDepositPaused(token)` and the allowance up front instead of relying on the revert to explain itself.
 
 ## ABI fragment
 
@@ -183,9 +180,6 @@ The subset of the vault ABI that [Deposit](deposit.md) and [Withdraw](withdraw.m
     ] },
 
   { "type": "error", "name": "UnsupportedUnderlying", "inputs": [] },
-  { "type": "error", "name": "InvalidUnderlying", "inputs": [] },
-  { "type": "error", "name": "DepositPaused", "inputs": [] },
-  { "type": "error", "name": "InvalidAmount", "inputs": [] },
   { "type": "error", "name": "ZeroAmount", "inputs": [] },
   { "type": "error", "name": "ZeroAddress", "inputs": [] },
   { "type": "error", "name": "ReentrancyGuardReentrantCall", "inputs": [] },

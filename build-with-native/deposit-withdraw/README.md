@@ -55,6 +55,7 @@ Resolve the routing table at runtime. Vaults are redeployed and asset listings c
 | Depositable tokens on a chain                  | vault `getSupportedUnderlyings()`                                                                 |
 | `asset_id`, `balance_decimals`, withdrawal fee | `POST /info` [`assets`](../native-core/post-info.md#assets)                                        |
 | Withdrawable `(chain, asset)` and minimums     | `POST /info` [`accountingWithdrawTokens`](../native-core/post-info.md#accountingwithdrawtokens)    |
+| Gas-token price, to quote the activation fee   | `POST /info` [`markPrices`](../native-core/post-info.md#markprices)                                |
 
 The current vault addresses are listed in [Vault Contract](vault-contract.md#addresses).
 
