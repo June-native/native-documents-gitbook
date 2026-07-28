@@ -56,24 +56,7 @@ Resolve the routing table at runtime. Vaults are redeployed and asset listings c
 | `asset_id`, `balance_decimals`, withdrawal fee | `POST /info` [`assets`](../native-core/post-info.md#assets)                                        |
 | Withdrawable `(chain, asset)` and minimums     | `POST /info` [`accountingWithdrawTokens`](../native-core/post-info.md#accountingwithdrawtokens)    |
 
-```bash
-curl -sS -X POST "$API_URL/info" \
-  -H 'content-type: application/json' \
-  -d '{"type":"accountingDepositContracts"}'
-```
-
-```json
-{
-  "accounting_deposit_contracts": [
-    { "src_chain_id": 1,     "src_contract": "0xc91807c59b354437eae0de32f153c06665cd2270" },
-    { "src_chain_id": 56,    "src_contract": "0xd7afd8fbecc1ae7a4ce5b93eb59d76f967d0dea7" },
-    { "src_chain_id": 8453,  "src_contract": "0x79292d171531673ff97035315fda568189c3c8a5" },
-    { "src_chain_id": 42161, "src_contract": "0x5d4c35e9c9a06061ba80e34b531bba88bf9952bc" }
-  ],
-  "query_height": 126780651,
-  "app_hash": "0x…"
-}
-```
+The current vault addresses are listed in [Vault Contract](vault-contract.md#addresses).
 
 ## Accounts
 
