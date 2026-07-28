@@ -37,11 +37,6 @@ Neither direction can be cancelled or reversed once the first transaction lands.
 
 Native Core exposes two REST endpoints, and funding uses a handful of queries on each. The full contract for both is in [Native Core API](../native-core/README.md).
 
-| Environment | Base URL                     | Native chain id |
-| ----------- | ---------------------------- | --------------- |
-| **Mainnet** | `https://api.native.org`     | `696969`        |
-| Testnet     | `https://api-test.native.org` | `969696`       |
-
 ```bash
 API_URL=https://api.native.org
 ```
@@ -79,8 +74,6 @@ curl -sS -X POST "$API_URL/info" \
   "app_hash": "0x…"
 }
 ```
-
-The same queries against `https://api-test.native.org` return the testnet routing table.
 
 ## Accounts
 

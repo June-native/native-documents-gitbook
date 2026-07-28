@@ -18,7 +18,7 @@ curl -sS -X POST "https://api.native.org/info" \
   -d '{"type":"accountingDepositContracts"}'
 ```
 
-The response is keyed by `src_chain_id`, so the same call covers every chain and stays correct across redeployments. Testnet vaults come from the same query against `https://api-test.native.org`.
+The response is keyed by `src_chain_id`, so the same call covers every chain and stays correct across redeployments.
 
 ## Writing
 

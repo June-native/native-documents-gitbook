@@ -52,7 +52,7 @@ const types = {
 
 const withdrawNonce = BigInt(Date.now())
 const message = {
-  nativeChainId: 696969n,        // 969696 on testnet
+  nativeChainId: 696969n,        // the Native chain id, not an EVM chain id
   authKind: 1n,
   authScope: 0n,
   nonce: withdrawNonce,
@@ -70,7 +70,7 @@ const message = {
 const signature = await wallet.signTypedData({ domain, types, primaryType: 'Withdraw', message })
 ```
 
-The domain carries **no `chainId`**, so a wallet signs it while connected to any EVM chain; `nativeChainId` inside the message binds the signature to an environment. Post the wallet's raw 65-byte `r‖s‖v` signature verbatim.
+The domain carries **no `chainId`**, so a wallet signs it while connected to any EVM chain. Post the wallet's raw 65-byte `r‖s‖v` signature verbatim.
 
 ```bash
 curl -sS -X POST "$API_URL/trade" \
