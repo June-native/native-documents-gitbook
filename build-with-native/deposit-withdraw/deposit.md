@@ -8,6 +8,21 @@ Five steps: check whether the account exists, size the activation fee it may owe
 
 You initiate the EVM transaction. Native's settlement pipeline observes it and credits the balance — there is nothing to submit to Native, and closing your process after the transaction lands does not affect the credit.
 
+```mermaid
+sequenceDiagram
+    autonumber
+    participant You
+    participant Vault as Vault (EVM)
+    participant Native as Native Core
+    You->>Native: /info accountStatus
+    Native-->>You: activation fee owed, or none
+    You->>Vault: approve, then deposit(token, amount, 0)
+    Vault-->>You: Deposit event carrying nonce
+    Native->>Vault: reads the event once the block is finalized
+    Native->>Native: credits the balance
+    You->>Native: /info deposits until deposit_nonce appears
+```
+
 Read [Deposit & Withdraw](README.md) first for the shared endpoints, discovery queries, and rate limits.
 
 ## 1. Check whether the account exists
@@ -144,9 +159,18 @@ curl -sS -X POST "$API_URL/info" \
 }
 ```
 
-A matching record means the balance is credited and tradable. `asset_id` tells you which Native asset the ERC20 mapped to, so you never need a token-to-asset table of your own. `amount_atoms` is the credited amount in that asset's `balance_decimals` (8), rescaled from the token's own decimals — the on-chain `70507040000000000` at 18 decimals arrives as `7050704` at 8. `tx_hash` and `block_height` refer to Native Core, not the source chain.
+A matching record means the balance is credited and tradable. `asset_id` tells you which Native asset the ERC20 mapped to, so you never need a token-to-asset table of your own. `amount_atoms` is the credited amount in that asset's `balance_decimals` (8), rescaled from the token's own decimals — the on-chain `70507040000000000` at 18 decimals arrives as `7050704` at 8.
 
 [`userBalances`](../native-core/post-info.md#userbalances) is the settled-state read once the deposit is done.
+
+`tx_hash` and `block_height` refer to Native Core, not the source chain. Open the credit on the [Native explorer](https://app.native.org/explorer) to inspect it by hand:
+
+```
+https://app.native.org/explorer/tx/<tx_hash>
+https://app.native.org/explorer/address/<user>
+```
+
+The address page lists the account's deposits and withdrawals, which is the quickest way to check a user's funding history without polling.
 
 ## What can go wrong
 

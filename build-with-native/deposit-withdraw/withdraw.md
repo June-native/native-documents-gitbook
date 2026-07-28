@@ -8,6 +8,20 @@ Four steps: validate the amount against the route's limits, sign and submit the 
 
 You initiate on Native Core. The signer network co-signs the release and submits it to the vault — you never call the contract yourself.
 
+```mermaid
+sequenceDiagram
+    autonumber
+    participant You
+    participant Native as Native Core
+    participant Vault as Vault (EVM)
+    You->>Native: /trade signed withdraw action
+    Native-->>You: accepted, balance debited
+    You->>Native: /info withdraws to confirm the debit
+    Native->>Vault: signer network releases with M-of-N signatures
+    Vault-->>You: tokens at dst_address, usedNonces set
+    You->>Vault: usedNonces(dstAddress, withdrawNonce) until true
+```
+
 Read [Deposit & Withdraw](README.md) first for the shared endpoints, discovery queries, and rate limits.
 
 ## 1. Validate the amount
@@ -106,6 +120,13 @@ curl -sS -X POST "$API_URL/info" \
 ```
 
 This read is a **3-day window**. It confirms the debit; it is not durable history, so record the withdrawal on your side at submit time.
+
+Each record's `tx_hash` is the Native debit. Open it on the [Native explorer](https://app.native.org/explorer) to inspect the withdrawal by hand:
+
+```
+https://app.native.org/explorer/tx/<tx_hash>
+https://app.native.org/explorer/address/<user>
+```
 
 ## 4. Watch the destination chain
 
