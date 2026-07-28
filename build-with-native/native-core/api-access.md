@@ -46,7 +46,7 @@ Writes are authorized by an **API wallet**: a protocol-level *agent* key scoped 
 An API wallet is just an **agent keypair you generate locally**, authorized on one of your account's agent slots (`0`–`3`) by a single owner-signed `approveAgent`. Set it up directly against the API — no browser required:
 
 1. **Generate an agent keypair** locally (any secp256k1 key). The private key is your only signing secret; it never leaves your process. Its 20-byte address is the `agent`.
-2. **Fund the account.** Deposit a supported asset from your main wallet — the per-chain deposit contracts are in [`accountingDepositContracts`](post-info.md#accountingdepositcontracts), and the supported assets, their `asset_id`s, and minimums in [`assets`](post-info.md#assets) / [`accountingWithdrawTokens`](post-info.md#accountingwithdrawtokens). Your trading account is created on the first deposit, which pays a one-time activation fee. [Deposit & withdraw](deposit-and-withdraw.md) has the full flow for both directions.
+2. **Fund the account.** Deposit a supported asset from your main wallet — the per-chain deposit contracts are in [`accountingDepositContracts`](post-info.md#accountingdepositcontracts), and the supported assets, their `asset_id`s, and minimums in [`assets`](post-info.md#assets) / [`accountingWithdrawTokens`](post-info.md#accountingwithdrawtokens). Your trading account is created on the first deposit, which pays a one-time activation fee. [Deposit & Withdraw](../deposit-withdraw/README.md) has the full flow for both directions.
 3. **Approve the agent.** Your main wallet signs one `approveAgent` under `auth_scheme:"eip712"` and you `POST /trade` it:
 
 ```json

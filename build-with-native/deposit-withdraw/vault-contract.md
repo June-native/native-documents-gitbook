@@ -6,11 +6,11 @@ description: The DepositWithdrawVault contract surface an integrator calls — d
 
 `DepositWithdrawVault` is the EVM side of Native Core funding. One instance is deployed per supported source chain. It takes custody of deposited ERC20s and releases them on withdrawal.
 
-You use three parts of it: the two deposit entry points, the view calls that decide whether a deposit will succeed, and `usedNonces` to confirm a withdrawal was paid out. The end-to-end flows are in [Deposit & withdraw](deposit-and-withdraw.md).
+You use three parts of it: the two deposit entry points, the view calls that decide whether a deposit will succeed, and `usedNonces` to confirm a withdrawal was paid out. The end-to-end flows are in [Deposit](deposit.md) and [Withdraw](withdraw.md).
 
 ## Addresses
 
-Resolve the vault at runtime from [`accountingDepositContracts`](post-info.md#accountingdepositcontracts). Vaults are redeployed, and a deposit sent to a superseded vault is not credited.
+Resolve the vault at runtime from [`accountingDepositContracts`](../native-core/post-info.md#accountingdepositcontracts). Vaults are redeployed, and a deposit sent to a superseded vault is not credited.
 
 ```bash
 curl -sS -X POST "https://api.native.org/info" \
@@ -31,7 +31,7 @@ function deposit(address token, uint256 amount, uint256 actionFlag)
 
 Pulls `amount` of `token` from `msg.sender` and credits that address's Native Core account. Requires an ERC20 allowance for the vault. Pass `actionFlag: 0`.
 
-`msg.value` carries the one-time account activation fee and must be `0` for an account that already exists. The contract does not validate it — an incorrect value produces a successful transaction that later fails validation off-chain. See [Deposit & withdraw](deposit-and-withdraw.md#2-size-the-activation-fee).
+`msg.value` carries the one-time account activation fee and must be `0` for an account that already exists. The contract does not validate it — an incorrect value produces a successful transaction that later fails validation off-chain. See [Deposit](deposit.md#2-size-the-activation-fee).
 
 `amount` is in the token's own decimals and must be a whole number of units at `minDepositDecimalByUnderlying(token)` decimal places, which is `8` for every listed token. An 18-decimal token therefore requires `amount % 10**10 == 0`.
 
@@ -44,7 +44,7 @@ function depositFor(address token, uint256 amount, address user, uint256 actionF
 
 Identical to `deposit`, except it credits `user` while the tokens and allowance come from `msg.sender`. Use it to fund an end user from your own contract or relayer.
 
-The activation fee follows `user`, not the caller: read [`accountStatus`](post-info.md#accountstatus) for `user` to decide `msg.value`.
+The activation fee follows `user`, not the caller: read [`accountStatus`](../native-core/post-info.md#accountstatus) for `user` to decide `msg.value`.
 
 ### withdraw
 
@@ -97,7 +97,7 @@ Topic 0 is `0x259af91af89c9a6b13d53607d57f43b151235f69d54d2339133e57cfb62bf4c5`.
 * `user` is the credited address — the caller for `deposit`, the `user` argument for `depositFor`.
 * `amount` is in the token's decimals; Native credits the same value rescaled to the asset's 8-decimal `balance_decimals`.
 * `fee` is the `msg.value` the transaction carried — `0` for a deposit into an existing account.
-* `nonce` is what you match against `deposit_nonce` in [`deposits`](post-info.md#deposits).
+* `nonce` is what you match against `deposit_nonce` in [`deposits`](../native-core/post-info.md#deposits).
 
 To confirm a withdrawal, use `usedNonces` and the destination token's ERC20 `Transfer` rather than the vault's `Withdraw` event — `usedNonces` is stable across vault redeployments and unambiguous.
 
@@ -120,7 +120,7 @@ Decode these with the ABI below so users see a reason rather than a four-byte se
 
 ## ABI fragment
 
-The subset of the vault ABI that [Deposit & withdraw](deposit-and-withdraw.md) calls. Paste it into your client:
+The subset of the vault ABI that [Deposit](deposit.md) and [Withdraw](withdraw.md) call. Paste it into your client:
 
 ```json
 [

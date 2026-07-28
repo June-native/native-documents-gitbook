@@ -18,10 +18,6 @@ The exhaustive spec behind the [Guides](guides.md): every request field, respons
 [post-trade.md](post-trade.md)
 {% endcontent-ref %}
 
-{% content-ref url="vault-contract.md" %}
-[vault-contract.md](vault-contract.md)
-{% endcontent-ref %}
-
 {% content-ref url="transaction-signing.md" %}
 [transaction-signing.md](transaction-signing.md)
 {% endcontent-ref %}
