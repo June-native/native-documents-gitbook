@@ -18,6 +18,10 @@ Start here if you're integrating from scratch. Each guide is a short, linear wal
 [manage-agents-and-funds.md](manage-agents-and-funds.md)
 {% endcontent-ref %}
 
+{% content-ref url="deposit-and-withdraw.md" %}
+[deposit-and-withdraw.md](deposit-and-withdraw.md)
+{% endcontent-ref %}
+
 {% content-ref url="handle-timeouts.md" %}
 [handle-timeouts.md](handle-timeouts.md)
 {% endcontent-ref %}
