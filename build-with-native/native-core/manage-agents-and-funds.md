@@ -19,7 +19,7 @@ Both are owner EIP-712 signatures, not batchable, and carry no `agent_epoch`.
 
 * [`withdraw`](post-trade.md#withdraw) — move an asset off Native to a destination chain. Owner EIP-712; enforces per-chain/asset minimums and a withdraw fee. A credit account cannot withdraw.
 
-Deposits are on-chain transfers from your main wallet in the web app, not a `/trade` action.
+Deposits are not a `/trade` action — they are on-chain transfers into a vault contract on the source chain. [Deposit & Withdraw](../deposit-withdraw/README.md) walks both directions end to end, including how to confirm each one settled.
 
 ## De-risk a credit account
 

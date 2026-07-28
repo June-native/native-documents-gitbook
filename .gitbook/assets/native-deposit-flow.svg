@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="424" viewBox="0 0 900 424" role="img" aria-label="Deposit sequence: you read accountStatus from Native Core, approve and call deposit on the vault, read the nonce from the Deposit event, Native confirms the source transaction and credits the balance, then you poll the deposits query until the deposit_nonce appears.">
+  <style>
+    :root {
+      --fg: #1f2933; --muted: #616e7c; --line: #cbd2d9; --box: #f5f7fa; --boxb: #d3dce6;
+      --you: #0f766e; --nat: #6d28d9; --band: #f4f1fd; --bandb: #ddd6fe;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e4e7eb; --muted: #9aa5b1; --line: #3e4c59; --box: #1f2933; --boxb: #3e4c59;
+        --you: #5eead4; --nat: #c4b5fd; --band: #1c1830; --bandb: #4c1d95;
+      }
+    }
+    text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 12.5px; fill: var(--fg); }
+    .hdr { fill: var(--box); stroke: var(--boxb); }
+    .hdrTxt { font-size: 13px; font-weight: 600; text-anchor: middle; }
+    .life { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 4; }
+    .lbl { text-anchor: middle; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .sub { font-size: 11.5px; fill: var(--muted); text-anchor: middle; }
+    .you { stroke: var(--you); stroke-width: 1.6; fill: none; }
+    .nat { stroke: var(--nat); stroke-width: 1.6; fill: none; }
+    .ret { stroke: var(--muted); stroke-width: 1.3; fill: none; stroke-dasharray: 5 4; }
+    .band { fill: var(--band); stroke: var(--bandb); }
+    .bandTxt { font-size: 11px; font-weight: 600; fill: var(--nat); }
+  </style>
+  <defs>
+    <marker id="ay" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--you)"/></marker>
+    <marker id="an" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--nat)"/></marker>
+    <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker>
+  </defs>
+
+  <rect class="hdr" x="35" y="18" width="190" height="34" rx="6"/>
+  <text class="hdrTxt" x="130" y="40">You</text>
+  <rect class="hdr" x="355" y="18" width="190" height="34" rx="6"/>
+  <text class="hdrTxt" x="450" y="40">Vault (EVM chain)</text>
+  <rect class="hdr" x="675" y="18" width="190" height="34" rx="6"/>
+  <text class="hdrTxt" x="770" y="40">Native Core</text>
+
+  <line class="life" x1="130" y1="52" x2="130" y2="408"/>
+  <line class="life" x1="450" y1="52" x2="450" y2="408"/>
+  <line class="life" x1="770" y1="52" x2="770" y2="408"/>
+
+  <text class="lbl mono" x="450" y="88">POST /info accountStatus</text>
+  <line class="you" x1="130" y1="98" x2="765" y2="98" marker-end="url(#ay)"/>
+
+  <text class="lbl sub" x="450" y="124">activation fee owed, or none</text>
+  <line class="ret" x1="770" y1="134" x2="135" y2="134" marker-end="url(#am)"/>
+
+  <text class="lbl mono" x="290" y="180">approve, then deposit(token, amount, 0)</text>
+  <line class="you" x1="130" y1="190" x2="445" y2="190" marker-end="url(#ay)"/>
+
+  <text class="lbl sub" x="290" y="216">Deposit event carries the nonce</text>
+  <line class="ret" x1="450" y1="226" x2="135" y2="226" marker-end="url(#am)"/>
+
+  <rect class="band" x="16" y="248" width="868" height="58" rx="6"/>
+  <text class="bandTxt" x="32" y="268">Native does this — you only wait</text>
+  <text class="lbl sub" x="610" y="284">confirms the source transaction, then credits the balance (~5 min)</text>
+  <line class="nat" x1="450" y1="294" x2="765" y2="294" marker-end="url(#an)"/>
+
+  <text class="lbl mono" x="450" y="342">POST /info deposits</text>
+  <line class="you" x1="130" y1="352" x2="765" y2="352" marker-end="url(#ay)"/>
+
+  <text class="lbl sub" x="450" y="378">record matching your deposit_nonce</text>
+  <line class="ret" x1="770" y1="388" x2="135" y2="388" marker-end="url(#am)"/>
+</svg>
