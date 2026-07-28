@@ -8,20 +8,7 @@ Five steps: check whether the account exists, size the activation fee it may owe
 
 You initiate the EVM transaction. Native's settlement pipeline observes it and credits the balance — there is nothing to submit to Native, and closing your process after the transaction lands does not affect the credit.
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant You
-    participant Vault as Vault (EVM)
-    participant Native as Native Core
-    You->>Native: /info accountStatus
-    Native-->>You: activation fee owed, or none
-    You->>Vault: approve, then deposit(token, amount, 0)
-    Vault-->>You: Deposit event carrying nonce
-    Native->>Vault: reads the event once the block is finalized
-    Native->>Native: credits the balance
-    You->>Native: /info deposits until deposit_nonce appears
-```
+<figure><img src="../../.gitbook/assets/native-deposit-flow.svg" alt=""><figcaption></figcaption></figure>
 
 Read [Deposit & Withdraw](README.md) first for the shared endpoints, discovery queries, and rate limits.
 
