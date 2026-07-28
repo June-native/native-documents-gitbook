@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="900" height="424" viewBox="0 0 900 424" role="img" aria-label="Deposit sequence: you read accountStatus from Native Core, approve and call deposit on the vault, read the nonce from the Deposit event, Native reads the event after finality and credits the balance, then you poll the deposits query until the deposit_nonce appears.">
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="424" viewBox="0 0 900 424" role="img" aria-label="Deposit sequence: you read accountStatus from Native Core, approve and call deposit on the vault, read the nonce from the Deposit event, Native confirms the source transaction and credits the balance, then you poll the deposits query until the deposit_nonce appears.">
   <style>
     :root {
       --fg: #1f2933; --muted: #616e7c; --line: #cbd2d9; --box: #f5f7fa; --boxb: #d3dce6;
@@ -54,7 +54,7 @@
 
   <rect class="band" x="16" y="248" width="868" height="58" rx="6"/>
   <text class="bandTxt" x="32" y="268">Native does this — you only wait</text>
-  <text class="lbl sub" x="610" y="284">reads the event once the block is finalized, credits the balance</text>
+  <text class="lbl sub" x="610" y="284">confirms the source transaction, then credits the balance (~5 min)</text>
   <line class="nat" x1="450" y1="294" x2="765" y2="294" marker-end="url(#an)"/>
 
   <text class="lbl mono" x="450" y="342">POST /info deposits</text>

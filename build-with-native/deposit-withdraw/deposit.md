@@ -111,16 +111,9 @@ const depositNonce = args.nonce          // e.g. 31n
 
 ## 5. Wait for the credit
 
-Native Core credits the balance only after the source transaction is irreversible, judged by the chain's own `finalized` block tag rather than a confirmation count. Budget for it:
+Native's settlement pipeline waits for the source transaction to be safely confirmed before it credits the balance. The credit lands **about 5 minutes** after the deposit transaction — a typical latency, not a guarantee, so poll for the record instead of sleeping on a fixed timer.
 
-| Chain    | Time to `finalized` |
-| -------- | ------------------- |
-| BSC      | ~1 second           |
-| Ethereum | ~13–15 minutes      |
-| Arbitrum | ~15 minutes         |
-| Base     | ~15–20 minutes      |
-
-Then poll [`deposits`](../native-core/post-info.md#deposits) and match on the tuple `(src_chain_id, src_contract, deposit_nonce)`.
+Poll [`deposits`](../native-core/post-info.md#deposits) and match on the tuple `(src_chain_id, src_contract, deposit_nonce)`.
 
 ```bash
 curl -sS -X POST "$API_URL/info" \
@@ -166,8 +159,8 @@ The address page lists the account's deposits and withdrawals, which is the quic
 | `deposit()` reverts `InvalidAmount`                          | Amount carries more than 8 decimal places                                                     | Round down to the `minDepositDecimalByUnderlying` grid                |
 | `deposit()` reverts `DepositPaused` / `UnsupportedUnderlying` | Token paused, or not listed on this vault                                                     | Read `isDepositPaused` and `getSupportedUnderlyings` before submitting |
 | `deposit()` reverts `SafeERC20FailedOperation`               | Allowance or balance too low                                                                  | Re-check the allowance you set in step 3                              |
-| Mined, no credit after the finality window                   | First deposit underpaid the activation fee — confirm with `getDepositRecord(nonce).msgValue`  | Not self-recoverable — contact Native with the source tx hash         |
-| Mined, no credit, account already existed                    | Still inside the finality window                                                              | Wait out the window for that chain, then re-poll                      |
+| Mined, still no credit well past 5 minutes                   | First deposit underpaid the activation fee — confirm with `getDepositRecord(nonce).msgValue`  | Not self-recoverable — contact Native with the source tx hash         |
+| Mined, no credit yet, account already existed                | Still inside the normal settlement delay                                                      | Keep polling; report a credit that has not landed well past 5 minutes  |
 | `429` with `RateLimited`                                     | More than 1 `/info` request per second from one IP                                            | Widen the polling interval; share one budget across loops             |
 
 ## Next steps

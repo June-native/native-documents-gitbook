@@ -27,7 +27,7 @@ Both directions are asymmetric: you act on one chain, and Native's settlement pi
 |                               | Deposit                                 | Withdraw                               |
 | ----------------------------- | --------------------------------------- | -------------------------------------- |
 | You send                      | `deposit()` on the vault contract        | A signed `withdraw` action to `/trade` |
-| Native settles the other side | credits the balance after EVM finality   | releases tokens from the vault         |
+| Native settles the other side | credits the balance a few minutes later | releases tokens from the vault         |
 | You confirm with              | `POST /info` `deposits`                  | vault `usedNonces(...)`                |
 | Correlation key               | The `Deposit` event's `nonce`            | The `withdraw_nonce` you chose         |
 
