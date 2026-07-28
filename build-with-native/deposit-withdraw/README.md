@@ -47,7 +47,7 @@ API_URL=https://api.native.org
 ```
 
 {% hint style="warning" %}
-`/info` and `/trade` are server-to-server APIs. They do not return `Access-Control-Allow-Origin` for third-party origins, so a browser cannot call them cross-origin. Run these calls from your backend.
+`/info` and `/trade` are server-to-server APIs. They send no CORS headers and answer `OPTIONS` with `405`, so no browser can call them cross-origin. Run these calls from your backend.
 {% endhint %}
 
 {% hint style="info" %}
