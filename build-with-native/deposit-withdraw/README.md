@@ -46,10 +46,6 @@ Native Core exposes two REST endpoints, and funding uses a handful of queries on
 API_URL=https://api.native.org
 ```
 
-{% hint style="warning" %}
-`/info` and `/trade` are server-to-server APIs. They send no CORS headers and answer `OPTIONS` with `405`, so no browser can call them cross-origin. Run these calls from your backend.
-{% endhint %}
-
 {% hint style="info" %}
 `/info` is rate limited to **1 request per second per IP**. Every polling loop in this section needs an interval at or above that, and a shared budget if you run several at once.
 {% endhint %}

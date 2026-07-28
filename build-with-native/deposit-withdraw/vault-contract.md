@@ -99,7 +99,7 @@ Topic 0 is `0x259af91af89c9a6b13d53607d57f43b151235f69d54d2339133e57cfb62bf4c5`.
 * `fee` is the `msg.value` the transaction carried — `0` for a deposit into an existing account.
 * `nonce` is what you match against `deposit_nonce` in [`deposits`](../native-core/post-info.md#deposits).
 
-To confirm a withdrawal, use `usedNonces` and the destination token's ERC20 `Transfer` rather than the vault's `Withdraw` event — `usedNonces` is stable across vault redeployments and unambiguous.
+Confirm a withdrawal with `usedNonces` and the destination token's ERC20 `Transfer`.
 
 ## Reverts
 

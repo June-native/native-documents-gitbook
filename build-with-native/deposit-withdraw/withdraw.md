@@ -91,7 +91,7 @@ curl -sS -X POST "$API_URL/trade" \
   }'
 ```
 
-Branch on `submission_status`, never on the HTTP status — `/trade` returns the same body shape for 200, 400, 429, 503 and 504. `accepted` means the action executed and the balance is debited. `rejected` carries an `error.code` to fix before you sign a fresh action. `timeout` is **not** a rejection: the withdrawal may still commit, so reconcile it by `cloid` with `txStatusByCloid` instead of re-signing — that is what the required `cloid` is for. The decision playbook is [Handle outcomes & timeouts](../native-core/handle-timeouts.md); the code catalog is [Error Responses](../native-core/error-responses.md).
+Branch on `submission_status`, never on the HTTP status — `/trade` returns the same body shape for 200, 400, 429, 503 and 504. `accepted` means the action executed and the balance is debited. `rejected` carries an `error.code` to fix before you sign a fresh action. `timeout` is **not** a rejection: the withdrawal may still commit, so reconcile it by `cloid` with `txStatusByCloid` instead of re-signing. The decision playbook is [Handle outcomes & timeouts](../native-core/handle-timeouts.md); the code catalog is [Error Responses](../native-core/error-responses.md).
 
 The authority is the recovered signer, so the debited account is whoever signed. `dst_address` is only the EVM payout target — watch it on the destination chain.
 
@@ -111,7 +111,7 @@ This read is a **3-day window**. It confirms the debit; it is not durable histor
 
 Native's signer network co-signs the release and submits it to the vault. You do not call `withdraw()` on the contract — the vault rejects anything but the operator's multi-signed call.
 
-The release is observable without any indexer. `usedNonces` is the vault's permanent replay guard, keyed by the payout address and your `withdraw_nonce`. It flips to `true` in the same transaction that transfers the tokens:
+`usedNonces` is the vault's permanent replay guard, keyed by the payout address and your `withdraw_nonce`. It flips to `true` in the same transaction that transfers the tokens:
 
 ```solidity
 function usedNonces(address user, uint256 nonce) external view returns (bool);
