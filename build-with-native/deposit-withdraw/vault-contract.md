@@ -12,12 +12,12 @@ You use three parts of it: the two deposit entry points, the view calls that dec
 
 One vault per source chain:
 
-| Chain           | Chain id | `DepositWithdrawVault`                       |
-| --------------- | -------: | -------------------------------------------- |
-| Ethereum        |        1 | `0xc91807C59B354437eaE0dE32F153c06665cD2270` |
-| BNB Smart Chain |       56 | `0xd7AFd8FbEcC1AE7a4Ce5b93eb59D76F967D0Dea7` |
-| Base            |     8453 | `0x79292d171531673Ff97035315Fda568189c3c8A5` |
-| Arbitrum        |    42161 | `0x5d4C35e9C9a06061BA80e34b531BBA88bF9952Bc` |
+| Chain (chain id)     | `DepositWithdrawVault`                       |
+| -------------------- | -------------------------------------------- |
+| Ethereum (1)         | `0xc91807C59B354437eaE0dE32F153c06665cD2270` |
+| BNB Smart Chain (56) | `0xd7AFd8FbEcC1AE7a4Ce5b93eb59D76F967D0Dea7` |
+| Base (8453)          | `0x79292d171531673Ff97035315Fda568189c3c8A5` |
+| Arbitrum (42161)     | `0x5d4C35e9C9a06061BA80e34b531BBA88bF9952Bc` |
 
 Vaults get redeployed, and a deposit sent to a superseded vault is not credited. [`accountingDepositContracts`](../native-core/post-info.md#accountingdepositcontracts) returns the current set keyed by `src_chain_id` — read it at startup instead of shipping the table above as a constant.
 
