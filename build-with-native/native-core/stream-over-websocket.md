@@ -22,7 +22,7 @@ Use **one** connection and multiplex every subscription onto it. You get 10 subs
 
 ## 2. Subscribe to a market
 
-Market channels are keyed by `coin`. Despite the name it holds the **`market_id` as a string** — `"2"`, never `"ETH"` — because the same base trades against several quotes. Read the ids from [`markets`](post-info.md#markets) once at startup.
+Market channels are keyed by `coin` — the **`market_id` as a string** (`"2"`, not `"ETH"`). Read the ids from [`markets`](post-info.md#markets) once at startup.
 
 ```json
 {"method":"subscribe","subscription":{"type":"bbo","coin":"2"}}

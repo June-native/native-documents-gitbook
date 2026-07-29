@@ -40,12 +40,8 @@ Four methods, all sent as one JSON text frame:
 
 Inside `subscription`, `type` selects the channel and one of two keys selects the topic:
 
-* `coin` — market channels. Despite the name, the value is a **`market_id`**, not a ticker; ids come from [`markets`](post-info.md#markets).
+* `coin` — market channels. The **`market_id` as a string** (`"2"`) — not a ticker, not a number. Ids come from [`markets`](post-info.md#markets).
 * `user` — account channels. Your **owner** address, `0x`-prefixed and case-insensitive — not the API-wallet address.
-
-{% hint style="warning" %}
-**`coin` carries a market id as a string.** The field keeps its Hyperliquid name so existing clients connect unchanged, but Native Core lists one base against several quotes — ETH/USDC is market `0`, ETH/USDT is market `2` — so a ticker cannot identify a book on its own. `"ETH"`, `"ETH/USDT"`, and the unquoted number `2` are each rejected; send `"2"`.
-{% endhint %}
 
 One subscription covers one market or one address. To follow several markets, send several `subscribe` frames on the same connection; there is no all-markets form.
 
