@@ -90,5 +90,6 @@ The reply echoes your `id` and carries the same response `POST /trade` would hav
 ## Next steps
 
 * [WebSocket](websocket.md) — every channel, payload, and limit
+* [Best practices](best-practices.md#streaming) — the traps worth knowing before you go live
 * [Handle outcomes & timeouts](handle-timeouts.md) — what to do with each `submission_status`
 * [Read market data](read-market-data.md) — the poll-based equivalents

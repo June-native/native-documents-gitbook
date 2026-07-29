@@ -260,7 +260,11 @@ Channels come in two kinds, and the kind decides when a frame goes out.
 | `spotState` | 200 ms |
 | `spotCreditState` | 200 ms |
 
-A throttled channel only pushes when the underlying state actually changed, and a skipped beat costs you nothing: the next frame is a complete snapshot. Testnet runs a faster `l2Book` lane (500 ms), which is why a book looks livelier there than on mainnet. Higher-volume integrations can be granted faster cadence, a deeper book, and higher caps — talk to the Native team.
+A throttled channel only pushes when the underlying state actually changed, and a skipped beat costs you nothing: the next frame is a complete snapshot. Testnet throttles `l2Book` to 500 ms instead, which is why a book looks livelier there — size your expectations off the mainnet column.
+
+{% hint style="warning" %}
+`l2Book` is a 5-second snapshot on mainnet, so it is a picture of depth, not a live price. React on `bbo`, which pushes on every change to the top of book.
+{% endhint %}
 
 ## Requests over the socket
 
@@ -291,7 +295,7 @@ Only a transport-level failure uses the `error` envelope. Branch on `submission_
 Three things to plan for:
 
 * **One request at a time.** A second `post` sent before the first is answered is refused with `"429 Too many in-flight post requests"`. Wait for each reply.
-* **`post` costs the same as HTTP.** Requests charge the same [per-IP budgets](api-access.md#rate-limits-errors) the REST endpoints apply — including the 1 request/second read budget — and come back as `"429 Rate limited, retry after <n>ms"` when you exceed one. The socket is a convenience, not extra quota.
+* **`post` costs the same as HTTP.** Requests charge the same [per-IP budgets](api-access.md#rate-limits-errors) the REST endpoints apply — 1 request/second for `info` and 1 request/second for `action`, on independent buckets — and come back as `"429 Rate limited, retry after <n>ms"` when you exceed one. The socket is a convenience, not extra quota.
 * **`post` bodies are capped at 64 KiB** by the WebSocket message limit, where `POST /trade` accepts 256 KiB. Send a large `batch` action over HTTP.
 
 `explorer` requests are not served:
@@ -322,9 +326,12 @@ Reconnect on disconnect, always. The server may drop a connection without warnin
 | Subscriptions per connection | 10 |
 | Inbound messages per connection | 2000 / minute |
 | In-flight `post` requests per IP | 1 |
+| `post` request rate per IP | 1/second `info`, 1/second `action` |
 | Message size, either direction | 64 KiB |
 
 Over the subscription cap the server replies `{"channel":"error","data":"Too many subscriptions"}` and the earlier subscriptions keep running. Ten subscriptions is three fully-watched markets — `l2Book` + `bbo` + `trades` each — plus one account channel, so multiplex everything onto the single connection rather than opening one per topic.
+
+The two `post` budgets are independent of each other and shared with the REST endpoints: a read never spends write quota, and a request costs the same whether it arrives over HTTP or the socket. Subscriptions cost nothing against them — they are inbound messages, and only the message cap applies.
 
 ## Recovering missed data
 
@@ -341,5 +348,6 @@ There is no resume cursor: subscriptions take no height or sequence argument. Re
 ## Next steps
 
 * [Stream over WebSocket](stream-over-websocket.md) — the five-step walkthrough
+* [Best practices](best-practices.md#streaming) — the traps worth knowing before you go live
 * [POST /info](post-info.md) — every poll-based read, and the backfill queries
 * [POST /trade](post-trade.md) — every action you can send as a `post`

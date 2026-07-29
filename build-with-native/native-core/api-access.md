@@ -172,10 +172,12 @@ curl -sS -X POST "$API_URL/trade" \
 
 ## Rate limits & errors
 
-Two rate limits apply, both returning HTTP `429` with `error.code: "RateLimited"`:
+Two limiters apply, both returning HTTP `429` with `error.code: "RateLimited"`:
 
-* **Reads (`/info`)** are limited to **1 request/second per IP**. Over-quota reads return `{"error":{"code":"RateLimited","message":"ip rate limit exceeded, retry after <ms>ms"}}` — back off and keep polling within the budget.
-* **Writes (`/trade`)** are limited to **1000 requests/second per signer** — keyed on the recovered [authority](nonces-and-api-wallets.md), so one API wallet is one bucket — over a 1-second sliding window. Over-quota writes come back in the trade-response shape with an `error.retry_after_ms` hint.
+* **Per IP** — **1 request/second** to `/info` and **1 request/second** to `/trade`, as two independent budgets, so a burst of reads never starves your writes. Each is a token bucket holding one second of allowance. Over-quota reads return `{"error":{"code":"RateLimited","message":"ip rate limit exceeded, retry after <ms>ms"}}`; over-quota writes come back in the trade-response shape with an `error.retry_after_ms` hint.
+* **Per signer** — writes are additionally limited to **1000 requests/second**, keyed on the recovered [authority](nonces-and-api-wallets.md) over a 1-second sliding window, so one API wallet is one bucket.
+
+For a single integration the **per-IP budget is the one that binds**: it applies before any signature is checked, and 1000 writes/second per signer is only reachable across many source addresses.
 
 Request bodies over **64 KiB** (`/info`) or **256 KiB** (`/trade`) are rejected with HTTP `413`.
 
