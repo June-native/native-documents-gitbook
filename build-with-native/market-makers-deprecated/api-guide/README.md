@@ -4,6 +4,13 @@ hidden: true
 
 # API Guide
 
+{% hint style="danger" %}
+This doc is deprecated, for market makers integrations, please refer to:
+
+* [native-core](../../native-core/ "mention")
+* [native-core.md](../../../modules/native-core.md "mention")
+{% endhint %}
+
 ## 1. Authentication
 
 Native requires the `api_key` header to be included in every request to authenticate that the request is coming from trusted users. We also offer flexible authentication methods to meet your needs.

@@ -1,5 +1,12 @@
 # Firm-Quote
 
+{% hint style="danger" %}
+This doc is deprecated, for market makers integrations, please refer to:
+
+* [native-core](../../native-core/ "mention")
+* [native-core.md](../../../modules/native-core.md "mention")
+{% endhint %}
+
 Based on the order book you provide, our router will determine the optimal liquidity source to offer the best price. If your pricing is selected, Native will request a firm quote from you.
 
 The firm quote endpoint must adhere to the following format:

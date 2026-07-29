@@ -1,5 +1,12 @@
 # On-chain events for swap
 
+{% hint style="danger" %}
+This doc is deprecated, for market makers integrations, please refer to:
+
+* [native-core](../../native-core/ "mention")
+* [native-core.md](../../../modules/native-core.md "mention")
+{% endhint %}
+
 * Market makers should monitor the pool address for the following event to detect successful trades on-chain.
 * Match the event by the `quoteId`
 

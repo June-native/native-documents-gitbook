@@ -1,5 +1,12 @@
 # GET Market maker info
 
+{% hint style="danger" %}
+This doc is deprecated, for market makers integrations, please refer to:
+
+* [native-core](../../native-core/ "mention")
+* [native-core.md](../../../modules/native-core.md "mention")
+{% endhint %}
+
 A single interface to return all helpful info for a given market maker. Including:
 
 * Basic info, like address, whitelisted IPs, status flags.

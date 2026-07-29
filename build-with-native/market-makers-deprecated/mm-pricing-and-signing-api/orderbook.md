@@ -4,6 +4,13 @@ description: Price levels endpoint for Native APIs and aggregators
 
 # Orderbook
 
+{% hint style="danger" %}
+This doc is deprecated, for market makers integrations, please refer to:
+
+* [native-core](../../native-core/ "mention")
+* [native-core.md](../../../modules/native-core.md "mention")
+{% endhint %}
+
 To indicate current pricing for Native APIs and aggregators, you must provide a price level endpoint that returns the price levels of all supported pairs on a specified chain.
 
 Native will call this endpoint **every second on every supported network** to retrieve the latest price levels.
