@@ -28,7 +28,18 @@ description: The core habits a live Native Core integration should follow.
 ## Reads & rate limits
 
 * **Query `/info` by the owner address**, not the API-wallet address — the agent address returns nothing.
-* **`/info` is 1 request/second per IP.** Cache static metadata, poll on a fixed interval, and back off on `429` — see [rate limits](api-access.md#rate-limits-errors).
+* **Budget 1 request/second per IP on each endpoint.** Reads and writes hold separate buckets, so polling never eats your order rate — but neither bucket gives you a second request. Cache static metadata, poll on a fixed interval, and back off on `429` — see [rate limits](api-access.md#rate-limits-errors).
+* **Once you need more than one read per second, stream instead of polling.** A [WebSocket](websocket.md) subscription costs nothing against the request budget.
+
+## Streaming
+
+* **Quote off `bbo`, not `l2Book`.** On mainnet `l2Book` is a five-second snapshot — read it for depth and shape, never for the price you act on. `bbo` pushes on every change to the top of book.
+* **`orderUpdates` is the event stream; `openOrders` is the reconciliation.** `openOrders` is a full replacement at most every five seconds, so driving state off it silently drops every transition in between. Track lifecycle on `orderUpdates` and use `openOrders` to catch drift.
+* **A partial fill arrives as `status: "open"`.** Compare `sz` (remaining) against `origSz` on every update — branching on `status` alone misses partials entirely.
+* **Never wait on the stream to confirm a submission.** `orderUpdates` carries only orders that reached the matching engine; a bad nonce or signature comes back on the `/trade` response and will never arrive as a frame.
+* **Deduplicate fills on `tid`.** After a reconnect the `userFills` snapshot overlaps the live stream by design. Resubscribe and rebuild from the snapshot packets rather than trying to patch the gap.
+* **On a credit account, watch `pending_exposure`, not just `actual`.** It moves the moment an order rests or cancels, so it is your live risk ahead of settlement — see [`spotCreditState`](websocket.md#spotcreditstate).
+* **Don't share the `post` channel between market data and trading.** One `post` may be in flight per IP, and a synchronous `/trade` holds that slot for up to a block — a cheap `info` query queued behind it just gets a `429`.
 
 ## Degraded states
 

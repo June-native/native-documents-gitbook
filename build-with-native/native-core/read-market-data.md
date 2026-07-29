@@ -9,7 +9,7 @@ Every read is a `POST /info` call, unauthenticated, dispatched on a top-level `t
 Examples use mainnet; swap in `https://api-test.native.org` for testnet — see [environments](api-access.md#environments).
 
 {% hint style="info" %}
-**Streaming coming soon.** Reads are poll-based today; a WebSocket streaming API for live market data and order updates is on the roadmap.
+**Don't want to poll?** The same market data and account state stream over a [WebSocket](websocket.md) connection — books, trades, fills, and order updates pushed as they happen. [Stream over WebSocket](stream-over-websocket.md) is the walkthrough.
 {% endhint %}
 
 ## Discover markets

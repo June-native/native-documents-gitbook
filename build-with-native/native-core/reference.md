@@ -18,6 +18,10 @@ The exhaustive spec behind the [Guides](guides.md): every request field, respons
 [post-trade.md](post-trade.md)
 {% endcontent-ref %}
 
+{% content-ref url="websocket.md" %}
+[websocket.md](websocket.md)
+{% endcontent-ref %}
+
 {% content-ref url="transaction-signing.md" %}
 [transaction-signing.md](transaction-signing.md)
 {% endcontent-ref %}
