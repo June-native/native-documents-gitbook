@@ -1,23 +1,20 @@
 ---
-description: How to reach Native Core — the two REST endpoints, environments, API wallets, signing, and limits.
+description: How to reach Native Core — the endpoints, environments, API wallets, signing, and limits.
 ---
 
 # API Access
 
-Native Core exposes a single HTTP API with exactly two REST endpoints:
+Native Core exposes two REST endpoints and one WebSocket endpoint:
 
 * `POST /info` — **reads**. One endpoint for all public reads, dispatched by a top-level `type` field (market metadata, order books, balances, order status, fills).
 * `POST /trade` — **writes**. One client-signed action per call (`order`, `cancel`, `cancelAll`, `modify`, `batch`, and the owner-signed `withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`).
+* `/ws` — **streaming**. Push channels for books, trades, fills, and order updates, plus the same `/info` and `/trade` bodies sent over the socket. See [WebSocket](websocket.md).
 
-Reads are poll-based over `POST /info`. This page is the front door for anyone integrating **directly** with Native Core: market makers, trading bots, AI-agent builders, and aggregators.
-
-{% hint style="info" %}
-**Streaming coming soon.** Today all reads are poll-based over `POST /info`. A WebSocket streaming API for live market data and order updates is on the roadmap.
-{% endhint %}
+This page is the front door for anyone integrating **directly** with Native Core: market makers, trading bots, AI-agent builders, and aggregators.
 
 There are two ways to integrate:
 
-* **Call the API directly** — the two REST endpoints documented on this page. Full control, any language.
+* **Call the API directly** — the endpoints documented on this page, plus the [WebSocket](websocket.md) surface when you need push instead of polling. Full control, any language.
 * **Use the [Native Core Python SDK](python-sdk/README.md)** — a thin, typed client that wraps both endpoints and handles `/trade` signing, nonces, and the synchronous outcome (reconciling a `timeout` by `cloid`) for you.
 
 Signing `/trade` by hand means building a canonical binary payload with recoverable secp256k1 signatures and per-signer monotonic nonces — fully specified below for building your own client. The Python SDK implements it for you.
@@ -26,10 +23,10 @@ Signing `/trade` by hand means building a canonical binary payload with recovera
 
 The API is served over HTTPS. Native Core runs on **mainnet**, with a **testnet** for integration and testing. Each environment has its own base URL and signing chain id:
 
-| Environment | Base URL | `network` | Chain id (signing) |
-| --- | --- | --- | --- |
-| **Mainnet** | `https://api.native.org` | `mainnet` | `696969` |
-| Testnet | `https://api-test.native.org` | `testnet` | `969696` |
+| Environment | Base URL | WebSocket | `network` | Chain id (signing) |
+| --- | --- | --- | --- | --- |
+| **Mainnet** | `https://api.native.org` | `wss://api.native.org/ws` | `mainnet` | `696969` |
+| Testnet | `https://api-test.native.org` | `wss://api-test.native.org/ws` | `testnet` | `969696` |
 
 The chain id is folded into every signed `/trade` payload and must match the environment you target — sign for the wrong one and the API recovers a different authority and rejects the write (see [Transaction signing](transaction-signing.md)). The examples below use mainnet:
 
@@ -125,6 +122,21 @@ The full per-action reference (envelope fields, every action type, and the const
 [post-trade.md](post-trade.md)
 {% endcontent-ref %}
 
+### WebSocket (streaming)
+
+Connect and subscribe — no authentication, no headers:
+
+```bash
+wscat -c wss://api.native.org/ws
+> {"method":"subscribe","subscription":{"type":"bbo","coin":"2"}}
+```
+
+Nine push channels cover books, trades, mids, fills, order updates, and balances, and a `post` method carries the two request bodies above over the same connection. Every channel, payload, and limit is here:
+
+{% content-ref url="websocket.md" %}
+[websocket.md](websocket.md)
+{% endcontent-ref %}
+
 ## Authentication & signing
 
 Every `/trade` write is a **client-signed transaction**. The API reconstructs a canonical unsigned binary payload from `action`, `nonce`, `agent_epoch`, and `expires_after_ms`, then verifies the recoverable secp256k1 signature over that exact payload — the transaction **authority** is the recovered signer. The owner address is never sent.
@@ -166,6 +178,8 @@ Two rate limits apply, both returning HTTP `429` with `error.code: "RateLimited"
 * **Writes (`/trade`)** are limited to **1000 requests/second per signer** — keyed on the recovered [authority](nonces-and-api-wallets.md), so one API wallet is one bucket — over a 1-second sliding window. Over-quota writes come back in the trade-response shape with an `error.retry_after_ms` hint.
 
 Request bodies over **64 KiB** (`/info`) or **256 KiB** (`/trade`) are rejected with HTTP `413`.
+
+A `post` request sent over the [WebSocket](websocket.md#requests-over-the-socket) charges the same per-IP budget as the equivalent HTTP call and is answered with a `429` string in the reply envelope — the socket is a convenience, not extra quota.
 
 The `/trade` error model keys on the **response body, not the HTTP status** — the API returns the same trade-response shape for HTTP 200 / 400 / 429 / 503 / 504, so a business rejection is **data**, not a transport error. Branch on `submission_status`, never the status line. What each outcome means and how to act on it is the [Handle outcomes & timeouts](handle-timeouts.md) playbook; every code and its fix is in:
 

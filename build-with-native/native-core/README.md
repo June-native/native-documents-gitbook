@@ -21,7 +21,7 @@ layout:
 
 # Native Core API
 
-The Native Core API is the direct integration surface for the on-chain CLOB. Clients submit signed business actions with `POST /trade` and read business state with `POST /info`. It serves market makers, trading bots, AI agents, and anyone integrating directly with Native Core.
+The Native Core API is the direct integration surface for the on-chain CLOB. Clients submit signed business actions with `POST /trade` and read business state with `POST /info`, or stream both over a [WebSocket](websocket.md) connection. It serves market makers, trading bots, AI agents, and anyone integrating directly with Native Core.
 
 Operational, recovery, and node-private interfaces are intentionally not part of this contract.
 
