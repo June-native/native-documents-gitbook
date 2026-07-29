@@ -55,7 +55,7 @@ An API wallet is just an **agent keypair you generate locally**, authorized on o
 }
 ```
 
-The typed-data fields are in [Transaction signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712); the action reference is [`approveAgent`](post-trade.md#approveagent). After approval, read the slot's `agent_epoch` from [`userAgents`](post-info.md#useragents) — agent-signed `/trade` writes carry it.
+The typed-data fields are in [Transaction signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712); the action reference is [`approveAgent`](post-trade.md#approveagent). After approval, read the slot's **`epoch`** from [`userAgents`](post-info.md#useragents) — each entry is `{slot_id, agent, epoch}` — and send that value as the `agent_epoch` envelope field on agent-signed `/trade` writes.
 
 Prefer a UI? The **[Native web app](https://app.native.org/markets/ETH-USDT?agentWallets=agents)** does these same steps for you — connect your main wallet and it generates the agent key, submits the `approveAgent`, and hands you a one-time **connection bundle**. Either way you end up holding the same three values:
 
@@ -153,7 +153,7 @@ The exact payload layout, encoding rules, and EIP-712 typed-data schemes are her
 
 ## Numbers
 
-Native Core executes on **integers only**. Public `order` / `modify` payloads accept human decimal strings for `price` and `quantity`; the write path converts them to raw atoms using each market's `price_decimals`, `max_price_sig_figs`, and `base_quantity_decimals`. Send prices and sizes as **strings**, never floats, and respect each market's precision — an out-of-precision value is rejected, not silently rounded.
+Native Core executes on **integers only**. Public `order` / `modify` payloads accept human decimal strings for `price` and `quantity`; the write path converts them to raw atoms using each market's `price_decimals` and `base_quantity_decimals` (`max_price_sig_figs` is enforced at execution, not on the write path). Send prices and sizes as **strings**, never floats, and respect each market's precision — an out-of-precision value is rejected, not silently rounded.
 
 {% content-ref url="decimals-units.md" %}
 [decimals-units.md](decimals-units.md)
