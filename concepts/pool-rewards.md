@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # Pool Rewards
 
 Liquidity providers who deposited in Native Pool receive rewards as their asset is utilise by Native Relay for trade settlements.
