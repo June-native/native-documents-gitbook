@@ -4,11 +4,7 @@ description: The /trade error model — read the response body, not the HTTP sta
 
 # Error responses
 
-`POST /trade` is **synchronous** and returns the **same JSON trade-response shape** whatever the HTTP status (`200`, `400`, `429`, `503`, `504`). Branch on the body, not the status line. A business rejection (below minimum, bad precision, insufficient balance) is **data**, not a transport error.
-
-The envelope carries `submission_status` and, on `accepted`, a [`response` envelope](post-trade.md#what-accepted-carries) with the per-order outcome. **A failed order does not always produce a top-level `error`** — for order-ish actions the failure code lives in `response.status.error` while `submission_status` stays `accepted`. See [Execution-level failures](#execution-level-failures).
-
-(One body never has this shape: a request over the 256 KiB `/trade` limit is refused before the handler runs and comes back as plain text. Guard your JSON parse.)
+`POST /trade` is **synchronous** and always returns the **same JSON trade-response shape**, whatever the HTTP status (`200`, `400`, `429`, `503`, `504`). Branch on the body, not the status line. The envelope carries `submission_status`, and any non-successful outcome carries an `error.code`. A business rejection (below minimum, bad precision, insufficient balance) is **data**, not a transport error: read `error.code` and act on it.
 
 Only the transport layer raises — a non-trade-response `4xx`/`5xx` body, or a wire failure before any response arrived. A decodable trade response is always returned to you as-is.
 
@@ -22,19 +18,13 @@ There are exactly three values.
 | --- | --- | --- |
 | `accepted` | The transaction landed and executed — for an order that covers rested, filled, or a benign IOC/FOK/self-trade/no-liquidity cancel; for a non-order action it committed. No `error`. | Done. The `/trade` response does not carry the fill state — read [`orderStatus`](post-info.md#orderstatus) to see whether an order rested or filled. |
 | `rejected` | The write was refused — request-shaping, gateway (rate limit / suspension / expiry), node admission — **or** it failed at execution. `error.code` says why; `tx_hash` is present once canonical bytes exist. | If `RateLimited`, back off `error.retry_after_ms` and resend the same signed action. Otherwise fix the cause and submit a **fresh** action. |
-| `timeout` | The outcome wasn't observed within the 3-second budget, or the submission couldn't be routed to a node. | Depends on `error.code` — the `Handoff*` family (503) never reached a node and is safe to resubmit; everything else may still land, so reconcile by `cloid` and **never** resubmit under a new nonce. |
+| `timeout` | The outcome wasn't observed within the wait budget, or the submission couldn't be routed to the active node. **May still land.** | Reconcile by `cloid`. **Never** resubmit under a new nonce — double-fill risk. |
 
 {% hint style="warning" %}
-`timeout` is not `rejected` — the transaction may still commit in a later block, and resubmitting under a new nonce is the one move that can double-fill you. Reconcile by `cloid` via [`orderStatus`](post-info.md#orderstatus) / [`txStatusByCloid`](post-info.md#orderstatus).
+`timeout` is not `rejected` — the transaction may still commit in a later block. Reconcile by `cloid` (via [`orderStatus`](post-info.md#orderstatus) / [`txStatusByCloid`](post-info.md#orderstatus)); resubmitting under a new nonce is the one move that can double-fill you.
 {% endhint %}
 
-A `timeout` has three shapes, and only one of them is safe to resubmit:
-
-| `error.code` | HTTP | Reached a node? | Do next |
-| --- | --- | --- | --- |
-| *(none)* — the wait budget elapsed | 200 | Yes, it is executing | Reconcile by `cloid` |
-| `HandoffTimeout` / `HandoffBufferFull:*` / `HandoffMultipleActive` | 503 | No — no writable node accepted it | Resubmit; nothing was delivered |
-| `node_unreachable: …` | 504 | Unknown — the connection broke mid-submission | Reconcile by `cloid` |
+A `timeout` has two shapes: the wait budget elapsed → HTTP `200` with **no** `error`; the submission couldn't be routed → HTTP `503`/`504` with an `error.code` (see the gateway codes below).
 
 ## Where a code comes from
 
@@ -45,8 +35,7 @@ Every `error.code` comes from one of four layers, and the **spelling tells you w
 | Request-shaping | lowercase `snake_case` | `invalid_json`, `invalid_quantity_precision`, `missing_cloid` | 400 | `rejected` (no `tx_hash`) |
 | Gateway | `CamelCase` / prefixed | `RateLimited`, `PlaceOrderSuspended`, `ExpiredTx`, `HandoffTimeout`, `node_unreachable: …` | 429 / 503 / 504 / 200 | `rejected` or `timeout` |
 | Node admission | `CamelCase`, verbatim from the node | `MinTradeSpotNtl`, `DuplicateCloid`, `InsufficientSpotBalance`, `AccountFrozen` | 200 | `rejected` |
-| Execution — order-ish | lowercase (the variant name) | `tick`, `insufficientspotbalance`, `lotsize` | 200 | `accepted`, code in `response.status.error` |
-| Execution — envelope | CamelCase display form | `BadNonce`, `BadSignature`, `ExpiredTx` | 200 | `rejected` |
+| Execution | lowercase (the variant name) | `tick`, `badnonce`, `insufficientspotbalance` | 200 | `rejected` |
 
 One condition can surface at two layers with different spellings — an under-minimum order is usually caught at admission as `MinTradeSpotNtl`, but the same failure at execution reads `mintradespotntl`. Match on the code you actually receive.
 
@@ -56,7 +45,7 @@ The wire carries `error.code`, not display copy — the **Message** column is il
 
 | Code | What it means | Message a user sees | Fix |
 | --- | --- | --- | --- |
-| `RateLimited` | Over quota on either limiter, never admitted. HTTP `429`, carries `error.retry_after_ms`. **`tx_hash` tells them apart**: the per-IP budget (1 req/s) is enforced before the body is parsed, so the reply has no `tx_hash`; the per-signer rate (1000 req/s) is enforced after canonicalization, so it does. | "Too many requests — retrying shortly." | Back off `retry_after_ms`, then resend the same signed action. The only safe resend. |
+| `RateLimited` | Over quota on either limiter — the per-IP budget (1 req/s) or the per-signer rate (1000 req/s). Both return this code in the same shape, so the response doesn't tell you which; never admitted. HTTP `429`, carries `error.retry_after_ms`. | "Too many requests — retrying shortly." | Back off `retry_after_ms`, then resend the same signed action. The only safe resend. |
 | `PlaceOrderSuspended` | The write path is degraded, so order placement is suspended: `order`, `modify`, and any `batch` that contains a non-cancel item are refused. Only `cancel` / `cancelAll` — and a `batch` whose **every** item is `cancel` / `cancelAll` — still go through; an empty `batch` is also refused. HTTP `503`, `error.retry_after_ms: 1000`. | "Placing orders is paused — try again shortly." | Back off and retry; keep cancelling if you need to reduce exposure. |
 | `HandoffTimeout` / `HandoffBufferFull:{request_count\|bytes\|signer}` / `HandoffMultipleActive` (`timeout`) | The submission couldn't be routed to a single writable node (leadership handoff / backpressure). `submission_status: "timeout"`, HTTP `503`, `error.retry_after_ms: 1000`. The action may still land. | "Order submitted — confirming status." | Reconcile by `cloid`; never resubmit under a new nonce. |
 | `node_unreachable: …` (`timeout`) | Node admission couldn't be reached; `submission_status: "timeout"`, HTTP `504`. The action may still land. | "Order submitted — confirming status." | Reconcile by `cloid`; never resubmit under a new nonce. |
@@ -75,21 +64,13 @@ A [`batch`](post-trade.md#batch) is one `/trade` call under one envelope nonce, 
 
 ## Execution-level failures
 
-An admitted action still runs against the book and **can fail at execution**. Because `/trade` is synchronous, that failure comes back on the `/trade` response — but **where** it appears depends on the action, and getting this wrong reads a failed order as a success.
+An admitted action still runs against the book and **can fail at execution**. Because `/trade` is synchronous, that failure comes back **on the `/trade` response itself** — `submission_status: "rejected"` with a lowercase `error.code`, for both order and non-order actions. The same outcome is also readable afterward via [`orderStatus`](post-info.md#orderstatus) by `cloid`, which you only need when the write came back `timeout`.
 
-* **Order-ish actions** (`order`, `cancel`, `cancelAll`, `modify`, `batch`) stay `submission_status: "accepted"` with **no** top-level `error`. The code appears only as a leaf inside the [`response` envelope](post-trade.md#what-accepted-carries), as `{"error":"<code>"}`. This covers `insufficientspotbalance`, `mintradespotntl`, `tick`, `lotsize`, `missingorder`, and the rest.
-* **Non-order actions** (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`) do map an execution failure to `submission_status: "rejected"` with a top-level `error.code`.
-* **Six envelope-level failures** demote any action to `rejected` because they invalidate the transaction itself: `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `invalidbatchlength`, `featuredisabled`. These surface in their CamelCase display form — `BadNonce`, `BadSignature`, and so on.
+Execution codes are the lowercase variant names — e.g. `tick`, `badnonce`, `insufficientspotbalance` — distinct from the CamelCase admission codes above.
 
-{% hint style="warning" %}
-`error.code` at the top level is never a lowercase execution code for an order. If you are matching on `error.code == "tick"`, you will never hit it — look in `response.status.error`.
-{% endhint %}
-
-| Code | Where it appears | What it means | Fix |
-| --- | --- | --- | --- |
-| `tick` | `response.status.error`, with `submission_status: "accepted"` | A non-integer `price` exceeded the market's `max_price_sig_figs`. The transaction landed; the order never entered the book. | Snap the price to the market's `price_decimals` / `max_price_sig_figs` before signing. The [Python SDK](python-sdk/README.md) checks this locally (`LocalValidationError`) and never sends it; see [Decimals & units](decimals-units.md#valid-invalid-examples). |
-| `insufficientspotbalance` / `mintradespotntl` / `lotsize` / `missingorder` | `response.status.error`, with `submission_status: "accepted"` | The order failed at execution for the stated reason. | Same handling as the CamelCase admission form of the condition — the difference is only which layer caught it. |
-| `BadNonce` / `BadSignature` / `ExpiredTx` / `MalformedTx` / `InvalidBatchLength` / `FeatureDisabled` | top-level `error.code`, with `submission_status: "rejected"` | The transaction envelope itself was invalid, so nothing executed. | Re-sign correctly and submit a fresh action. |
+| Code | What it means | Fix |
+| --- | --- | --- |
+| `tick` | A non-integer `price` exceeded the market's `max_price_sig_figs`. The order was admitted, then rejected at execution — `/trade` returns `submission_status: "rejected"` with `error.code: "tick"`. | Snap the price to the market's `price_decimals` / `max_price_sig_figs` before signing. The [Python SDK](python-sdk/README.md) checks this locally (`LocalValidationError`) and never sends it; see [Decimals & units](decimals-units.md#valid-invalid-examples). |
 
 ## Full /trade error-code reference
 
@@ -115,8 +96,7 @@ Request-shaping and gateway errors:
 | `invalid_market_id` | A market id was a valid `u64` JSON value but exceeded the protocol `u32` range. |
 | `invalid_asset_id` | An asset id was a valid `u64` JSON value but exceeded the protocol `u32` range. |
 | `invalid_dst_address` | `withdraw.dst_address` was not a 20-byte hex address. |
-| `invalid_dst_chain_id` | `withdraw.dst_chain_id` exceeded the protocol `u32` range. A **zero** chain id passes this check and is rejected later at admission as `InvalidWithdraw` (HTTP 200). |
-| `missing_cloid` | An action that requires a client id omitted `cloid`. |
+| `invalid_dst_chain_id` | `withdraw.dst_chain_id` was zero or exceeded the protocol `u32` range. |
 | `invalid_cloid` | A `cloid` was not a 16-byte hex value. |
 | `invalid_side` | `side` was not `bid`, `ask`, `buy`, or `sell`. |
 | `invalid_order_type` | `order_type` was not `limit` or `market`. |
@@ -132,8 +112,7 @@ Request-shaping and gateway errors:
 | `encode_error: <TxCodecError>` | The write path could not assemble canonical signed tx bytes, for example because a batch length exceeded codec limits. |
 | `empty_tx_bytes` | Defensive guard: canonical byte assembly produced an empty byte vector. This should not occur for normal JSON requests. |
 | `decode_error: <TxDecodeError>` | The write path assembled bytes but could not decode them or recover the authorization (single signature, or a multisig proof — empty/too-many/duplicate/unsorted recovered signers). For public JSON this is the usual shape for a malformed or unrecoverable signature. |
-| `RateLimited` | Over quota on either limiter: the per-IP budget (1 req/s per endpoint, enforced before parsing — no `tx_hash`) or the per-signer rate (1000/s over a 1-second window, enforced after canonicalization — carries `tx_hash`). HTTP `429`; includes `retry_after_ms`. |
-| `TooManyPending` | Too many synchronous `/trade` waits are already in flight on this instance. HTTP `503`, `submission_status: "rejected"`, `retry_after_ms: 50` — transient, retry immediately. Distinct from the same-named node-admission code below. |
+| `RateLimited` | Over quota on either limiter: the per-IP budget (1 req/s per endpoint) or the per-signer rate (1000/s over a 1-second window). HTTP `429`; includes `retry_after_ms`. |
 | `PlaceOrderSuspended` | Order placement is suspended while the write path is degraded. Admitted: `cancel`, `cancelAll`, and a `batch` whose **every** item is `cancel` / `cancelAll`. Refused: `order`, `modify`, any `batch` that mixes in a non-cancel item, and an empty `batch`. HTTP `503`, `retry_after_ms: 1000`. |
 | `ExpiredTx` | The envelope's `expires_after_ms` was already past at the gateway clock; fast-failed before the node hop. HTTP `200`, `submission_status: "rejected"`. |
 | `HandoffTimeout` / `HandoffBufferFull:{request_count\|bytes\|signer}` / `HandoffMultipleActive` | The submission could not be routed to a single writable node (leadership handoff / backpressure). HTTP `503`, `submission_status: "timeout"`, `retry_after_ms: 1000`. |
@@ -150,7 +129,7 @@ Node admission pass-through errors:
 | `BadSignature` | The node could not recover a signer from the canonical transaction signature. Public JSON normally fails earlier during signer recovery. |
 | `AuthorityHintMismatch` | The decoded authority does not match the submit-path `authority_hint` (recovered signer for single-sig, derived policy authority for multisig). The hint did not match the canonical transaction. |
 | `WrongChainId` | The signed payload's chain id did not match the node's configured chain id. |
-| `TooManyPending` | Global pending capacity or per-owner pending capacity was reached at the node. (The API also emits this code itself, at HTTP `503` with `retry_after_ms: 50`, when its own synchronous-write concurrency is saturated — see the gateway table above.) |
+| `TooManyPending` | Global pending capacity or per-owner pending capacity was reached. |
 | `InvalidIngressConfig` | The node ingress configuration was invalid. |
 | `DirectSignerIsActiveAgent` | A signer currently registered as an active agent attempted direct-owner mode. |
 | `OwnerDoesNotExist` | Direct-owner admission resolved to an owner account that does not exist. |

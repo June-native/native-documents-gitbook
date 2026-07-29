@@ -11,7 +11,7 @@ Native Core has two kinds of trading account. Every owner is exactly one of them
 | Provisioning | Created automatically on **first deposit** — the default account. | **Provisioned by the protocol**; not self-service. |
 | Collateral | Per-asset `available` balance. | A USD credit line. |
 | Short positions | Not supported — trading is limited to held balance. | Supported — positions are signed (`actual_qty` may be negative). |
-| Order-time risk gate | Sufficient `available` balance. | `available_usd_atoms >= 0` against the credit line. |
+| Order-time risk gate | Sufficient `available` balance. | `available_usd >= 0` against the credit line. |
 | State | `active` / `frozen` | `active` / `frozen` |
 
 A `frozen` account may only cancel — new orders and modifies are rejected. Most integrations use a **spot account**; without a protocol-granted credit line, an owner is a spot account and the credit-account reads below report no credit position.
@@ -28,7 +28,7 @@ Point every `POST /info` account query at the **owner** address (not the API-wal
 
 **Credit account**
 
-* [`spotCreditAccount`](post-info.md#spotcreditaccount) — credit line and status. The fields are `credit_usd_atoms`, `available_usd_atoms`, `last_known_available_usd_atoms`, `status`, `authorized`, `oracle_status`, and `credit_trading_whitelisted_market_ids` — all USD figures are in `usd_atoms`.
+* [`spotCreditAccount`](post-info.md#spotcreditaccount) — credit line, `available_usd`, and status
 * [`spotCreditPositions`](post-info.md#spotcreditpositions) — signed long/short positions per asset
 
 The credit account's on-chain name is a *spot-credit account*, which is why its query types are `spotCreditAccount` and `spotCreditPositions`.

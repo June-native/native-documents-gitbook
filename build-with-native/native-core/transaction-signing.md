@@ -484,11 +484,11 @@ Rejected response (node-admission code, returned verbatim):
 
 Request-shaping rejections usually have no `tx_hash` because canonical bytes were not assembled; admission and execution rejections include it. Rate-limit responses also include `error.retry_after_ms`. A `submission_status: "timeout"` means the outcome was not observed in time — either the wait budget elapsed (HTTP `200`, no `error`) or the submission could not be routed (`HandoffTimeout` / `HandoffBufferFull:*` / `HandoffMultipleActive` at HTTP `503`, or `node_unreachable: …` at HTTP `504`); reconcile by `cloid`, never resubmit.
 
-Malformed or non-decodable JSON is handled by the API and returns the `TradeResponse` shape with `error.code = "invalid_json"`. This includes invalid action type tags and invalid field types. Negative numeric strings and malformed decimal strings are also `invalid_json` — they are rejected inside deserialization, before any field-specific check runs. Failures caught after decoding, such as a precision violation, return their specific code in the same response shape. All such responses include `x-trace-id`.
+Malformed or non-decodable JSON is handled by the API and returns the `TradeResponse` shape with `error.code = "invalid_json"`. This includes invalid action type tags and invalid field types. Request-local validation failures after decoding, such as negative numeric strings or malformed decimal strings, return their specific error code in the same response shape. All such responses include `x-trace-id`.
 
 ### `/trade` error codes
 
-Every `/trade` `error.code` — request-shaping, gateway, node-admission, and execution — is cataloged in [Error responses](error-responses.md#full-trade-error-code-reference). Node-admission codes are returned **verbatim** (CamelCase) in top-level `error.code`. A lowercase execution code such as `tick` never appears there — for an order-ish action it comes back inside the [`response` envelope](post-trade.md#what-accepted-carries) while `submission_status` stays `accepted`.
+Every `/trade` `error.code` — request-shaping, gateway, node-admission, and execution — is cataloged in [Error responses](error-responses.md#full-trade-error-code-reference). Node-admission codes are returned **verbatim** (CamelCase); a failure at execution comes back synchronously with a **lowercase** code (e.g. `tick`).
 
 Supported public top-level action types:
 

@@ -123,7 +123,8 @@ The genesis quote allowlist is USDC asset `1` with `min_quantity="10"`, USDT ass
 * `oid`, `nonce`, `agent_epoch`, and `expires_after_ms` parse as `u64`.
 * `quantity` greater than zero is enforced at **execution**, not at this admission stage — a zero quantity passes shaping and is rejected when the order runs.
 * `price` must be present for both limit orders and protected market orders in the current protocol encoding.
-* `market` orders are valid only with `ioc` or `fok`, and `gtc` / `alo` only with limit orders — both pairings are enforced at **execution**, not at this admission stage.
+* `market` orders are valid only with `ioc` or `fok`.
+* `gtc` and `alo` are valid only for limit orders.
 * non-integer display prices may have at most `max_price_sig_figs` significant figures (enforced at execution, not admission — see [Valid / invalid examples](#valid-invalid-examples)); integer display prices are always allowed.
 * quote notional is computed with widened arithmetic and must fit into `u64` quote balance atoms.
 * If the configured minimum spot notional is nonzero, the raw quote notional must be at least that minimum.
@@ -135,7 +136,7 @@ The pairs below use an **illustrative** market with `price_decimals = 2`, `max_p
 Two independent gates apply to a `price`, and they fail at **different layers**:
 
 * **Fractional digits `>` `price_decimals`** — rejected at **admission**: `POST /trade` returns `submission_status: "rejected"` with `invalid_price_precision` (or `invalid_quantity_precision` for `quantity`).
-* **Non-integer price with more than `max_price_sig_figs` significant figures** — clears admission, then **fails at execution** as [`tick`](error-responses.md#execution-level-failures). Because `/trade` is synchronous, that failure comes back on the `/trade` response itself — but as a per-order leaf: `submission_status` stays `"accepted"` and the code appears as `response.status.error: "tick"`, with no top-level `error`. It is also readable afterward on [`orderStatus`](post-info.md#orderstatus). The [Python SDK](python-sdk/README.md) saves you the round trip by rejecting it locally (`LocalValidationError: … significant figures`) before it ever signs.
+* **Non-integer price with more than `max_price_sig_figs` significant figures** — clears admission, then **fails at execution** as [`tick`](error-responses.md#execution-level-failures). Because `/trade` is synchronous, that failure comes back on the `/trade` response itself (`submission_status: "rejected"`, `error.code: "tick"`), and is also readable afterward on [`orderStatus`](post-info.md#orderstatus). The [Python SDK](python-sdk/README.md) saves you the round trip by rejecting it locally (`LocalValidationError: … significant figures`) before it ever signs.
 
 `price`:
 

@@ -65,7 +65,7 @@ An agent-signed request also carries `agent_epoch`, a decimal `u64` identifying 
 ## Safety
 
 {% hint style="warning" %}
-**Do not reuse a decommissioned address.** A retired address keeps its nonce history, so a fresh signer on the same address inherits it and must clear the old window's minimum before any action is accepted. Rotate to a fresh API wallet rather than reusing an address you have retired.
+**Do not reuse a decommissioned address.** Once an authority's retained nonce set prunes, an old signed action from that address could re-enter the acceptance window and be replayed. Rotate to a fresh API wallet rather than reusing an address you have retired.
 {% endhint %}
 
 {% hint style="warning" %}

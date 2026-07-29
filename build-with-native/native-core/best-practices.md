@@ -11,10 +11,9 @@ description: The core habits a live Native Core integration should follow.
 
 ## Know the outcome
 
-* **`accepted` is not success — read `response`.** An order that failed at execution still returns `submission_status: "accepted"` with no top-level `error`; the code is in `response.status.error`. Branching on `submission_status` alone records a rejected order as live.
-* **The fill state is already in the `/trade` reply.** `response.status` is `open` / `filled` / `cancelled` / `error` — you don't need an [`orderStatus`](post-info.md#orderstatus) poll to learn which.
+* **`accepted` means landed, not filled.** Read [`orderStatus`](post-info.md#orderstatus) to see whether the order rested or filled.
 * **Only `RateLimited` is safe to resend** — back off `error.retry_after_ms` and resend the same signed action. Every other rejection needs a fresh action.
-* **On a `timeout`, branch on `error.code` before you decide.** The `Handoff*` family (HTTP 503) never reached a node — resubmit it, or you drop every write for the duration of a leadership handoff. Everything else may still land: reconcile by `cloid`, never resubmit under a new nonce. See [Handle outcomes & timeouts](handle-timeouts.md).
+* **Never resend a `timeout` under a new nonce** — reconcile by `cloid` instead. See [Handle outcomes & timeouts](handle-timeouts.md).
 
 ## Signing & nonces
 
