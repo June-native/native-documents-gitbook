@@ -96,13 +96,14 @@ Response envelope:
   "error": {                         // present only on a non-successful outcome
     "code": "<code>",
     "retry_after_ms": 1000           // present only on RateLimited / PlaceOrderSuspended / Handoff*
-  }
+  },
+  "response": { … }                  // present only on `accepted` — the per-order outcome
 }
 ```
 
 `submission_status` is one of exactly three values:
 
-* `accepted` — the transaction landed and executed. For an order that means it rested, filled, partially filled, or was cancelled by its own time-in-force / self-trade rules (an IOC/FOK that didn't fully fill, a self-trade-prevention cancel, or a market order that found no liquidity); for a non-order action (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`) it means the action committed. There is no `error`. **`/trade` reports that the order landed, not its fill state — read [`orderStatus`](post-info.md#orderstatus) to see whether it rested or filled.**
+* `accepted` — the transaction landed and executed. For an order that means it rested, filled, partially filled, or was cancelled by its own time-in-force / self-trade rules (an IOC/FOK that didn't fully fill, a self-trade-prevention cancel, or a market order that found no liquidity); for a non-order action (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`) it means the action committed. There is no top-level `error`. **The per-order outcome is in the `response` field** — you do not need an [`orderStatus`](post-info.md#orderstatus) call to learn it.
 * `rejected` — the write was refused (request-shaping, rate limit, expiry, place-order suspension, or node admission) **or** it failed at execution. `error.code` carries the reason; `tx_hash` is present once canonical bytes exist.
 * `timeout` — the outcome was not observed within the wait budget, or the submission could not be routed to the active node. The transaction **may still commit**; reconcile by `cloid` via [`orderStatus`](post-info.md#orderstatus) / [`txStatusByCloid`](post-info.md#orderstatus) — never blindly resubmit.
 
@@ -111,11 +112,15 @@ Response envelope:
 ```json
 {
   "submission_status": "accepted",
-  "tx_hash": "0x..."
+  "tx_hash": "0x...",
+  "response": {
+    "type": "order",
+    "status": { "open": { "oid": 1964626153570560, "cloid": "0x4e5e6ffddbed6ed66c3d02cab8a4cac6" } }
+  }
 }
 ```
 
-The transaction landed and executed. Read [`orderStatus`](post-info.md#orderstatus) to see whether the order rested or filled — the `/trade` response does not carry the fill state.
+The transaction landed and executed, and `response` carries what happened to the order. `response.type` is the action type; a single-result action carries one `status`, a multi-result action (`batch`, `cancelAll`) carries `statuses[]` in item order. Each leaf is one of `{"open":{…}}` (rested), `{"filled":{"total_sz","avg_px",…}}`, `{"cancelled":{…}}`, or `{"error":"<code>"}` when the order failed at execution.
 {% endtab %}
 {% tab title="Rejected" %}
 ```json
