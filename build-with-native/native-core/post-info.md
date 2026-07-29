@@ -30,24 +30,30 @@ See [Decimals & Units](decimals-units.md) for raw/display conversion and validat
   "app_hash": "0x...",
   "assets": [
     {
-      "asset_id": 0,
+      "asset_id": 1,
       "symbol": "USDC",
       "balance_decimals": 8,
-      "withdraw_fee": "0",
-      "withdraw_fee_atoms": "0",
-      "issuer": "0x0000000000000000000000000000000000000000"
+      "withdraw_fee": "1",
+      "withdraw_fee_atoms": "100000000",
+      "issuer": "0x0000000000000000000000000000000000000000",
+      "credit_ltv": 100,
+      "credit_ltv_setting": null
     },
     {
-      "asset_id": 6,
-      "symbol": "SOL",
+      "asset_id": 3,
+      "symbol": "ETH",
       "balance_decimals": 8,
-      "withdraw_fee": "0.01",
-      "withdraw_fee_atoms": "1000000",
-      "issuer": "0xabcdef0123456789abcdef0123456789abcdef01"
+      "withdraw_fee": "0.001",
+      "withdraw_fee_atoms": "100000",
+      "issuer": "0x0000000000000000000000000000000000000000",
+      "credit_ltv": 100,
+      "credit_ltv_setting": null
     }
   ]
 }
 ```
+
+`credit_ltv` is the asset's loan-to-value percentage for credit accounts — the haircut applied when it counts toward a credit line. `credit_ltv_setting` echoes the per-asset override when one is configured, `null` otherwise.
 
 `issuer` is the owner account bound to an asset by operator-managed metadata. Assets without an issuer binding surface as the zero address. The issuer is a per-asset binding only and confers no privileges beyond the recorded mapping. The `assets` response does not include `cloid`; client operation ids are only observable via `txStatusByCloid` while a transaction is in the recent query window. `withdraw_fee_atoms` is canonical asset metadata in asset-local atoms; `withdraw_fee` is formatted from atoms using `balance_decimals`. On a [withdraw](post-trade.md#withdraw) this fee is recorded (in the event and `/info withdraws`) but is **not** deducted from the balance.
 
@@ -190,11 +196,20 @@ Response field `markets` is sorted by `market_id`. `price_decimals` and `max_pri
       "quote_symbol": "USDC",
       "quote_balance_decimals": 8,
       "price_decimals": 2,
-      "max_price_sig_figs": 7
+      "max_price_sig_figs": 7,
+      "credit_trading": true,
+      "credit_trading_setting": null,
+      "maker_fee_milli_bps": 2000,
+      "taker_fee_milli_bps": 10000,
+      "fee_setting": null
     }
   ]
 }
 ```
+
+`maker_fee_milli_bps` / `taker_fee_milli_bps` are the market's **effective** fee rates in milli-basis-points — never null, and the only programmatic source of what you will be charged. Divide by 1000 for basis points: `2000` is 2 bps maker, `10000` is 10 bps taker. `fee_setting` echoes the per-market override when one is configured, `null` otherwise.
+
+`credit_trading` is the per-market gate for credit accounts. A credit account may trade a market when its own status is `active` **and** either `credit_trading` is true or the market appears in that account's `credit_trading_whitelisted_market_ids` (see [`spotCreditAccount`](#spotcreditaccount)). `credit_trading_setting` echoes the per-market override, `null` otherwise.
 
 ### l2Book
 
@@ -217,12 +232,17 @@ Response field `markets` is sorted by `market_id`. `price_decimals` and `max_pri
   "requested_depth": 20,
   "depth": 20,
   "max_depth": 100,
+  "query_time_ms": 1785338171446,
+  "last_update_height": 129475493,
+  "last_update_ts_ms": 1785338171296,
   "bids": [
     { "price": "10", "quantity": "1.5", "order_count": 2 }
   ],
   "asks": []
 }
 ```
+
+`query_time_ms` is the block time of the view you read; `last_update_height` / `last_update_ts_ms` are when **this market's** book last changed. Together they are the staleness signal: a wide gap between `last_update_ts_ms` and `query_time_ms` means the book is quiet, not that your read is stale.
 
 ### withdraws
 
@@ -248,11 +268,14 @@ Per-user retained withdraw records (3-day window), sorted by `(block_height, tx_
       "withdraw_fee_atoms": "1000",
       "dst_chain_id": 1,
       "dst_address": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-      "withdraw_nonce": "7"
+      "withdraw_nonce": "7",
+      "vault_address": "0xcccccccccccccccccccccccccccccccccccccccc"
     }
   ]
 }
 ```
+
+`vault_address` is the [vault contract](../deposit-withdraw/vault-contract.md) the withdrawal pays out from. It is `null` on records written before vault payouts were activated.
 
 ### deposits
 
@@ -448,6 +471,8 @@ When the oracle is unavailable, `oracle_status` is `{ "status": "unavailable", "
 }
 ```
 
+Pass `market_id: -1` (as the number `-1` or the string `"-1"`) to get the owner's open orders across **every** market in one call. The response echoes `"market_id": -1` and applies the same 500-item cap and `truncated` flag over the union.
+
 ```json
 {
   "query_height": 180000,
@@ -513,7 +538,10 @@ When the oracle is unavailable, `oracle_status` is `{ "status": "unavailable", "
 }
 ```
 
-`limit` must be positive and is capped at `max_limit` (500). A bad `limit` or a height range wider than the recent window does **not** return HTTP 400 — it returns HTTP 200 with an in-band `error` object (`InvalidFillsQuery` or `HistoryWindowExceeded`) and an empty `fills` array. On success the response echoes the effective `limit`, your `requested_limit`, and `max_limit`.
+`limit` must be positive and is capped at `max_limit` (500). Two different failure shapes, and the difference matters to your parser:
+
+* A `limit` that is **missing, non-numeric, or beyond `u32`** is rejected with **HTTP 400** and `InvalidFillsQuery` — there is no `fills` key at all.
+* A `limit` of `0`, a `from_height` above `to_height`, or a range wider than the recent window returns **HTTP 200** with an in-band `error` object (`InvalidFillsQuery` or `HistoryWindowExceeded`) and an empty `fills` array. On success the response echoes the effective `limit`, your `requested_limit`, and `max_limit`.
 
 ```json
 {
@@ -579,7 +607,9 @@ Query by client order id:
 
 `orderStatus` checks the current open-order view, then falls back to the latest retained status record for that `oid` or `(user, market_id, cloid)`. Status records are action-result records, not a complete lifecycle stream: a successful incoming order writes one record even when it rests on the book, but later passive maker fills are exposed through `userFills` and open-order state changes rather than a new status record for the maker order. Explicit cancel and modify actions do write status records for the affected resting order. Outcome-stage failed order attempts also write retained status records when execution has enough order context: `IocCancel`, `FokCancel`, `BadAloPx`, `MarketOrderNoLiquidity`, and `InsufficientSpotCredit` can be queried by `oid` or `(user, market_id, cloid)` inside the recent query window.
 
-For an in-flight order — a `/trade` you just sent — you do **not** poll `orderStatus` to learn the outcome: the synchronous `/trade` response already carries it (the order's lifecycle status, or the reject / execution `error.code`). A just-submitted tx that the query view has not yet advanced to reads back `found: false` here until its block is published.
+A partially filled order that is still on the book reports `status: "partiallyfilledresting"`, not `"open"` — match on both if you are testing for "still working".
+
+For an in-flight order — a `/trade` you just sent — you do **not** poll `orderStatus` to learn the outcome: the synchronous `/trade` response already carries it in its [`response` envelope](post-trade.md#what-accepted-carries). A just-submitted tx that the query view has not yet advanced to reads back `found: false` here until its block is published.
 
 ### batchOrderStatus
 

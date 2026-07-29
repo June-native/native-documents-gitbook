@@ -153,14 +153,14 @@ Your fills, both sides of the book. The first packet after subscribing is a snap
 | --- | --- |
 | `side` | **Your** direction — `B` you bought, `A` you sold |
 | `crossed` | `true` when you were the taker |
-| `fee` / `feeToken` | The fee charged on **your** side of this fill, and the asset it was charged in. When no fee was charged, `fee` is `"0"` and `feeToken` is absent. |
+| `fee` / `feeToken` | The fee charged on **your** side of this fill, and the asset it was charged in. A zero-rate fill reports `fee: "0"` **with** `feeToken` present — this is the common case on zero-fee markets. `feeToken` is omitted only when the fill carries no fee record at all. |
 | `tid` | The same trade id the `trades` channel carries, so the two join |
 
-A snapshot fill is built exactly like the live frame for the same trade — same `tid` — so you can deduplicate cleanly across the snapshot-to-stream boundary after a reconnect. Two details specific to the snapshot: it lists fills oldest-first, and `side` comes back empty on a fill whose aggressing order has already aged out of the recent window. Neither affects the `tid` join.
+A snapshot fill is built exactly like the live frame for the same trade — same `tid` — so you can deduplicate cleanly across the snapshot-to-stream boundary after a reconnect. The snapshot lists fills oldest-first.
 
 #### `orderUpdates`
 
-Lifecycle transitions of your accepted orders. `data` is an array: every transition your account made in one block arrives as a single batched frame.
+Lifecycle transitions of your accepted orders. `data` is an array of the transitions your account made in one block — batched, but **split across several frames once the array would exceed 56 KiB**. Don't treat one frame as the complete set for a block.
 
 ```json
 {"channel":"orderUpdates","data":[
@@ -260,7 +260,7 @@ Channels come in two kinds, and the kind decides when a frame goes out.
 | `spotState` | 200 ms |
 | `spotCreditState` | 200 ms |
 
-A throttled channel only pushes when the underlying state actually changed, and a skipped beat costs you nothing: the next frame is a complete snapshot. Testnet throttles `l2Book` to 500 ms instead, which is why a book looks livelier there — size your expectations off the mainnet column.
+A throttled channel pushes when its market or account was **touched** in a block, not when the payload actually differs — so expect repeat frames with identical content, and diff before acting if that matters to you. A skipped beat costs you nothing: the next frame is a complete snapshot. Testnet throttles `l2Book` to 500 ms instead, which is why a book looks livelier there — size your expectations off the mainnet column.
 
 {% hint style="warning" %}
 `l2Book` is a 5-second snapshot on mainnet, so it is a picture of depth, not a live price. React on `bbo`, which pushes on every change to the top of book.
@@ -319,15 +319,17 @@ Reconnect on disconnect, always. The server may drop a connection without warnin
 
 ## Limits
 
-| Limit | Value |
-| --- | --- |
-| Connections per IP | 1 |
-| New connections per IP | 30 / minute |
-| Subscriptions per connection | 10 |
-| Inbound messages per connection | 2000 / minute |
-| In-flight `post` requests per IP | 1 |
-| `post` request rate per IP | 1/second `info`, 1/second `action` |
-| Message size, either direction | 64 KiB |
+| Limit | Value | Enforced today |
+| --- | --- | --- |
+| Connections per IP | 1 | not yet — counted only |
+| New connections per IP | 30 / minute | not yet — counted only |
+| Subscriptions per connection | 10 | yes |
+| Inbound messages per connection | 2000 / minute | not yet — counted only |
+| In-flight `post` requests per IP | 1 | yes |
+| `post` request rate per IP | 1/second `info`, 1/second `action` | yes |
+| Message size, either direction | 64 KiB | yes |
+
+The connection caps are being measured against real traffic before they start refusing. **Design to them anyway** — one connection carrying every subscription — because they will be enforced, and a client built on many sockets breaks when they are.
 
 Over the subscription cap the server replies `{"channel":"error","data":"Too many subscriptions"}` and the earlier subscriptions keep running. Ten subscriptions is three fully-watched markets — `l2Book` + `bbo` + `trades` each — plus one account channel, so multiplex everything onto the single connection rather than opening one per topic.
 
