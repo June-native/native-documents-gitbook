@@ -28,6 +28,7 @@
 * [Spot Margin](concepts/spot-margin.md)
 * [Auto LP](concepts/auto-lp.md)
 * [Fees](concepts/swap-fees.md)
+* [Pool Rewards](concepts/pool-rewards.md)
 * [Slippage](concepts/slippage.md)
 * [Risks](concepts/risks.md)
 
