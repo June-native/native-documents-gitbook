@@ -18,7 +18,7 @@ No authentication, no headers.
 wscat -c wss://api.native.org/ws
 ```
 
-Use **one** connection and multiplex every subscription onto it. You get 10 subscriptions per connection, and one connection per IP.
+Use **one** connection and multiplex every subscription onto it — you get 10 subscriptions per connection, and the per-IP connection cap is 1. See [limits](websocket.md#limits) for which caps refuse you today and which are still only being measured.
 
 ## 2. Subscribe to a market
 

@@ -85,7 +85,7 @@ Protected market order example:
 }
 ```
 
-`POST /trade` is **synchronous**: the request blocks while the transaction is admitted, executed on-chain, and the outcome is read back — typically well under a second, bounded by a wait budget (~3s). The result is in the body's `submission_status`; `tx_hash` is present once canonical bytes are assembled, and a non-successful outcome carries `error.code`.
+`POST /trade` is **synchronous**: the request blocks while the transaction is admitted, executed on-chain, and the outcome is read back. Typical latency is a block or two; the wait budget is **3 seconds**, so set your client timeout above that or you will abandon replies that were about to arrive.
 
 Response envelope:
 
@@ -95,40 +95,85 @@ Response envelope:
   "tx_hash": "0x…",                  // present once canonical bytes exist; omitted on a request-shaping reject
   "error": {                         // present only on a non-successful outcome
     "code": "<code>",
-    "retry_after_ms": 1000           // present only on RateLimited / PlaceOrderSuspended / Handoff*
+    "retry_after_ms": 1000           // present only on RateLimited / PlaceOrderSuspended / TooManyPending / Handoff*
+  },
+  "response": { … }                  // present only on `accepted` — the per-order outcome, see below
+}
+```
+
+`submission_status` answers **"did the transaction land?"**, and it has exactly three values:
+
+* `accepted` — the transaction landed and reached execution. There is no top-level `error`. **This does not mean the order succeeded** — see [what `accepted` carries](#what-accepted-carries) below.
+* `rejected` — the write never reached execution: request-shaping, rate limit, expiry, place-order suspension, or node admission. `error.code` carries the reason; `tx_hash` is present once canonical bytes exist. A handful of envelope-level execution failures also land here — `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `invalidbatchlength`, `featuredisabled` — returned in their CamelCase display form (`BadNonce`, …).
+* `timeout` — the outcome was not observed within the 3-second budget, or the submission could not be routed. Whether it can still land depends on the code — see [timeout](#timeout-can-it-still-land).
+
+### What `accepted` carries
+
+On `accepted` the reply includes a fourth field, `response`, holding the actual per-order outcome. **You do not need an `/info` round trip to learn whether an order rested or filled.**
+
+`response.type` is the action type (`order`, `cancel`, `cancelAll`, `modify`, `batch`, or `default` for a non-order action). A single-result action carries one `status`; a multi-result action (`batch`, `cancelAll`) carries `statuses[]` in item order. Each leaf is one of four shapes, keyed by its single field:
+
+| Leaf | Meaning |
+| --- | --- |
+| `{"open":{"oid","cloid"}}` | The order rested on the book |
+| `{"filled":{"total_sz","avg_px","oid","cloid"}}` | The order filled. `total_sz` and `avg_px` are display values, formatted exactly as `/info` formats them. |
+| `{"cancelled":{"oid","cloid"}}` | The order was cancelled — by an explicit cancel, or by its own time-in-force / self-trade rule |
+| `{"error":"<code>"}` | **The order failed at execution** — e.g. `insufficientspotbalance`, `mintradespotntl`, `tick`, `lotsize`, `missingorder` |
+
+{% hint style="warning" %}
+A per-order failure keeps `submission_status: "accepted"` and puts the code in the `{"error":…}` leaf, with **no** top-level `error`. Branching on `submission_status` alone reads a rejected order as a success. Always inspect `response`.
+{% endhint %}
+
+{% tabs %}
+{% tab title="Rested" %}
+```json
+{
+  "submission_status": "accepted",
+  "tx_hash": "0x...",
+  "response": {
+    "type": "order",
+    "status": { "open": { "oid": 1964626153570560, "cloid": "0x4e5e6ffddbed6ed66c3d02cab8a4cac6" } }
+  }
+}
+```
+{% endtab %}
+{% tab title="Filled" %}
+```json
+{
+  "submission_status": "accepted",
+  "tx_hash": "0x...",
+  "response": {
+    "type": "order",
+    "status": { "filled": { "total_sz": "0.01", "avg_px": "1941.34", "oid": 1949585043882752,
+                            "cloid": "0x39791fa07ff1be03663c735d1f9cfd4a" } }
+  }
+}
+```
+{% endtab %}
+{% tab title="Failed at execution" %}
+```json
+{
+  "submission_status": "accepted",
+  "tx_hash": "0x...",
+  "response": {
+    "type": "order",
+    "status": { "error": "insufficientspotbalance" }
   }
 }
 ```
 
-`submission_status` is one of exactly three values:
-
-* `accepted` — the transaction landed and executed. For an order that means it rested, filled, partially filled, or was cancelled by its own time-in-force / self-trade rules (an IOC/FOK that didn't fully fill, a self-trade-prevention cancel, or a market order that found no liquidity); for a non-order action (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`) it means the action committed. There is no `error`. **`/trade` reports that the order landed, not its fill state — read [`orderStatus`](post-info.md#orderstatus) to see whether it rested or filled.**
-* `rejected` — the write was refused (request-shaping, rate limit, expiry, place-order suspension, or node admission) **or** it failed at execution. `error.code` carries the reason; `tx_hash` is present once canonical bytes exist.
-* `timeout` — the outcome was not observed within the wait budget, or the submission could not be routed to the active node. The transaction **may still commit**; reconcile by `cloid` via [`orderStatus`](post-info.md#orderstatus) / [`txStatusByCloid`](post-info.md#orderstatus) — never blindly resubmit.
-
-{% tabs %}
-{% tab title="Accepted" %}
-```json
-{
-  "submission_status": "accepted",
-  "tx_hash": "0x..."
-}
-```
-
-The transaction landed and executed. Read [`orderStatus`](post-info.md#orderstatus) to see whether the order rested or filled — the `/trade` response does not carry the fill state.
+The transaction landed; the order did not enter the book. There is no top-level `error` — the code is only in the leaf.
 {% endtab %}
 {% tab title="Rejected" %}
 ```json
 {
   "submission_status": "rejected",
   "tx_hash": "0x...",
-  "error": {
-    "code": "MinTradeSpotNtl"
-  }
+  "error": { "code": "MinTradeSpotNtl" }
 }
 ```
 
-The example is a node-admission reject (CamelCase, returned verbatim): the order notional was below the market's quote-asset minimum. An execution-layer rejection instead carries a lowercase code — e.g. `error.code: "tick"` for a price off the market's tick grid.
+A node-admission reject (CamelCase, verbatim): the order notional was below the market's quote-asset minimum. The transaction never reached execution, so there is no `response`.
 {% endtab %}
 {% tab title="Timeout" %}
 ```json
@@ -137,14 +182,25 @@ The example is a node-admission reject (CamelCase, returned verbatim): the order
   "tx_hash": "0x..."
 }
 ```
-
-The outcome was not observed in time (a slow block or a routing failure). Reconcile by `cloid`; do not resubmit under a fresh nonce.
 {% endtab %}
 {% endtabs %}
 
-Request-shaping rejections (e.g. `invalid_quantity_precision`) carry no `tx_hash` because canonical bytes were never assembled; admission and execution rejections include one.
+Request-shaping rejections (e.g. `invalid_quantity_precision`) carry no `tx_hash` because canonical bytes were never assembled; admission rejections include one.
 
-Beyond per-action outcomes, the gateway can refuse a write for operational reasons: `RateLimited` (HTTP 429 — 1000 requests/second per signer, with `error.retry_after_ms`), `PlaceOrderSuspended` (HTTP 503 — while the write path is degraded, only `cancel`/`cancelAll` and an all-cancel `batch` are accepted so you can reduce exposure; `order`, `modify`, any `batch` that mixes in a non-cancel item, and an empty `batch` are refused), `ExpiredTx` (HTTP 200), and the routing codes `HandoffTimeout` / `HandoffBufferFull:{request_count|bytes|signer}` / `HandoffMultipleActive` (HTTP 503) and `node_unreachable` (HTTP 504), which come back as `submission_status: "timeout"`. A request body over 256 KiB is rejected with HTTP 413. See the full `/trade` error-code table in [error-responses.md](error-responses.md).
+### `timeout` — can it still land?
+
+The `error.code` tells you, and the two cases need opposite handling:
+
+| Code | HTTP | Did it reach a node? | Do next |
+| --- | --- | --- | --- |
+| *(none)* — the wait budget elapsed | 200 | **Yes.** It was admitted and is executing. | Reconcile by `cloid`. **Never** resubmit under a new nonce. |
+| `HandoffBufferFull:{request_count\|bytes\|signer}` | 503 | **No.** Refused before any submission was attempted. | Resubmit. Nothing will be there to reconcile. |
+| `HandoffTimeout` / `HandoffMultipleActive` | 503 | **No.** No writable node accepted it. | Resubmit; reconcile first if a duplicate would be costly. |
+| `node_unreachable: …` | 504 | **Unknown.** The connection broke mid-submission and the node may already hold it. | Reconcile by `cloid`. **Never** resubmit under a new nonce. |
+
+When in doubt, treat it as the 504 case and reconcile. The [outcomes playbook](handle-timeouts.md#reconciling-a-timeout) has the reasoning behind each row.
+
+Beyond per-action outcomes, the API can refuse a write for operational reasons: `RateLimited` (HTTP 429 — the per-IP budget of 1 request/second, or the per-signer 1000/second, with `error.retry_after_ms`), `TooManyPending` (HTTP 503 with `error.retry_after_ms: 50` — too many synchronous writes are already in flight; retry immediately, it is transient), `PlaceOrderSuspended` (HTTP 503 — while the write path is degraded, only `cancel`/`cancelAll` and an all-cancel `batch` are accepted so you can reduce exposure; `order`, `modify`, any `batch` that mixes in a non-cancel item, and an empty `batch` are refused), `ExpiredTx` (HTTP 200), and the routing codes `HandoffTimeout` / `HandoffBufferFull:{request_count|bytes|signer}` / `HandoffMultipleActive` (HTTP 503) and `node_unreachable` (HTTP 504), which come back as `submission_status: "timeout"`. A request body over 256 KiB is rejected with HTTP 413. See the full `/trade` error-code table in [error-responses.md](error-responses.md).
 
 ### cancel
 
