@@ -278,7 +278,7 @@ failure  {"channel":"post","data":{"id":42,"response":{"type":"error","payload":
 
 * `request.type` is `"info"` — the payload is a [`POST /info`](post-info.md) body — or `"action"`, where the payload is a signed [`POST /trade`](post-trade.md) body.
 * `id` is echoed on every reply. Use a distinct one per request to match replies to requests.
-* A success reply carries exactly what the HTTP endpoint would have returned. A failure reply carries a plain string: the HTTP status and description that request would have produced.
+* A success reply carries exactly what the HTTP endpoint would have returned. A failure reply flattens the HTTP error into a plain string — the status followed by the same `error.code` or message — so decode it against [Error responses](error-responses.md).
 
 An `action` reply is the full trade response, so a business rejection arrives as a **successful** `action` whose `submission_status` says what happened — the same contract as over HTTP:
 
@@ -349,5 +349,6 @@ There is no resume cursor: subscriptions take no height or sequence argument. Re
 
 * [Stream over WebSocket](stream-over-websocket.md) — the five-step walkthrough
 * [Best practices](best-practices.md#streaming) — the traps worth knowing before you go live
+* [Error responses](error-responses.md) — every `error.code` a `post` can return
 * [POST /info](post-info.md) — every poll-based read, and the backfill queries
 * [POST /trade](post-trade.md) — every action you can send as a `post`
