@@ -482,7 +482,7 @@ Rejected response (node-admission code, returned verbatim):
 }
 ```
 
-Request-shaping rejections usually have no `tx_hash` because canonical bytes were not assembled; admission and execution rejections include it. Rate-limit responses also include `error.retry_after_ms`. A `submission_status: "timeout"` means the outcome was not observed in time — either the wait budget elapsed (HTTP `200`, no `error`) or the submission could not be routed (`HandoffTimeout` / `HandoffBufferFull:*` / `HandoffMultipleActive` at HTTP `503`, or `node_unreachable: …` at HTTP `504`); reconcile by `cloid`, never resubmit.
+Request-shaping rejections usually have no `tx_hash` because canonical bytes were not assembled; admission and execution rejections include it. Rate-limit responses also include `error.retry_after_ms`. A `submission_status: "timeout"` means the outcome was not observed in time — either the wait budget elapsed (HTTP `200`, no `error`) or the submission could not be routed (`HandoffTimeout` / `HandoffBufferFull:*` / `HandoffMultipleActive` at HTTP `503`, or `node_unreachable: …` at HTTP `504`). The two cases need opposite handling — see [Handle outcomes & timeouts](handle-timeouts.md#reconciling-a-timeout).
 
 Malformed or non-decodable JSON is handled by the API and returns the `TradeResponse` shape with `error.code = "invalid_json"`. This includes invalid action type tags and invalid field types. Negative numeric strings and malformed decimal strings are also `invalid_json` — they are rejected inside deserialization, before any field-specific check runs. Failures caught after decoding, such as a precision violation, return their specific code in the same response shape. All such responses include `x-trace-id`.
 

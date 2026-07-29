@@ -41,10 +41,17 @@ Not every `timeout` is indeterminate. The `error.code` tells you whether the tra
 | Code | HTTP | Reached a node? | What to do |
 | --- | --- | --- | --- |
 | *(none)* — the wait budget elapsed | 200 | **Yes**, it is executing | Reconcile by `cloid`. **Never** resubmit under a new nonce. |
-| `HandoffTimeout` / `HandoffBufferFull:{request_count\|bytes\|signer}` / `HandoffMultipleActive` | 503 | **No** — no writable node accepted it | Safe to resubmit. There is nothing to reconcile. |
+| `HandoffBufferFull:{request_count\|bytes\|signer}` | 503 | **No** — refused before any submission was attempted | Resubmit. There is nothing to reconcile. |
+| `HandoffTimeout` / `HandoffMultipleActive` | 503 | **No** — no writable node accepted it | Resubmit, or reconcile first if a duplicate would be costly (see below). |
 | `node_unreachable: …` | 504 | **Unknown** — the connection broke mid-submission | Reconcile by `cloid`. **Never** resubmit under a new nonce. |
 
-Treating the 503 routing family as indeterminate silently drops every write for the duration of a leadership handoff. Treating the other two as safe to resubmit is how you double-fill. When a code is not in this table, reconcile.
+Treating the whole 503 family as indeterminate silently drops every write for the duration of a leadership handoff, which is why it is worth separating. Treating the 200 and 504 cases as safe to resubmit is how you double-fill.
+
+{% hint style="info" %}
+`HandoffBufferFull` is refused before any node is contacted, so a resubmit cannot duplicate. `HandoffTimeout` and `HandoffMultipleActive` mean every attempt either failed to connect or was explicitly refused — so a resubmit is expected to be safe, but the guarantee rests on the service classifying the connection failure correctly. If a duplicate fill would be expensive for you, reconcile by `cloid` first and resubmit only when the lookup comes back empty; you still recover the order, just one round trip later.
+{% endhint %}
+
+When a code is not in this table, reconcile.
 
 To reconcile, look the action up by the `cloid` you sent:
 

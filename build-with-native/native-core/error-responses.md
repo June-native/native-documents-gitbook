@@ -22,7 +22,7 @@ There are exactly three values.
 | --- | --- | --- |
 | `accepted` | The transaction landed and executed — for an order that covers rested, filled, or a benign IOC/FOK/self-trade/no-liquidity cancel; for a non-order action it committed. No `error`. | Done. The `/trade` response does not carry the fill state — read [`orderStatus`](post-info.md#orderstatus) to see whether an order rested or filled. |
 | `rejected` | The write was refused — request-shaping, gateway (rate limit / suspension / expiry), node admission — **or** it failed at execution. `error.code` says why; `tx_hash` is present once canonical bytes exist. | If `RateLimited`, back off `error.retry_after_ms` and resend the same signed action. Otherwise fix the cause and submit a **fresh** action. |
-| `timeout` | The outcome wasn't observed within the 3-second budget, or the submission couldn't be routed to a node. | Depends on `error.code` — the `Handoff*` family (503) never reached a node and is safe to resubmit; everything else may still land, so reconcile by `cloid` and **never** resubmit under a new nonce. |
+| `timeout` | The outcome wasn't observed within the 3-second budget, or the submission couldn't be routed to a node. | Depends on `error.code` — the `Handoff*` family (503) never reached a node, so resubmit rather than lose the write; everything else may still land, so reconcile by `cloid` and **never** resubmit under a new nonce. |
 
 {% hint style="warning" %}
 `timeout` is not `rejected` — the transaction may still commit in a later block, and resubmitting under a new nonce is the one move that can double-fill you. Reconcile by `cloid` via [`orderStatus`](post-info.md#orderstatus) / [`txStatusByCloid`](post-info.md#orderstatus).
@@ -33,7 +33,8 @@ A `timeout` has three shapes, and only one of them is safe to resubmit:
 | `error.code` | HTTP | Reached a node? | Do next |
 | --- | --- | --- | --- |
 | *(none)* — the wait budget elapsed | 200 | Yes, it is executing | Reconcile by `cloid` |
-| `HandoffTimeout` / `HandoffBufferFull:*` / `HandoffMultipleActive` | 503 | No — no writable node accepted it | Resubmit; nothing was delivered |
+| `HandoffBufferFull:*` | 503 | No — refused before any submission was attempted | Resubmit; nothing was delivered |
+| `HandoffTimeout` / `HandoffMultipleActive` | 503 | No — no writable node accepted it | Resubmit; reconcile first if a duplicate would be costly |
 | `node_unreachable: …` | 504 | Unknown — the connection broke mid-submission | Reconcile by `cloid` |
 
 ## Where a code comes from
@@ -58,7 +59,7 @@ The wire carries `error.code`, not display copy — the **Message** column is il
 | --- | --- | --- | --- |
 | `RateLimited` | Over quota on either limiter, never admitted. HTTP `429`, carries `error.retry_after_ms`. **`tx_hash` tells them apart**: the per-IP budget (1 req/s) is enforced before the body is parsed, so the reply has no `tx_hash`; the per-signer rate (1000 req/s) is enforced after canonicalization, so it does. | "Too many requests — retrying shortly." | Back off `retry_after_ms`, then resend the same signed action. The only safe resend. |
 | `PlaceOrderSuspended` | The write path is degraded, so order placement is suspended: `order`, `modify`, and any `batch` that contains a non-cancel item are refused. Only `cancel` / `cancelAll` — and a `batch` whose **every** item is `cancel` / `cancelAll` — still go through; an empty `batch` is also refused. HTTP `503`, `error.retry_after_ms: 1000`. | "Placing orders is paused — try again shortly." | Back off and retry; keep cancelling if you need to reduce exposure. |
-| `HandoffTimeout` / `HandoffBufferFull:{request_count\|bytes\|signer}` / `HandoffMultipleActive` (`timeout`) | The submission couldn't be routed to a single writable node (leadership handoff / backpressure). `submission_status: "timeout"`, HTTP `503`, `error.retry_after_ms: 1000`. The action may still land. | "Order submitted — confirming status." | Reconcile by `cloid`; never resubmit under a new nonce. |
+| `HandoffTimeout` / `HandoffBufferFull:{request_count\|bytes\|signer}` / `HandoffMultipleActive` (`timeout`) | The submission couldn't be routed to a single writable node (leadership handoff / backpressure). `submission_status: "timeout"`, HTTP `503`, `error.retry_after_ms: 1000`. No node accepted it. | "Reconnecting — retrying your order." | Back off `retry_after_ms` and resubmit, rather than losing the write for the whole handoff. Reconcile by `cloid` first if a duplicate would be costly — see [submission_status](#submission_status). |
 | `node_unreachable: …` (`timeout`) | Node admission couldn't be reached; `submission_status: "timeout"`, HTTP `504`. The action may still land. | "Order submitted — confirming status." | Reconcile by `cloid`; never resubmit under a new nonce. |
 | `MinTradeSpotNtl` | Order, modify replacement, or batch item is below the market's quote-asset minimum notional. Market orders use their protection price. | "Order must have a minimum value of 10 USDC." | Size up so `price × quantity` clears the minimum. |
 | `invalid_price_precision` / `invalid_quantity_precision` | `price` / `quantity` has more fractional digits than the market's `price_decimals` / `base_quantity_decimals`. | "Price has too many decimal places for this market." | Snap to market precision before signing; send strings, never floats. |

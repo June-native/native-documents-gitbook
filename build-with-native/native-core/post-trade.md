@@ -194,10 +194,11 @@ The `error.code` tells you, and the two cases need opposite handling:
 | Code | HTTP | Did it reach a node? | Do next |
 | --- | --- | --- | --- |
 | *(none)* — the wait budget elapsed | 200 | **Yes.** It was admitted and is executing. | Reconcile by `cloid`. **Never** resubmit under a new nonce. |
-| `HandoffTimeout` / `HandoffBufferFull:{request_count\|bytes\|signer}` / `HandoffMultipleActive` | 503 | **No.** No writable node accepted it, so nothing was delivered. | Safe to resubmit. Nothing will be there to reconcile. |
+| `HandoffBufferFull:{request_count\|bytes\|signer}` | 503 | **No.** Refused before any submission was attempted. | Resubmit. Nothing will be there to reconcile. |
+| `HandoffTimeout` / `HandoffMultipleActive` | 503 | **No.** No writable node accepted it. | Resubmit; reconcile first if a duplicate would be costly. |
 | `node_unreachable: …` | 504 | **Unknown.** The connection broke mid-submission and the node may already hold it. | Reconcile by `cloid`. **Never** resubmit under a new nonce. |
 
-When in doubt, treat it as the 504 case and reconcile.
+When in doubt, treat it as the 504 case and reconcile. The [outcomes playbook](handle-timeouts.md#reconciling-a-timeout) has the reasoning behind each row.
 
 Beyond per-action outcomes, the API can refuse a write for operational reasons: `RateLimited` (HTTP 429 — the per-IP budget of 1 request/second, or the per-signer 1000/second, with `error.retry_after_ms`), `TooManyPending` (HTTP 503 with `error.retry_after_ms: 50` — too many synchronous writes are already in flight; retry immediately, it is transient), `PlaceOrderSuspended` (HTTP 503 — while the write path is degraded, only `cancel`/`cancelAll` and an all-cancel `batch` are accepted so you can reduce exposure; `order`, `modify`, any `batch` that mixes in a non-cancel item, and an empty `batch` are refused), `ExpiredTx` (HTTP 200), and the routing codes `HandoffTimeout` / `HandoffBufferFull:{request_count|bytes|signer}` / `HandoffMultipleActive` (HTTP 503) and `node_unreachable` (HTTP 504), which come back as `submission_status: "timeout"`. A request body over 256 KiB is rejected with HTTP 413. See the full `/trade` error-code table in [error-responses.md](error-responses.md).
 
