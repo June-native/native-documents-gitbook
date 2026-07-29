@@ -68,19 +68,27 @@ Always set a `cloid` — it is how you reconcile a `timeout` (step 5). Send `pri
 
 ## 5. Read the outcome
 
-`/trade` is synchronous: the call blocks (~1s) and returns the result in `submission_status`.
+`/trade` is synchronous: the call blocks until the transaction executes and returns the outcome. Typical latency is a block or two; the wait budget is **3 seconds**, so set your client timeout above that.
 
 ```json
-{ "submission_status": "accepted", "tx_hash": "0x…" }
+{
+  "submission_status": "accepted",
+  "tx_hash": "0x…",
+  "response": { "type": "order", "status": { "open": { "oid": 1964626153570560, "cloid": "0x11111111111111111111111111111111" } } }
+}
 ```
 
-`accepted` means the order **landed and executed** — not necessarily filled. Read [`orderStatus`](post-info.md#orderstatus) to see whether it rested or filled. The other two outcomes — `rejected` and `timeout` — each need their own handling, and only a `timeout` can double-fill you if you resubmit. The full decision playbook is one page:
+Read **both** fields. `submission_status: "accepted"` means the transaction landed; `response.status` is what actually happened to the order — `open` (rested), `filled`, `cancelled`, or `{"error":"<code>"}` if it failed at execution. A failed order still reports `accepted`, so branching on `submission_status` alone will read it as a success.
+
+The other two outcomes — `rejected` and `timeout` — each need their own handling, and a `timeout` can double-fill you if you resubmit the wrong kind. The full decision playbook is one page:
 
 {% content-ref url="handle-timeouts.md" %}
 [handle-timeouts.md](handle-timeouts.md)
 {% endcontent-ref %}
 
 That is a full round trip. The order is working — list it with [`openOrders`](post-info.md#openorders), and cancel with a [`cancel`](post-trade.md#cancel) action.
+
+Streaming its lifecycle instead of polling? [Stream over WebSocket](stream-over-websocket.md).
 
 ## Next steps
 
