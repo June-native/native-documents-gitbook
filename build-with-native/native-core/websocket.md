@@ -109,7 +109,7 @@ Full order-book snapshot — every frame is complete, there are no incremental d
   "time":1785332059496}}
 ```
 
-`levels` is `[bids, asks]`, each best-first and capped at 5 levels per side. `n` is the number of resting orders at that price. The book is throttled — see [push cadence](#push-cadence) — so use `bbo` when you need the top of book at event speed.
+`levels` is `[bids, asks]`, each best-first and capped at 10 levels per side. `n` is the number of resting orders at that price. The book is throttled — see [push cadence](#push-cadence) — so use `bbo` when you need the top of book at event speed.
 
 #### `bbo`
 
@@ -250,20 +250,20 @@ Channels come in two kinds, and the kind decides when a frame goes out.
 | `userFills` | each of your fills |
 | `orderUpdates` | each of your order transitions |
 
-**Snapshot** channels carry the full current state and are throttled — the values below are the current mainnet floors, not guarantees:
+**Snapshot** channels carry the full current state and are throttled — the values below are the current floors, the same on mainnet and testnet, and not guarantees:
 
 | Channel | No faster than |
 | --- | --- |
-| `l2Book` | 5 s |
+| `l2Book` | 500 ms |
 | `allMids` | 5 s |
-| `openOrders` | 5 s |
+| `openOrders` | 500 ms |
 | `spotState` | 200 ms |
 | `spotCreditState` | 200 ms |
 
-A throttled channel pushes when its market or account was **touched** in a block, not when the payload actually differs — so expect repeat frames with identical content, and diff before acting if that matters to you. A skipped beat costs you nothing: the next frame is a complete snapshot. Testnet throttles `l2Book` to 500 ms instead, which is why a book looks livelier there — size your expectations off the mainnet column.
+A throttled channel pushes when its market or account was **touched** in a block, not when the payload actually differs — so expect repeat frames with identical content, and diff before acting if that matters to you. A skipped beat costs you nothing: the next frame is a complete snapshot.
 
 {% hint style="warning" %}
-`l2Book` is a 5-second snapshot on mainnet, so it is a picture of depth, not a live price. React on `bbo`, which pushes on every change to the top of book.
+`l2Book` is a throttled snapshot — one frame every 500 ms at best — so it is a picture of depth, not a live price. React on `bbo`, which pushes on every change to the top of book.
 {% endhint %}
 
 ## Requests over the socket
