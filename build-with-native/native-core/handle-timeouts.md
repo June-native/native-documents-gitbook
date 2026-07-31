@@ -62,7 +62,7 @@ This is why every order should carry a `cloid` — it is your only handle for re
 
 ## Batches
 
-A [`batch`](post-trade.md#batch) is one envelope with **one** `submission_status`, but its `response.statuses[]` carries one leaf per item, in item order — so an accepted batch already tells you which items rested, filled, or failed. Reconcile by `cloid` via [`batchOrderStatus`](post-info.md#batchorderstatus) only when the envelope came back `timeout`.
+A [`batch`](post-trade.md#batch) is one envelope with **one** `submission_status`, but its `response.statuses[]` carries one leaf per item, in item order — so an accepted batch already tells you which items rested, filled, or failed. Reconcile per item by `cloid` via [`orderStatus`](post-info.md#orderstatus) only when the envelope came back `timeout`.
 
 ## Next steps
 

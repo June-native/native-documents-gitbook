@@ -502,7 +502,7 @@ Pass `market_id: -1` (as the number `-1` or the string `"-1"`) to get the owner'
 }
 ```
 
-`original_qty` is the submitted order quantity. For an order that partially fills and then rests on the book, `filled_qty` is nonzero and `remaining_qty` is the currently open quantity. `owner_index` is the protocol's internal account index for the owner; it also appears on the order objects returned by `orderStatus` / `batchOrderStatus`.
+`original_qty` is the submitted order quantity. For an order that partially fills and then rests on the book, `filled_qty` is nonzero and `remaining_qty` is the currently open quantity. `owner_index` is the protocol's internal account index for the owner; it also appears on the order objects returned by `orderStatus`.
 
 ### userAgents
 
@@ -611,71 +611,7 @@ A partially filled order that is still on the book reports `status: "partiallyfi
 
 For an in-flight order — a `/trade` you just sent — you do **not** poll `orderStatus` to learn the outcome: the synchronous `/trade` response already carries it in its [`response` envelope](post-trade.md#what-accepted-carries). A just-submitted tx that the query view has not yet advanced to reads back `found: false` here until its block is published.
 
-### batchOrderStatus
-
-Batch form of [orderStatus](#orderstatus), capped at 20 lookups per request. Each item supports the same lookup forms as `orderStatus`: `{ "oid": "..." }` or `{ "user": "...", "market_id": "...", "cloid": "..." }`. A parseable `oid` takes precedence for that item. Results are returned in the same order as the input array.
-
-```json
-{
-  "type": "batchOrderStatus",
-  "orders": [
-    { "oid": "773094113280001" },
-    {
-      "user": "0x0000000000000000000000000000000000000001",
-      "market_id": "0",
-      "cloid": "0x11111111111111111111111111111111"
-    }
-  ]
-}
-```
-
-```json
-{
-  "results": [
-    {
-      "found": true,
-      "query_height": 180000,
-      "app_hash": "0x...",
-      "status": "open",
-      "order": { "status": "open", "oid": 773094113280001 }
-    },
-    {
-      "found": false,
-      "query_height": 180000,
-      "app_hash": "0x...",
-      "owner": "0x0000000000000000000000000000000000000001",
-      "market_id": 0,
-      "cloid": "0x11111111111111111111111111111111"
-    }
-  ]
-}
-```
-
-Malformed items do not prevent valid items from being queried; the malformed slot contains an item-local error:
-
-```json
-{
-  "results": [
-    {
-      "error": {
-        "code": "InvalidOrderStatusQuery",
-        "message": "orderStatus requires either oid or user + market_id + cloid"
-      }
-    }
-  ]
-}
-```
-
-If `orders` is not an array the API returns HTTP 400 `InvalidOrderStatusBatch`. If more than 20 items are supplied, the API returns HTTP 400:
-
-```json
-{
-  "error": {
-    "code": "TooManyOrderStatusQueries",
-    "message": "batchOrderStatus supports at most 20 orders"
-  }
-}
-```
+A query that carries neither a parseable `oid` nor a complete `user` + `market_id` + `cloid` triple is rejected with **HTTP 400** and `InvalidOrderStatusQuery`. A malformed `market_id` or `cloid` is rejected the same way, as `InvalidMarketId` / `InvalidCloid`.
 
 Transaction status by `cloid` uses the transaction authority as the `user` namespace and does not require a market id. For `withdraw`, `settle`, and `repay`, `user` is the recovered signer authority.
 
