@@ -56,7 +56,7 @@ When a code is not in this table, reconcile.
 To reconcile, look the action up by the `cloid` you sent:
 
 * [`orderStatus`](post-info.md#orderstatus) — an order's current lifecycle by `cloid`.
-* [`txStatusByCloid`](post-info.md#orderstatus) — a non-order action (`withdraw` / `settle` / `repay`) by `cloid`, within the recent window.
+* [`txStatusByCloid`](post-info.md#txstatusbycloid) — a non-order action (`withdraw` / `settle` / `repay`) by `cloid`, within the recent window.
 
 This is why every order should carry a `cloid` — it is your only handle for reconciliation.
 

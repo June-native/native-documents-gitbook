@@ -611,52 +611,6 @@ A partially filled order that is still on the book reports `status: "partiallyfi
 
 For an in-flight order — a `/trade` you just sent — you do **not** poll `orderStatus` to learn the outcome: the synchronous `/trade` response already carries it in its [`response` envelope](post-trade.md#what-accepted-carries). A just-submitted tx that the query view has not yet advanced to reads back `found: false` here until its block is published.
 
-A query that carries neither a parseable `oid` nor a complete `user` + `market_id` + `cloid` triple is rejected with **HTTP 400** and `InvalidOrderStatusQuery`. A malformed `market_id` or `cloid` is rejected the same way, as `InvalidMarketId` / `InvalidCloid`.
-
-Transaction status by `cloid` uses the transaction authority as the `user` namespace and does not require a market id. For `withdraw`, `settle`, and `repay`, `user` is the recovered signer authority.
-
-```json
-{
-  "type": "txStatusByCloid",
-  "user": "0x00ee41b8f0dd58806f14b30fb11994673769b25c",
-  "cloid": "0x11111111111111111111111111111111"
-}
-```
-
-```json
-{
-  "found": true,
-  "query_height": 180000,
-  "app_hash": "0x...",
-  "owner": "0x00ee41b8f0dd58806f14b30fb11994673769b25c",
-  "cloid": "0x11111111111111111111111111111111",
-  "tx_hash": "0x...",
-  "tx_index": 1,
-  "status": "success",
-  "action_type": "settle"
-}
-```
-
-Failed retained tx responses use the lower-case committed execution error code as `status`, matching the `orderStatus` style where terminal failures are reported through the status string:
-
-```json
-{
-  "found": true,
-  "query_height": 180000,
-  "app_hash": "0x...",
-  "owner": "0x00ee41b8f0dd58806f14b30fb11994673769b25c",
-  "cloid": "0x11111111111111111111111111111111",
-  "tx_hash": "0x...",
-  "tx_index": 1,
-  "status": "invalidsettle",
-  "action_type": "settle"
-}
-```
-
-If a failed retained tx has no single committed error code in its payload, `status` remains `"failed"`.
-
-The public `settle`/`repay` actions also surface here, with `action_type` `"settle"` / `"repay"`. Their `user` namespace is the **recovered signer** (settle → margin owner; repay → cash owner), so a counterparty named in the action body cannot find the tx. This window is the only `cloid`-keyed lookup for settle/repay: there is no idempotency, only recent-window visibility bounded by `max_recent_txs`. The same `cloid` resubmitted under a new envelope `nonce` is a separate tx; a lookup returns the latest retained one, and once a tx ages out of the window the response is `found: false`. A failed settle/repay is retained the same way and reports `status` `"invalidsettle"` / `"invalidrepay"` (or another lower-case committed error code).
-
 Open order response:
 
 ```json
@@ -708,3 +662,51 @@ Not found:
   "cloid": "0x11111111111111111111111111111111"
 }
 ```
+
+A query that carries neither a parseable `oid` nor a complete `user` + `market_id` + `cloid` triple is rejected with **HTTP 400** and `InvalidOrderStatusQuery`. A malformed `market_id` or `cloid` is rejected the same way, as `InvalidMarketId` / `InvalidCloid`.
+
+### txStatusByCloid
+
+Transaction status by `cloid` uses the transaction authority as the `user` namespace and does not require a market id. For `withdraw`, `settle`, and `repay`, `user` is the recovered signer authority.
+
+```json
+{
+  "type": "txStatusByCloid",
+  "user": "0x00ee41b8f0dd58806f14b30fb11994673769b25c",
+  "cloid": "0x11111111111111111111111111111111"
+}
+```
+
+```json
+{
+  "found": true,
+  "query_height": 180000,
+  "app_hash": "0x...",
+  "owner": "0x00ee41b8f0dd58806f14b30fb11994673769b25c",
+  "cloid": "0x11111111111111111111111111111111",
+  "tx_hash": "0x...",
+  "tx_index": 1,
+  "status": "success",
+  "action_type": "settle"
+}
+```
+
+Failed retained tx responses use the lower-case committed execution error code as `status`, matching the `orderStatus` style where terminal failures are reported through the status string:
+
+```json
+{
+  "found": true,
+  "query_height": 180000,
+  "app_hash": "0x...",
+  "owner": "0x00ee41b8f0dd58806f14b30fb11994673769b25c",
+  "cloid": "0x11111111111111111111111111111111",
+  "tx_hash": "0x...",
+  "tx_index": 1,
+  "status": "invalidsettle",
+  "action_type": "settle"
+}
+```
+
+If a failed retained tx has no single committed error code in its payload, `status` remains `"failed"`.
+
+The public `settle`/`repay` actions also surface here, with `action_type` `"settle"` / `"repay"`. Their `user` namespace is the **recovered signer** (settle → margin owner; repay → cash owner), so a counterparty named in the action body cannot find the tx. This window is the only `cloid`-keyed lookup for settle/repay: there is no idempotency, only recent-window visibility bounded by `max_recent_txs`. The same `cloid` resubmitted under a new envelope `nonce` is a separate tx; a lookup returns the latest retained one, and once a tx ages out of the window the response is `found: false`. A failed settle/repay is retained the same way and reports `status` `"invalidsettle"` / `"invalidrepay"` (or another lower-case committed error code).
