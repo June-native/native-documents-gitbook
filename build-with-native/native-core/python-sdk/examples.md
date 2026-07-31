@@ -58,7 +58,7 @@ It turns the two misconfigs that would otherwise surface as empty query results 
 | --- | --- |
 | `basic_order.py` | A resting `gtc` limit order end to end: place with a `cloid`, poll `order_status` until it rests (`open`), `cancel_by_cloid`, then `wait_for_order` to confirm the terminal `cancelled` state. |
 | `basic_market_order.py` | A protected `market_order` with an explicit `protection_px` (the worst price you accept — this example passes it directly rather than deriving it from `slippage_bps`). Buys a minimum-notional clip 2% through the best ask, then market-sells the fill to flatten. |
-| `basic_batch.py` | A mixed `batch` under one nonce: two resting bids in one call, then a second batch that `modify`s the first order and `cancel`s the second — atomically. Per-leg outcomes are reconciled with `batch_order_status`. |
+| `basic_batch.py` | A mixed `batch` under one nonce: two resting bids in one call, then a second batch that `modify`s the first order and `cancel`s the second — atomically. Per-leg outcomes are reconciled with one `order_status` lookup per leg. |
 | `info/query_markets_info.py` | Read-only: list the tradable markets and their precision (`markets()`). |
 | `info/query_orderbook_info.py` | Read-only: the L2 order book for one market (`l2_book`). |
 | `info/query_balances_info.py` | Read-only: your spot balances, available and locked per asset (`user_balances`). |

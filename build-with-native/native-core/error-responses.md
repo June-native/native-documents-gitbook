@@ -72,7 +72,7 @@ The wire carries `error.code`, not display copy — the **Message** column is il
 
 ## Batch
 
-A [`batch`](post-trade.md#batch) is one `/trade` call under one envelope nonce, so the envelope gets **one** `submission_status`. That status reflects the batch's admission and overall outcome — it does **not** report each item. Items execute in array order, and **each item may individually succeed or fail** inside the batch execution result. Reconcile **per item** by `cloid` via [`batchOrderStatus`](post-info.md#batchorderstatus) (up to 20 lookups per call, which covers a full `1..=10`-item batch). Don't infer item outcomes from the envelope status.
+A [`batch`](post-trade.md#batch) is one `/trade` call under one envelope nonce, so the envelope gets **one** `submission_status`. That status reflects the batch's admission and overall outcome — it does **not** report each item. Items execute in array order, and **each item may individually succeed or fail** inside the batch execution result. Reconcile **per item** by `cloid` with one [`orderStatus`](post-info.md#orderstatus) lookup per item. Don't infer item outcomes from the envelope status.
 
 ## Execution-level failures
 
