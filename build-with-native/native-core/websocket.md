@@ -167,10 +167,7 @@ Lifecycle transitions of your accepted orders. `data` is an array of the transit
   {"order":{"coin":"2","side":"A","limitPx":"1941.34","sz":"0.01",
             "oid":1949584490234112,"timestamp":1784737180713,"origSz":"0.01",
             "cloid":"0x86ecc48f2434c98fe41b1dc071e1b30d"},
-   "status":"open","statusTimestamp":1784737180713},
-  {"order":{"coin":"2","side":"A","limitPx":"1941.34","sz":"0",
-            "oid":1949584490234112,"timestamp":1784737180713,"origSz":"0.01"},
-   "status":"filled","statusTimestamp":1784737182363}]}
+   "status":"open","statusTimestamp":1784737180713}]}
 ```
 
 * `order.sz` is the **remaining** quantity and `origSz` the original, so a partial fill shows as `status: "open"` with a shrunken `sz`.
