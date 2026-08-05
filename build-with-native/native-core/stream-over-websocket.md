@@ -33,8 +33,17 @@ Market channels are keyed by `coin` — the **`market_id` as a string** (`"2"`, 
 Each is acked with a `subscriptionResponse`, then data starts:
 
 ```json
-{"channel":"bbo","data":{"coin":"2","time":1785332059496,
-  "bbo":[{"px":"1903.49","sz":"24.8254","n":1},{"px":"1904.56","sz":"57.71","n":1}]}}
+{
+  "channel": "bbo",
+  "data": {
+    "coin": "2",
+    "time": 1785332059496,
+    "bbo": [
+      { "px": "1903.49", "sz": "24.8254", "n": 1 },
+      { "px": "1904.56", "sz": "57.71", "n": 1 }
+    ]
+  }
+}
 ```
 
 Pick the channel that matches how fast you need to react: `bbo` and `trades` push on every change, while `l2Book` is a throttled full snapshot. The [cadence table](websocket.md#push-cadence) has the numbers.
@@ -58,7 +67,7 @@ For balances, subscribe to `spotState`. If you trade on a credit line, subscribe
 The server closes any connection it hasn't sent a frame to for 60 seconds. Send a ping every 30 seconds and stop worrying about it:
 
 ```json
-{"method":"ping"}
+{ "method": "ping" }
 ```
 
 It answers `{"channel":"pong"}`. Your client library's built-in protocol-level ping works just as well.
@@ -78,11 +87,28 @@ Deduplicate fills on `tid` — a snapshot fill and the live frame for the same t
 You do not need a second transport to write. `post` carries [`POST /info`](post-info.md) and [`POST /trade`](post-trade.md) bodies over the open connection:
 
 ```json
-{"method":"post","id":1,"request":{"type":"action","payload":{
-  "action":{"type":"order","market_id":"2","side":"bid","order_type":"limit",
-            "tif":"gtc","price":"1900.00","quantity":"1.0000",
-            "cloid":"0x11111111111111111111111111111111"},
-  "nonce":"1760000000000","agent_epoch":"3","signature":"0x…"}}}
+{
+  "method": "post",
+  "id": 1,
+  "request": {
+    "type": "action",
+    "payload": {
+      "action": {
+        "type": "order",
+        "market_id": "2",
+        "side": "bid",
+        "order_type": "limit",
+        "tif": "gtc",
+        "price": "1900.00",
+        "quantity": "1.0000",
+        "cloid": "0x11111111111111111111111111111111"
+      },
+      "nonce": "1760000000000",
+      "agent_epoch": "3",
+      "signature": "0x…"
+    }
+  }
+}
 ```
 
 The reply echoes your `id` and carries the same response `POST /trade` would have returned, `submission_status` and all. Signing is unchanged — see [Transaction Signing](transaction-signing.md). One request at a time, and the same per-IP rate budget as HTTP applies.

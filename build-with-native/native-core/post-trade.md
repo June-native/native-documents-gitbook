@@ -132,7 +132,9 @@ A per-order failure keeps `submission_status: "accepted"` and puts the code in t
   "tx_hash": "0x...",
   "response": {
     "type": "order",
-    "status": { "open": { "oid": 1964626153570560, "cloid": "0x4e5e6ffddbed6ed66c3d02cab8a4cac6" } }
+    "status": {
+      "open": { "oid": 1964626153570560, "cloid": "0x4e5e6ffddbed6ed66c3d02cab8a4cac6" }
+    }
   }
 }
 ```
@@ -144,8 +146,14 @@ A per-order failure keeps `submission_status: "accepted"` and puts the code in t
   "tx_hash": "0x...",
   "response": {
     "type": "order",
-    "status": { "filled": { "total_sz": "0.01", "avg_px": "1941.34", "oid": 1949585043882752,
-                            "cloid": "0x39791fa07ff1be03663c735d1f9cfd4a" } }
+    "status": {
+      "filled": {
+        "total_sz": "0.01",
+        "avg_px": "1941.34",
+        "oid": 1949585043882752,
+        "cloid": "0x39791fa07ff1be03663c735d1f9cfd4a"
+      }
+    }
   }
 }
 ```

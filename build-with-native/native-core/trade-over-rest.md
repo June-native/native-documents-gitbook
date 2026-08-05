@@ -74,7 +74,12 @@ Always set a `cloid` — it is how you reconcile a `timeout` (step 5). Send `pri
 {
   "submission_status": "accepted",
   "tx_hash": "0x…",
-  "response": { "type": "order", "status": { "open": { "oid": 1964626153570560, "cloid": "0x11111111111111111111111111111111" } } }
+  "response": {
+    "type": "order",
+    "status": {
+      "open": { "oid": 1964626153570560, "cloid": "0x11111111111111111111111111111111" }
+    }
+  }
 }
 ```
 
