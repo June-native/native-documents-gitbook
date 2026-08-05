@@ -226,23 +226,52 @@ Lifecycle transitions of your accepted orders. `data` is an array of the transit
   "data": [
     {
       "order": {
-        "coin": "2",
-        "side": "A",
-        "limitPx": "1941.34",
-        "sz": "0.01",
-        "oid": 1949584490234112,
-        "timestamp": 1784737180713,
-        "origSz": "0.01",
-        "cloid": "0x86ecc48f2434c98fe41b1dc071e1b30d"
+        "coin": "49",
+        "side": "B",
+        "limitPx": "490.681",
+        "sz": "157.634",
+        "oid": 2366974344560896,
+        "timestamp": 1785918530096,
+        "origSz": "157.634",
+        "cloid": "0x04becbf0aa5ffcaaba6be4126f0debff"
       },
       "status": "open",
-      "statusTimestamp": 1784737180713
+      "statusTimestamp": 1785918530096
+    },
+    {
+      "order": {
+        "coin": "49",
+        "side": "A",
+        "limitPx": "496.537",
+        "sz": "0",
+        "oid": 2366974277452805,
+        "timestamp": 1785918529896,
+        "origSz": "164.016",
+        "cloid": "0x04abf5ad3ce48f8ba8cdb7b05fabf38f"
+      },
+      "status": "canceled",
+      "statusTimestamp": 1785918530096
+    },
+    {
+      "order": {
+        "coin": "45",
+        "side": "A",
+        "limitPx": "720.305",
+        "sz": "0",
+        "oid": 2368550228460800,
+        "timestamp": 1785923226596,
+        "origSz": "0.463",
+        "cloid": "0x00000000008e17d10000002d00000001"
+      },
+      "status": "filled",
+      "statusTimestamp": 1785923226596
     }
   ]
 }
 ```
 
 * `order.sz` is the **remaining** quantity and `origSz` the original, so a partial fill shows as `status: "open"` with a shrunken `sz`.
+* **A terminal transition carries no filled quantity.** The canceled order above reports `sz: "0"` against an `origSz` of `164.016` — that zero is the order leaving the book, not a claim that all of it traded. Read the traded amount from [`orderStatus`](post-info.md#orderstatus), which returns `filled_qty`.
 * `status` is `open`, `filled`, `canceled`, or `rejected` — the last covers an order refused at execution, such as a post-only order that would have crossed.
 * **Submission failures never appear here.** A write that fails before execution — bad nonce, expired transaction, bad signature — is reported synchronously on the [`POST /trade`](post-trade.md) response. This channel carries only orders that reached the matching engine.
 
