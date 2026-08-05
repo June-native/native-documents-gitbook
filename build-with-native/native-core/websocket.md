@@ -58,7 +58,10 @@ Every push is `{"channel":"<name>","data":<payload>}`.
 Subscription arguments are validated when you subscribe, so a bad request fails loudly instead of ACKing and never pushing. Anything that cannot be turned into a valid subscription — malformed JSON, an unknown `method`, an unsupported `type`, a malformed address, a `market_id` that does not exist — returns one error shape that echoes your request back:
 
 ```json
-{"channel":"error","data":"Error parsing JSON into valid websocket request: {\"method\":\"subscribe\",\"subscription\":{\"type\":\"l2Book\",\"coin\":\"99999\"}}"}
+{
+  "channel": "error",
+  "data": "Error parsing JSON into valid websocket request: {\"method\":\"subscribe\",\"subscription\":{\"type\":\"l2Book\",\"coin\":\"99999\"}}"
+}
 ```
 
 Two states have their own text:
@@ -81,11 +84,23 @@ Nine channels. All prices, sizes, and amounts are **display decimals**, already 
 One frame per matched trade. `data` is an array.
 
 ```json
-{"channel":"trades","data":[
-  {"coin":"2","side":"B","px":"1908.54","sz":"0.0478","time":1785332190946,
-   "tid":135639477518336,
-   "users":["0x0000000000000000000000000000000000000001",
-            "0x0000000000000000000000000000000000000002"]}]}
+{
+  "channel": "trades",
+  "data": [
+    {
+      "coin": "2",
+      "side": "B",
+      "px": "1908.54",
+      "sz": "0.0478",
+      "time": 1785332190946,
+      "tid": 135639477518336,
+      "users": [
+        "0x0000000000000000000000000000000000000001",
+        "0x0000000000000000000000000000000000000002"
+      ]
+    }
+  ]
+}
 ```
 
 | Field | Meaning |
@@ -100,13 +115,23 @@ One frame per matched trade. `data` is an array.
 Full order-book snapshot — every frame is complete, there are no incremental diffs.
 
 ```json
-{"channel":"l2Book","data":{
-  "coin":"2",
-  "levels":[
-    [{"px":"1903.49","sz":"24.8254","n":1},{"px":"1903.23","sz":"234.0143","n":1}],
-    [{"px":"1904.56","sz":"50.6472","n":1},{"px":"1904.84","sz":"227.6955","n":1}]
-  ],
-  "time":1785332059496}}
+{
+  "channel": "l2Book",
+  "data": {
+    "coin": "2",
+    "levels": [
+      [
+        { "px": "1903.49", "sz": "24.8254", "n": 1 },
+        { "px": "1903.23", "sz": "234.0143", "n": 1 }
+      ],
+      [
+        { "px": "1904.56", "sz": "50.6472", "n": 1 },
+        { "px": "1904.84", "sz": "227.6955", "n": 1 }
+      ]
+    ],
+    "time": 1785332059496
+  }
+}
 ```
 
 `levels` is `[bids, asks]`, each best-first and capped at 10 levels per side. `n` is the number of resting orders at that price. The book is throttled — see [push cadence](#push-cadence) — so use `bbo` when you need the top of book at event speed.
@@ -116,9 +141,17 @@ Full order-book snapshot — every frame is complete, there are no incremental d
 Top of book only, pushed whenever it changes.
 
 ```json
-{"channel":"bbo","data":{
-  "coin":"2","time":1785332059496,
-  "bbo":[{"px":"1903.49","sz":"24.8254","n":1},{"px":"1904.56","sz":"57.71","n":1}]}}
+{
+  "channel": "bbo",
+  "data": {
+    "coin": "2",
+    "time": 1785332059496,
+    "bbo": [
+      { "px": "1903.49", "sz": "24.8254", "n": 1 },
+      { "px": "1904.56", "sz": "57.71", "n": 1 }
+    ]
+  }
+}
 ```
 
 `bbo` is `[best_bid, best_ask]`; a side with no liquidity is `null`.
@@ -128,8 +161,18 @@ Top of book only, pushed whenever it changes.
 Mid price for every market with liquidity on both sides, as one table. Keys are market ids; each value is `(best_bid + best_ask) / 2`.
 
 ```json
-{"channel":"allMids","data":{"mids":{
-  "0":"1902.25","2":"1904.025","3":"569.195","14":"0.9999","45":"677.104"}}}
+{
+  "channel": "allMids",
+  "data": {
+    "mids": {
+      "0": "1902.25",
+      "2": "1904.025",
+      "3": "569.195",
+      "14": "0.9999",
+      "45": "677.104"
+    }
+  }
+}
 ```
 
 `allMids` takes no `coin` — subscribe with `{"type":"allMids"}` alone. A market with only one side quoted is left out, and a mid carries one more decimal place than the market's `price_decimals`, since it is a midpoint.
@@ -141,12 +184,27 @@ Mid price for every market with liquidity on both sides, as one table. Keys are 
 Your fills, both sides of the book. The first packet after subscribing is a snapshot of your 100 most recent fills, marked `isSnapshot: true`; every fill after that streams as it happens, with the field absent.
 
 ```json
-{"channel":"userFills","data":{
-  "user":"0x0000000000000000000000000000000000000001",
-  "fills":[{"coin":"45","px":"677.104","sz":"0.554","side":"B","time":1785332187696,
-            "oid":2170230549774592,"crossed":true,
-            "fee":"0.00000554","feeToken":"QQQB",
-            "tid":135639409360896,"cloid":"0x00000000006179420000002d00000001"}]}}
+{
+  "channel": "userFills",
+  "data": {
+    "user": "0x0000000000000000000000000000000000000001",
+    "fills": [
+      {
+        "coin": "45",
+        "px": "677.104",
+        "sz": "0.554",
+        "side": "B",
+        "time": 1785332187696,
+        "oid": 2170230549774592,
+        "crossed": true,
+        "fee": "0.00000554",
+        "feeToken": "QQQB",
+        "tid": 135639409360896,
+        "cloid": "0x00000000006179420000002d00000001"
+      }
+    ]
+  }
+}
 ```
 
 | Field | Meaning |
@@ -163,11 +221,25 @@ A snapshot fill is built exactly like the live frame for the same trade — same
 Lifecycle transitions of your accepted orders. `data` is an array of the transitions your account made in one block — batched, but **split across several frames once the array would exceed 56 KiB**. Don't treat one frame as the complete set for a block.
 
 ```json
-{"channel":"orderUpdates","data":[
-  {"order":{"coin":"2","side":"A","limitPx":"1941.34","sz":"0.01",
-            "oid":1949584490234112,"timestamp":1784737180713,"origSz":"0.01",
-            "cloid":"0x86ecc48f2434c98fe41b1dc071e1b30d"},
-   "status":"open","statusTimestamp":1784737180713}]}
+{
+  "channel": "orderUpdates",
+  "data": [
+    {
+      "order": {
+        "coin": "2",
+        "side": "A",
+        "limitPx": "1941.34",
+        "sz": "0.01",
+        "oid": 1949584490234112,
+        "timestamp": 1784737180713,
+        "origSz": "0.01",
+        "cloid": "0x86ecc48f2434c98fe41b1dc071e1b30d"
+      },
+      "status": "open",
+      "statusTimestamp": 1784737180713
+    }
+  ]
+}
 ```
 
 * `order.sz` is the **remaining** quantity and `origSz` the original, so a partial fill shows as `status: "open"` with a shrunken `sz`.
@@ -179,13 +251,25 @@ Lifecycle transitions of your accepted orders. `data` is an array of the transit
 Every resting order on your account, as a full replacement — across all markets, not only the ones you subscribed to. The first packet carries `isSnapshot: true`; later refreshes omit it.
 
 ```json
-{"channel":"openOrders","data":{
-  "isSnapshot":true,
-  "user":"0x0000000000000000000000000000000000000001",
-  "orders":[
-    {"coin":"0","side":"B","limitPx":"1900.11","sz":"2","oid":1508735205769472,
-     "timestamp":1785331894628,"origSz":"2",
-     "cloid":"0xe839158bc4e9b91fe0311d83cce1b117"}]}}
+{
+  "channel": "openOrders",
+  "data": {
+    "isSnapshot": true,
+    "user": "0x0000000000000000000000000000000000000001",
+    "orders": [
+      {
+        "coin": "0",
+        "side": "B",
+        "limitPx": "1900.11",
+        "sz": "2",
+        "oid": 1508735205769472,
+        "timestamp": 1785331894628,
+        "origSz": "2",
+        "cloid": "0xe839158bc4e9b91fe0311d83cce1b117"
+      }
+    ]
+  }
+}
 ```
 
 #### `spotState`
@@ -193,9 +277,13 @@ Every resting order on your account, as a full replacement — across all market
 Your spot balances, as a full replacement.
 
 ```json
-{"channel":"spotState","data":{
-  "user":"0x0000000000000000000000000000000000000001",
-  "balances":[{"coin":"USDT","token":2,"total":"15000.5","hold":"400"}]}}
+{
+  "channel": "spotState",
+  "data": {
+    "user": "0x0000000000000000000000000000000000000001",
+    "balances": [{ "coin": "USDT", "token": 2, "total": "15000.5", "hold": "400" }]
+  }
+}
 ```
 
 `total` is available plus locked, `hold` is the locked part, and `token` is the `asset_id`.
@@ -209,19 +297,34 @@ A credit account's balance list is empty — it trades on its credit line, not o
 A credit account's per-asset positions and credit line, as a full replacement. The first packet carries `isSnapshot: true`.
 
 ```json
-{"channel":"spotCreditState","data":{
-  "isSnapshot":true,
-  "user":"0x0000000000000000000000000000000000000001",
-  "authorized":true,
-  "status":"active",
-  "creditUsdAtoms":10000000000000000,
-  "positions":[
-    {"asset_id":1,"symbol":"USDC","actual_display":"7372385.97518792",
-     "actual_qty":"737238597518792",
-     "pending_exposure_display":"0","pending_exposure_qty":"0"},
-    {"asset_id":2,"symbol":"USDT","actual_display":"-10592539.71238006",
-     "actual_qty":"-1059253971238006",
-     "pending_exposure_display":"0","pending_exposure_qty":"0"}]}}
+{
+  "channel": "spotCreditState",
+  "data": {
+    "isSnapshot": true,
+    "user": "0x0000000000000000000000000000000000000001",
+    "authorized": true,
+    "status": "active",
+    "creditUsdAtoms": 10000000000000000,
+    "positions": [
+      {
+        "asset_id": 1,
+        "symbol": "USDC",
+        "actual_display": "7372385.97518792",
+        "actual_qty": "737238597518792",
+        "pending_exposure_display": "0",
+        "pending_exposure_qty": "0"
+      },
+      {
+        "asset_id": 2,
+        "symbol": "USDT",
+        "actual_display": "-10592539.71238006",
+        "actual_qty": "-1059253971238006",
+        "pending_exposure_display": "0",
+        "pending_exposure_qty": "0"
+      }
+    ]
+  }
+}
 ```
 
 | Field | Meaning |
@@ -267,10 +370,34 @@ A throttled channel pushes when its market or account was **touched** in a block
 
 `post` carries the REST bodies down the same connection, so a bot that streams can also trade without opening a second transport.
 
-```json
-request  {"method":"post","id":42,"request":{"type":"info","payload":{"type":"l2Book","market_id":2,"depth":2}}}
-success  {"channel":"post","data":{"id":42,"response":{"type":"info","payload":{ … }}}}
-failure  {"channel":"post","data":{"id":42,"response":{"type":"error","payload":"<status and description>"}}}
+```jsonc
+// request
+{
+  "method": "post",
+  "id": 42,
+  "request": {
+    "type": "info",
+    "payload": { "type": "l2Book", "market_id": 2, "depth": 2 }
+  }
+}
+
+// success
+{
+  "channel": "post",
+  "data": {
+    "id": 42,
+    "response": { "type": "info", "payload": { … } }
+  }
+}
+
+// failure
+{
+  "channel": "post",
+  "data": {
+    "id": 42,
+    "response": { "type": "error", "payload": "<status and description>" }
+  }
+}
 ```
 
 * `request.type` is `"info"` — the payload is a [`POST /info`](post-info.md) body — or `"action"`, where the payload is a signed [`POST /trade`](post-trade.md) body.
@@ -280,11 +407,28 @@ failure  {"channel":"post","data":{"id":42,"response":{"type":"error","payload":
 An `action` reply is the full trade response, so a business rejection arrives as a **successful** `action` whose `submission_status` says what happened — the same contract as over HTTP:
 
 ```json
-{"channel":"post","data":{"id":3,"response":{"type":"action","payload":{
-  "submission_status":"accepted",
-  "tx_hash":"0xe84f3cfbedf6f069136aef795deaab5b74aa26cd1eb14d0f1020839134a82dc8",
-  "response":{"type":"order","status":{"open":{"oid":1964626153570560,
-              "cloid":"0x4e5e6ffddbed6ed66c3d02cab8a4cac6"}}}}}}}
+{
+  "channel": "post",
+  "data": {
+    "id": 3,
+    "response": {
+      "type": "action",
+      "payload": {
+        "submission_status": "accepted",
+        "tx_hash": "0xe84f3cfbedf6f069136aef795deaab5b74aa26cd1eb14d0f1020839134a82dc8",
+        "response": {
+          "type": "order",
+          "status": {
+            "open": {
+              "oid": 1964626153570560,
+              "cloid": "0x4e5e6ffddbed6ed66c3d02cab8a4cac6"
+            }
+          }
+        }
+      }
+    }
+  }
+}
 ```
 
 Only a transport-level failure uses the `error` envelope. Branch on `submission_status`, never on the envelope — see [Handle outcomes & timeouts](handle-timeouts.md).
@@ -298,8 +442,16 @@ Three things to plan for:
 `explorer` requests are not served:
 
 ```json
-{"channel":"post","data":{"id":5,"response":{"type":"error",
-  "payload":"400 explorer requests are not supported"}}}
+{
+  "channel": "post",
+  "data": {
+    "id": 5,
+    "response": {
+      "type": "error",
+      "payload": "400 explorer requests are not supported"
+    }
+  }
+}
 ```
 
 ## Connection lifecycle
