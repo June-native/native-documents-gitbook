@@ -104,7 +104,7 @@ Response envelope:
 `submission_status` answers **"did the transaction land?"**, and it has exactly three values:
 
 * `accepted` — the transaction landed and reached execution. There is no top-level `error`. **This does not mean the order succeeded** — see [what `accepted` carries](#what-accepted-carries) below.
-* `rejected` — the write never reached execution: request-shaping, rate limit, expiry, place-order suspension, or node admission. `error.code` carries the reason; `tx_hash` is present once canonical bytes exist. A handful of envelope-level execution failures also land here — `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `invalidbatchlength`, `featuredisabled` — returned in their CamelCase display form (`BadNonce`, …).
+* `rejected` — the write never reached execution: request-shaping, rate limit, expiry, place-order suspension, or node admission. `error.code` carries the reason; `tx_hash` is present once canonical bytes exist. A handful of envelope-level execution failures also land here — `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `featuredisabled` — returned in their CamelCase display form (`BadNonce`, …).
 * `timeout` — the outcome was not observed within the 3-second budget, or the submission could not be routed. Whether it can still land depends on the code — see [timeout](#timeout-can-it-still-land).
 
 ### What `accepted` carries
@@ -258,7 +258,7 @@ Effects to confirm via reads:
 | `type`      | yes      | `"cancelAll"`             |
 | `market_id` | yes      | Decimal string market id. |
 
-`cancelAll` carries no `oid` and no `cloid`. The `missing_oid_or_cloid` parse error does not apply to it. Agent signatures are accepted (same allowlist as `cancel`). Submit precheck classifies it (and any pure-`cancelAll` or `cancel`/`cancelAll`-only batch) as a pure cancel: oracle freshness, frozen SpotCreditAccount, mark coverage, quote-min-notional, and duplicate cloid checks are skipped at admission.
+`cancelAll` carries no `oid` and no `cloid` in the request. The `missing_oid_or_cloid` parse error does not apply to it. Agent signatures are accepted (same allowlist as `cancel`). Submit precheck classifies it (and any pure-`cancelAll` or `cancel`/`cancelAll`-only batch) as a pure cancel: oracle freshness, frozen SpotCreditAccount, mark coverage, quote-min-notional, and duplicate cloid checks are skipped at admission.
 
 ```json
 {
@@ -344,7 +344,7 @@ Replaces one open order using action-atomic cancel-plus-place semantics. Provide
 
 Batch constraints:
 
-* `items` must contain `1..=10` items.
+* `items` must contain `1..=10` items. Anything outside that range fails while the API assembles the canonical bytes, so it comes back `rejected` with [`encode_error: LengthOverflow`](error-responses.md#full-trade-error-code-reference) and no `tx_hash`.
 * Items execute in array order.
 * The batch has one envelope nonce. Individual items may succeed or fail inside the batch execution result.
 
