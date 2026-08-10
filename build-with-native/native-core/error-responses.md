@@ -6,7 +6,7 @@ description: The /trade error model — read the response body, not the HTTP sta
 
 `POST /trade` is **synchronous** and returns the **same JSON trade-response shape** whatever the HTTP status (`200`, `400`, `429`, `503`, `504`). Branch on the body, not the status line. A business rejection (below minimum, bad precision, insufficient balance) is **data**, not a transport error.
 
-The envelope carries `submission_status` and, on `accepted`, a [`response` envelope](post-trade.md#what-accepted-carries) with the per-order outcome. **A failed order does not always produce a top-level `error`** — for order-ish actions the failure code lives in `response.status.error` while `submission_status` stays `accepted`. See [Execution-level failures](#execution-level-failures).
+The envelope carries `submission_status` and, on `accepted`, a [`response` envelope](post-trade.md#what-accepted-carries) with the per-order outcome. **A failed order does not always produce a top-level `error`** — for order-ish actions the failure code lives in an `{"error":"<code>"}` leaf inside `response` while `submission_status` stays `accepted`. See [Execution-level failures](#execution-level-failures).
 
 (One body never has this shape: a request over the 256 KiB `/trade` limit is refused before the handler runs and comes back as plain text. Guard your JSON parse.)
 
@@ -46,7 +46,7 @@ Every `error.code` comes from one of four layers, and the **spelling tells you w
 | Request-shaping | lowercase `snake_case` | `invalid_json`, `invalid_quantity_precision`, `missing_cloid` | 400 | `rejected` (no `tx_hash`) |
 | Gateway | `CamelCase` / prefixed | `RateLimited`, `PlaceOrderSuspended`, `ExpiredTx`, `HandoffTimeout`, `node_unreachable: …` | 429 / 503 / 504 / 200 | `rejected` or `timeout` |
 | Node admission | `CamelCase`, verbatim from the node | `MinTradeSpotNtl`, `DuplicateCloid`, `InsufficientSpotBalance`, `AccountFrozen` | 200 | `rejected` |
-| Execution — order-ish | lowercase (the variant name) | `tick`, `insufficientspotbalance`, `lotsize` | 200 | `accepted`, code in `response.status.error` |
+| Execution — order-ish | lowercase (the variant name) | `tick`, `insufficientspotbalance`, `lotsize` | 200 | `accepted`, code in the `response` leaf |
 | Execution — envelope | CamelCase display form | `BadNonce`, `BadSignature`, `ExpiredTx` | 200 | `rejected` |
 
 One condition can surface at two layers with different spellings — an under-minimum order is usually caught at admission as `MinTradeSpotNtl`, but the same failure at execution reads `mintradespotntl`. Match on the code you actually receive.
@@ -72,24 +72,24 @@ The wire carries `error.code`, not display copy — the **Message** column is il
 
 ## Batch
 
-A [`batch`](post-trade.md#batch) is one `/trade` call under one envelope nonce, so the envelope gets **one** `submission_status`. That status reflects the batch's admission and overall outcome — it does **not** report each item. Items execute in array order, and **each item may individually succeed or fail** inside the batch execution result. Reconcile **per item** by `cloid` with one [`orderStatus`](post-info.md#orderstatus) lookup per item. Don't infer item outcomes from the envelope status.
+A [`batch`](post-trade.md#batch) is one `/trade` call under one envelope nonce, so the envelope gets **one** `submission_status`. That status reflects the batch's admission and overall outcome — it does **not** report each item. Items execute in array order, and **each item may individually succeed or fail** inside the batch execution result. On `accepted`, read the per-item outcomes straight out of [`response.statuses[]`](post-trade.md#batch), in item order — no `/info` lookup needed. Fall back to one [`orderStatus`](post-info.md#orderstatus) per item only when the envelope came back `timeout`. Don't infer item outcomes from the envelope status.
 
 ## Execution-level failures
 
 An admitted action still runs against the book and **can fail at execution**. Because `/trade` is synchronous, that failure comes back on the `/trade` response — but **where** it appears depends on the action, and getting this wrong reads a failed order as a success.
 
-* **Order-ish actions** (`order`, `cancel`, `cancelAll`, `modify`, `batch`) stay `submission_status: "accepted"` with **no** top-level `error`. The code appears only as a leaf inside the [`response` envelope](post-trade.md#what-accepted-carries), as `{"error":"<code>"}`. This covers `insufficientspotbalance`, `mintradespotntl`, `tick`, `lotsize`, `missingorder`, and the rest.
+* **Order-ish actions** (`order`, `cancel`, `cancelAll`, `modify`, `batch`) stay `submission_status: "accepted"` with **no** top-level `error`. The code appears only as a leaf inside the [`response` envelope](post-trade.md#what-accepted-carries), as `{"error":"<code>"}`. How deep that leaf sits follows the action: `response.status.error` for an `order`, `cancel`, or `modify`; `response.statuses[i].error` for a `cancelAll`; `response.statuses[i].status.error` for a [`batch`](post-trade.md#batch) item. This covers `insufficientspotbalance`, `mintradespotntl`, `tick`, `lotsize`, `missingorder`, and the rest.
 * **Non-order actions** (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`) do map an execution failure to `submission_status: "rejected"` with a top-level `error.code`.
 * **Six envelope-level failures** demote any action to `rejected` because they invalidate the transaction itself: `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `invalidbatchlength`, `featuredisabled`. These surface in their CamelCase display form — `BadNonce`, `BadSignature`, and so on.
 
 {% hint style="warning" %}
-`error.code` at the top level is never a lowercase execution code for an order. If you are matching on `error.code == "tick"`, you will never hit it — look in `response.status.error`.
+`error.code` at the top level is never a lowercase execution code for an order. If you are matching on `error.code == "tick"`, you will never hit it — look in the `response` leaf instead.
 {% endhint %}
 
 | Code | Where it appears | What it means | Fix |
 | --- | --- | --- | --- |
-| `tick` | `response.status.error`, with `submission_status: "accepted"` | A non-integer `price` exceeded the market's `max_price_sig_figs`. The transaction landed; the order never entered the book. | Snap the price to the market's `price_decimals` / `max_price_sig_figs` before signing. The [Python SDK](python-sdk/README.md) checks this locally (`LocalValidationError`) and never sends it; see [Decimals & units](decimals-units.md#valid-invalid-examples). |
-| `insufficientspotbalance` / `mintradespotntl` / `lotsize` / `missingorder` | `response.status.error`, with `submission_status: "accepted"` | The order failed at execution for the stated reason. | Same handling as the CamelCase admission form of the condition — the difference is only which layer caught it. |
+| `tick` | the `response` leaf, with `submission_status: "accepted"` | A non-integer `price` exceeded the market's `max_price_sig_figs`. The transaction landed; the order never entered the book. | Snap the price to the market's `price_decimals` / `max_price_sig_figs` before signing. The [Python SDK](python-sdk/README.md) checks this locally (`LocalValidationError`) and never sends it; see [Decimals & units](decimals-units.md#valid-invalid-examples). |
+| `insufficientspotbalance` / `mintradespotntl` / `lotsize` / `missingorder` | the `response` leaf, with `submission_status: "accepted"` | The order failed at execution for the stated reason. | Same handling as the CamelCase admission form of the condition — the difference is only which layer caught it. |
 | `BadNonce` / `BadSignature` / `ExpiredTx` / `MalformedTx` / `InvalidBatchLength` / `FeatureDisabled` | top-level `error.code`, with `submission_status: "rejected"` | The transaction envelope itself was invalid, so nothing executed. | Re-sign correctly and submit a fresh action. |
 
 ## Full /trade error-code reference

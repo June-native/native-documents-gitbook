@@ -111,7 +111,13 @@ Response envelope:
 
 On `accepted` the reply includes a fourth field, `response`, holding the actual per-order outcome. **You do not need an `/info` round trip to learn whether an order rested or filled.**
 
-`response.type` is the action type (`order`, `cancel`, `cancelAll`, `modify`, `batch`, or `default` for a non-order action). A single-result action carries one `status`; a multi-result action (`batch`, `cancelAll`) carries `statuses[]` in item order. Each leaf is one of four shapes, keyed by its single field:
+`response.type` is the action type (`order`, `cancel`, `cancelAll`, `modify`, `batch`, or `default` for a non-order action). Where the outcome sits depends on the action:
+
+* `order`, `cancel`, `modify` — one `status`, holding one leaf.
+* `cancelAll` — `statuses[]`, one leaf per cancelled order. An empty array cancelled nothing and is still a success.
+* `batch` — `statuses[]`, one **full sub-response** per item, in item order. Each element repeats the same `{"type", …}` shape, so a batch leaf sits one level deeper, at `statuses[i].status`. See [batch](#batch).
+
+Each leaf is one of four shapes, keyed by its single field:
 
 | Leaf | Meaning |
 | --- | --- |
@@ -341,6 +347,48 @@ Batch constraints:
 * `items` must contain `1..=10` items.
 * Items execute in array order.
 * The batch has one envelope nonce. Individual items may succeed or fail inside the batch execution result.
+
+#### Reading a batch response
+
+`statuses[]` answers the request item for item. Each element is a **full sub-response**, not a bare leaf, so the outcome you want is at `statuses[i].status`:
+
+```json
+{
+  "submission_status": "accepted",
+  "tx_hash": "0x...",
+  "response": {
+    "type": "batch",
+    "statuses": [
+      {
+        "type": "order",
+        "status": {
+          "open": { "oid": 1964626153570560, "cloid": "0x4e5e6ffddbed6ed66c3d02cab8a4cac6" }
+        }
+      },
+      {
+        "type": "order",
+        "status": { "error": "insufficientspotbalance" }
+      }
+    ]
+  }
+}
+```
+
+The first item rested; the second never entered the book. `submission_status` stays `accepted` for both, because it describes the envelope and not the items.
+
+A failure leaf carries only `error` — no `oid`, no `cloid`. Array position is your only link back to the item you sent, so keep your own `items` array to match against.
+
+A `cancelAll` item is itself multi-result, so it nests one level further, with bare leaves under its own `statuses[]`:
+
+```json
+{
+  "type": "cancelAll",
+  "statuses": [
+    { "cancelled": { "oid": 1964626153571328 } },
+    { "cancelled": { "oid": 1949585043882752 } }
+  ]
+}
+```
 
 ### withdraw
 
