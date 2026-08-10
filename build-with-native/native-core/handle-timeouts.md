@@ -17,7 +17,7 @@ description: What to do with each /trade outcome — when to resend, when to rec
 | `timeout` | The outcome was not observed in the 3-second budget, or the submission could not be routed. | Depends on the code — see [below](#reconciling-a-timeout). |
 
 {% hint style="warning" %}
-**`accepted` is not success.** An order that failed at execution — insufficient balance, below minimum notional, off the tick grid — still returns `accepted` with **no** top-level `error`; the code appears only as `response.status.error`. A client that branches on `submission_status` alone records a rejected order as live and will keep quoting against a position it never had.
+**`accepted` is not success.** An order that failed at execution — insufficient balance, below minimum notional, off the tick grid — still returns `accepted` with **no** top-level `error`; the code appears only inside `response`, at `response.status.error` for a single order. A client that branches on `submission_status` alone records a rejected order as live and will keep quoting against a position it never had.
 {% endhint %}
 
 ```json
@@ -62,7 +62,7 @@ This is why every order should carry a `cloid` — it is your only handle for re
 
 ## Batches
 
-A [`batch`](post-trade.md#batch) is one envelope with **one** `submission_status`, but its `response.statuses[]` carries one leaf per item, in item order — so an accepted batch already tells you which items rested, filled, or failed. Reconcile per item by `cloid` via [`orderStatus`](post-info.md#orderstatus) only when the envelope came back `timeout`.
+A [`batch`](post-trade.md#batch) is one envelope with **one** `submission_status`, but its `response.statuses[]` carries one sub-response per item, in item order — so an accepted batch already tells you which items rested, filled, or failed. Read each item's outcome at `statuses[i].status`, one level below where a `cancelAll` leaf sits. Reconcile per item by `cloid` via [`orderStatus`](post-info.md#orderstatus) only when the envelope came back `timeout`.
 
 ## Next steps
 
