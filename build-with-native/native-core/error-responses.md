@@ -80,7 +80,7 @@ An admitted action still runs against the book and **can fail at execution**. Be
 
 * **Order-ish actions** (`order`, `cancel`, `cancelAll`, `modify`, `batch`) stay `submission_status: "accepted"` with **no** top-level `error`. The code appears only as a leaf inside the [`response` envelope](post-trade.md#what-accepted-carries), as `{"error":"<code>"}`. How deep that leaf sits follows the action: `response.status.error` for an `order`, `cancel`, or `modify`; `response.statuses[i].error` for a `cancelAll`; `response.statuses[i].status.error` for a [`batch`](post-trade.md#batch) item. This covers `insufficientspotbalance`, `mintradespotntl`, `tick`, `lotsize`, `missingorder`, and the rest.
 * **Non-order actions** (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`) do map an execution failure to `submission_status: "rejected"` with a top-level `error.code`.
-* **Six envelope-level failures** demote any action to `rejected` because they invalidate the transaction itself: `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `invalidbatchlength`, `featuredisabled`. These surface in their CamelCase display form — `BadNonce`, `BadSignature`, and so on.
+* **Five envelope-level failures** demote any action to `rejected` because they invalidate the transaction itself: `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `featuredisabled`. These surface in their CamelCase display form — `BadNonce`, `BadSignature`, and so on.
 
 {% hint style="warning" %}
 `error.code` at the top level is never a lowercase execution code for an order. If you are matching on `error.code == "tick"`, you will never hit it — look in the `response` leaf instead.
@@ -90,7 +90,7 @@ An admitted action still runs against the book and **can fail at execution**. Be
 | --- | --- | --- | --- |
 | `tick` | the `response` leaf, with `submission_status: "accepted"` | A non-integer `price` exceeded the market's `max_price_sig_figs`. The transaction landed; the order never entered the book. | Snap the price to the market's `price_decimals` / `max_price_sig_figs` before signing. The [Python SDK](python-sdk/README.md) checks this locally (`LocalValidationError`) and never sends it; see [Decimals & units](decimals-units.md#valid-invalid-examples). |
 | `insufficientspotbalance` / `mintradespotntl` / `lotsize` / `missingorder` | the `response` leaf, with `submission_status: "accepted"` | The order failed at execution for the stated reason. | Same handling as the CamelCase admission form of the condition — the difference is only which layer caught it. |
-| `BadNonce` / `BadSignature` / `ExpiredTx` / `MalformedTx` / `InvalidBatchLength` / `FeatureDisabled` | top-level `error.code`, with `submission_status: "rejected"` | The transaction envelope itself was invalid, so nothing executed. | Re-sign correctly and submit a fresh action. |
+| `BadNonce` / `BadSignature` / `ExpiredTx` / `MalformedTx` / `FeatureDisabled` | top-level `error.code`, with `submission_status: "rejected"` | The transaction envelope itself was invalid, so nothing executed. | Re-sign correctly and submit a fresh action. |
 
 ## Full /trade error-code reference
 
