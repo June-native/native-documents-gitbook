@@ -1,4 +1,4 @@
-# Native Pool
+# Earn with Native Pool
 
 Native Pool is an earn product on Native Core: deposit supported assets to earn yield, and withdraw them when you need to. To deposit, use your balance from Native Core. Or, use direct EVM deposit if you are a new user or wish to deposit directly from EVM.
 
