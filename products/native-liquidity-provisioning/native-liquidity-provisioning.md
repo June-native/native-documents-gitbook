@@ -3,7 +3,7 @@
 ### Performance & Advantages
 
 * **Optimized Pricing:** Market makers quote based on mint/redeem values and real-time market data, ensuring executable, market-responsive prices.
-* **Instant Settlement:** Liquidity for swaps is drawn from the Native Credit Pool, which acts as the market maker’s inventory. LPs supply single-sided assets permissionlessly and earn yields.
+* **Efficient Settlement:** Native's settlement and margin infrastructure supports market maker inventory and reliable swap execution.
 * **Continuous Liquidity:** Market makers periodically rebalance the pool, such as redeeming stETH for ETH or trading on secondary markets, to maintain readiness for future swaps.
 * **Easy Access:** Native’s pricing and liquidity are available directly through its Swap Engine API and integrated across major aggregators and gateways.
 
@@ -35,7 +35,6 @@ StakeStone, the issuer of STONEUSD, has partnered with Native to deliver optimal
 
 **Lower Cost for Supplying Liquidity**
 
-* For asset issuers, establishing secondary market liquidity is essential. Native reduces this cost, as liquid assets supplied to its credit pool earn rewards at the same time. In contrast, AMM pools for yield-bearing assets often generate lower returns due to less prominent trading activity, making liquidity provision comparatively more expensive.
-* Check [Yield dashboard](https://defillama.com/yields?project=Native+Credit+Pool\&chain=Ethereum) on Native
+* For asset issuers, establishing secondary market liquidity is essential. Native's capital-efficient market infrastructure can lower the cost of supporting secondary liquidity compared with traditional AMM approaches.
 
 <figure><img src="../../.gitbook/assets/Working Collection (19).png" alt=""><figcaption></figcaption></figure>

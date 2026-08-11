@@ -18,7 +18,7 @@ Get an institutional-grade experience with fully on-chain visibility:
 Bootstrap real order-book liquidity and price discovery:
 
 * **Real CLOB listing:** List and bootstrap liquidity with a real central limit order book on Native Core.
-* **Capital-efficient provision:** Native Pool allows active capital utilization, lowering the cost of establishing deep liquidity.
+* **Capital-efficient provision:** Native's market infrastructure helps market makers use capital efficiently, supporting deeper liquidity at lower cost.
 * **Chain abstraction:** Unified, multi-chain liquidity with Native Relay.
 {% endtab %}
 

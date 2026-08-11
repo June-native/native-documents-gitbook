@@ -2,28 +2,18 @@
 hidden: true
 ---
 
-# Pool Rewards
+# Native Pool Yield
 
-Liquidity providers who deposited in Native Pool receive rewards as their asset is utilise by Native Relay for trade settlements.
+Native Pool distributes yield to eligible earning balances on Native Core.
 
-### Where is the reward coming from?
+### Where does yield come from?
 
-Native Pool LP rewards are generated from Native Relay trading fee on Native Core when relying trades from swap aggregators, wallet, and other trading venues.
+Yield is funded by demand for capital on Native Core, including market maker utilization and trading fees generated through Native Relay.
 
-Reference the fee documents for the Native Core fee rates:
+Yield is variable and is not a direct rebate of a specific trade or fee. The app displays the current yield information for each supported asset.
 
-{% content-ref url="swap-fees.md" %}
-[swap-fees.md](swap-fees.md)
-{% endcontent-ref %}
+### How is yield allocated?
 
-Note that some markets on Native Core may have special fee rates applied. Fee rate can be viewed from each of the "Market" page: [http://app.native.org/markets/](http://app.native.org/markets/)
+Native distributes variable yield to eligible earning balances. Each distribution is allocated pro rata to eligible balances for the relevant asset.
 
-<figure><img src="../.gitbook/assets/image (79).png" alt=""><figcaption></figcaption></figure>
-
-### How rewards are calculated?
-
-`reward = bid side volume * taker fee rate * rebate ratio`&#x20;
-
-Rewards are calculated and distributed every 24 hours. Based on the token bid side volume from the last 24 hours window.
-
-Bid side volume: trades that takers are swapping **to** to the token. For example, if the token is WETH, its volume is calculated by the trades that are swapping from another token **to** WETH.
+Balances in a pending scheduled withdrawal are not eligible for yield until they are returned to the earn balance.

@@ -5,7 +5,7 @@ description: wNLP – Native's LP Token
 # wNLP
 
 {% hint style="info" %}
-wNLP is used for powering Native's Earn Program for users to supply single-sided LP directly on public networks.
+wNLP is a legacy LP token used for users who supplied single-sided liquidity directly on public networks.
 {% endhint %}
 
 #### wNLP is:

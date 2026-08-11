@@ -1,27 +1,29 @@
 ---
-description: Hosts Assets and Enforces Settlement
+description: Earn yield on supported assets with Native Pool
 ---
 
 # Native Pool
 
-Native Pool hosts LP assets and enforces settlement across various chains.
+Native Pool is Native Core's earn product. Deposit supported assets to earn yield, and withdraw them whenever you choose.
 
-It gives users a single, unified entry point to start earning trading fees or LPing with Native Core:
+To start earning, you can:
 
-* **Loan Based:** the pool model is designed so liquidity providers bear no market risk while their capital is actively utilized.
-* **Single Token LP:** with a single-sided LP model, liquidity providers are no longer constrained by pair-based deposits or exposed to impermanent loss.
+* Deposit supported assets from an EVM network directly into Native Pool.
+* Deposit into Native Core first, then move your available Core balance into Native Pool.
 
-#### Use case
+Yield is funded by demand for capital on Native Core, including market maker utilisation and trading fees generated through Native Relay. It is distributed to eligible earning balances on a daily basis.
 
-Native Pool is currently powering:
+### Withdrawing from Native Pool
 
-* "Native Earn Program" - flexible and fixed term, single token Earn product.
-* "Native Liquidity Provisioning" - versatile LP model for asset issuers to bootstrap liquidity.
+You can choose the withdrawal option that suits your needs:
 
-{% content-ref url="../products/native-earn/" %}
-[native-earn](../products/native-earn/)
-{% endcontent-ref %}
+* **Scheduled withdrawal:** request a withdrawal and claim it once the displayed pending period ends.
+* **Instant withdrawal:** withdraw immediately, subject to the fee and availability shown in the app.
 
-{% content-ref url="../products/native-liquidity-provisioning/native-liquidity-provisioning.md" %}
-[native-liquidity-provisioning.md](../products/native-liquidity-provisioning/native-liquidity-provisioning.md)
+Assets in a pending scheduled withdrawal no longer earn yield. You can review the current terms, supported assets, and status for each position in the Native app.
+
+### Learn more
+
+{% content-ref url="../products/native-earn/README.md" %}
+[native-pool](../products/native-earn/README.md)
 {% endcontent-ref %}

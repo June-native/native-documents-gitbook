@@ -16,7 +16,7 @@ noIndex: true
 
 ### Settlement
 
-Settlement covers the full round trip between the EVM vault ([Native Pool](../modules/native-pool.md)) and Native Core for both the integrator (Relay) side and the MM side — moving balances between margin, cash, and on-chain settlement as positions are closed and repaid.
+Settlement covers the full round trip between EVM deposit and withdrawal infrastructure and Native Core for both the integrator (Relay) side and the MM side — moving balances between margin, cash, and on-chain settlement as positions are closed and repaid.
 
 ### Funding Rate
 
