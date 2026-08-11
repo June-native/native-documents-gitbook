@@ -1,17 +1,17 @@
 # Native Pool
 
-Native Pool lets you earn yield on supported assets through a dedicated balance on Native Core. Deposit assets into Native Core and move them into Native Pool, or use the direct deposit path in the app to start earning.
+Native Pool is an earn product on Native Core: deposit supported assets to earn yield, and withdraw them when you need to. To deposit, use your balance from Native Core. Or, use direct EVM deposit if you are a new user or wish to deposit directly from EVM.
 
-Your earning balance remains denominated in the asset you deposit. Native Pool is designed for users who want to retain assets that are actively used for trading liquidity without managing an LP position or a pair.
+Native Pool is designed for users who want to earn on assets that are actively used for trading liquidity but without the need for actively managing a position or perform complex liquidity provisions.
 
 ### How yield works
 
 Yield is supported by demand for capital on Native Core:
 
-* **Market maker utilization:** verified market makers use capital to support margin trading and settlement.
-* **Trading activity:** Native Relay trading fees contribute to the product's yield.
+* **Market maker utilisation:** verified market makers utilise the capital to support trading and settlement on Native Core, generating funding fees.
+* **Native Relay volume:** Native Relay utilises the capital to execute atomic trades on EVM networks, generating trading fees.
 
-Native distributes yield daily. The amount you receive is based on your eligible earn balance for each asset at the daily snapshot. The app shows the current yield information and asset-specific terms.
+Native distributes yield to eligible earning balances. The amount you receive is based on your eligible balance for each asset when a distribution is made. The app shows current yield information and asset-specific terms.
 
 ### Deposit and start earning
 
@@ -33,7 +33,7 @@ An amount in a scheduled withdrawal stops earning yield. Before it becomes claim
 
 ### Existing positions
 
-If you have a legacy position, use the Legacy entry in the app to review it. Eligible positions can be migrated into Native Pool. New deposits are made through the Native Pool experience.
+If you have a legacy position, use the Legacy entry in the app to review it. Eligible positions can be migrated into Native Pool, one-time account activation fees may apply.
 
 ### Important considerations
 

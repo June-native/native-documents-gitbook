@@ -14,6 +14,6 @@ Yield is variable and is not a direct rebate of a specific trade or fee. The app
 
 ### How is yield allocated?
 
-Native distributes yield daily. Each distribution is allocated pro rata to eligible earn balances for the relevant asset at the daily snapshot.
+Native distributes variable yield to eligible earning balances. Each distribution is allocated pro rata to eligible balances for the relevant asset.
 
 Balances in a pending scheduled withdrawal are not eligible for yield until they are returned to the earn balance.
