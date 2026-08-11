@@ -1,8 +1,8 @@
-# Native Earn FAQ
+# Native Pool FAQ
 
-#### What is Native Core Earn?
+#### What is Native Pool?
 
-Native Core Earn is Native's earn experience. It uses Native Pool, a dedicated balance on Native Core, to hold supported assets that are eligible to receive yield.
+Native Pool is a dedicated balance on Native Core that holds supported assets eligible to receive yield.
 
 #### How do I start earning?
 
@@ -26,7 +26,7 @@ Yes. An instant withdrawal is available subject to the fee and availability show
 
 #### What happened to Fixed-Term and Flexible Earn?
 
-New deposits use Native Core Earn. If you have a legacy position, use the Legacy entry in the app to review it and, where available, migrate it to Native Core Earn.
+New deposits use Native Pool. If you have a legacy position, use the Legacy entry in the app to review it and, where available, migrate it to Native Pool.
 
 #### What are the risks?
 

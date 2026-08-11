@@ -1,5 +1,5 @@
 ---
-description: Earn yield on supported assets in Native Core
+description: Earn yield on supported assets with Native Pool
 ---
 
 # Native Pool
@@ -25,5 +25,5 @@ Assets in a pending scheduled withdrawal no longer earn yield. You can review th
 ### Learn more
 
 {% content-ref url="../products/native-earn/README.md" %}
-[native-earn](../products/native-earn/README.md)
+[native-pool](../products/native-earn/README.md)
 {% endcontent-ref %}
