@@ -37,7 +37,7 @@
 * [Native Liquidity Provisioning](products/native-liquidity-provisioning/README.md)
   * [Tokenized Stocks & Equities (RWAs)](products/native-liquidity-provisioning/tokenized-stocks-and-equities-rwas.md)
   * [Yield-Bearing Assets](products/native-liquidity-provisioning/native-liquidity-provisioning.md)
-* [Native Pool](products/native-earn/README.md)
+* [Native Pool Yield](products/native-earn/README.md)
   * [Native Pool FAQ](products/native-earn/native-earn-faq.md)
 
 ## USER GUIDE
