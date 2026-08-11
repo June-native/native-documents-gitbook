@@ -1,47 +1,40 @@
-# Native Earn Program
+# Native Core Earn
 
-Native Pool enables liquidity providers to earn steady yields through single-sided liquidity provisioning.&#x20;
+Native Core Earn lets you earn yield on supported assets through Native Pool, a dedicated balance on Native Core. Deposit assets into Native Core and move them into Native Pool, or use the direct deposit path in the app to start earning.
 
-Within Native's system, there are two primary avenues for earning rewards:&#x20;
+Your earning balance remains denominated in the asset you deposit. Native Pool is designed for users who want to retain assets that are actively used for trading liquidity without managing an LP position or a pair.
 
-* Flexible Earn
-* Fixed-Term Earn&#x20;
+### How yield works
 
-All powered by Native Pool.&#x20;
+Yield is supported by demand for capital on Native Core:
 
-Native offers LPs a permissionless way to tap into best-in-class yield opportunities in single-sided liquidity provision on-chain, without the need to actively manage positions.
+* **Market maker utilization:** verified market makers use capital to support margin trading and settlement.
+* **Trading activity:** Native Relay trading fees contribute to the product's yield.
 
-### Fixed-Term Earn Product
+Native distributes yield daily. The amount you receive is based on your eligible earn balance for each asset at the daily snapshot. The app shows the current yield information and asset-specific terms.
 
-The Fixed-Term Earn product distributes a fixed annual percentage yield (Fixed APY) over a specified period (from \[Start Time] to \[End Time]). An LP’s liquidity will be contributed to the Native Credit Pool and will receive a predetermined APY for the term, regardless of the actual fluctuating yield in the pool. This provides an optimal experience for users seeking yield certainty.
+### Deposit and start earning
 
-#### How the Fixed-Term Earn Product Works
+You can start earning in either of these ways:
 
-During the open deposit period, users can supply liquidity in major base tokens, for example, single-asset USDT or USDC, into the Native Fixed-Term Earn Product. User-supplied funds flow into the Native Credit Pool, where the liquidity engages in trading activities.
+1. Deposit a supported asset from an EVM network directly into Native Pool.
+2. Deposit into Native Core, then transfer an available Core balance into Native Pool.
 
-From the Start Time to the End Time, liquidity providers earn the fixed APY, independent of the actual flexible yield rate generated in the Credit Pool. Upon successful deposit, users continue to receive the same fixed rate until the product’s maturity.
+Once the transfer into Native Pool is complete, the balance is eligible for subsequent yield distributions. Minimum deposit requirements and any first-time account-activation fee are displayed before you confirm a deposit.
 
-<figure><img src="../../.gitbook/assets/fixtermearninvest.png" alt=""><figcaption></figcaption></figure>
+### Withdraw your assets
 
-When the Fixed-Term Earn product matures (reaching the End Time), users can withdraw their principal plus the fixed rewards accrued over the entire deposit period. (For example, an LP who deposits 1,000 USDT at the beginning of a 1-year term with a 10% APY will receive 100 USDT in rewards)
+Native Core Earn offers two withdrawal options:
 
-Additionally, Native features an auto-rollover mechanism that allows matured but unwithdrawn funds to remain in the Credit Pool, continuing to generate yield and remaining ready for user withdrawal at any time.
+* **Scheduled withdrawal:** move an amount from your earn balance into a pending withdrawal. Claim it after the pending period shown in the app.
+* **Instant withdrawal:** receive the available amount immediately, less the fee shown before confirmation.
 
-<figure><img src="../../.gitbook/assets/fixtermearnwithdrawl (1).png" alt=""><figcaption></figcaption></figure>
+An amount in a scheduled withdrawal stops earning yield. Before it becomes claimable, you can cancel a pending request to return the amount to your earn balance. Only one scheduled withdrawal can be pending at a time.
 
-### Flexible Earn Product
+### Existing Native Earn positions
 
-By supplying single-asset liquidity directly to the Native Credit Pool, LPs can also earn ongoing yields at a variable rate. This liquidity and the corresponding rewards can be withdrawn with a high degree of flexibility.
+If you have a legacy Native Earn position, use the Legacy entry in the app to review it. Eligible legacy positions can be migrated into Native Core Earn. New deposits are made through the Native Core Earn experience.
 
-When a user supplies an asset (e.g., USDT, USDC) into the Native Credit Pool, corresponding NLP tokens (e.g., nUSDT, nUSDC) are minted and credited to them. NLP tokens represent share tokens of the Native Credit Pool. Their value increases continuously, and rewards are distributed to users through periodic rebalancing.
+### Important considerations
 
-For example, assume initially that 1 nUSDT = 1 USDT, and a user mints 100 nUSDT with 100 USDT. After some time, as rewards accumulate, 1 nUSDT becomes redeemable for 1.1 USDT. The user’s 100 nUSDT would then be worth 110 USDT, representing a reward accumulation of 10 USDT.
-
-<figure><img src="../../.gitbook/assets/flexibleearninvest.png" alt=""><figcaption></figcaption></figure>
-
-Users realize their yields by burning NLP tokens to redeem their capital. Two withdrawal options are available: instant and scheduled.
-
-* Users can withdraw their funds and rewards immediately at a 1% discount.
-* Alternatively, they can schedule a withdrawal, which is processed within T+3 without any discount applied.
-
-<figure><img src="../../.gitbook/assets/flexibleearnwithdrawl.png" alt=""><figcaption></figcaption></figure>
+Yield is variable and depends on product activity. The availability, terms, and fees for each supported asset may change. Review the app carefully before you deposit or withdraw.

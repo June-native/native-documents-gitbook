@@ -1,6 +1,6 @@
 # Native Liquidity Provisioning
 
-Native provides the infrastructure for asset issuers to bootstrap and scale on-chain trading and liquidation liquidity. By supplying assets to the Native Credit Pool, issuers can effectively improve market depth, execution quality, and distribution for their assets.
+Native provides the infrastructure for asset issuers to bootstrap and scale on-chain trading and liquidation liquidity. Native's orderbook, RFQ, settlement, and margin infrastructure help issuers improve market depth, execution quality, and distribution for their assets.
 
 
 

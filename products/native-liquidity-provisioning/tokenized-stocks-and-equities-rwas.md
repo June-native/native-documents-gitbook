@@ -31,12 +31,9 @@ Native has supported bStocks since day one, delivering 24/7 liquidity, deep mark
 
 
 
-**Yield for bStocks with no impermanent loss**
+**Capital-efficient liquidity for bStocks**
 
-* Native offers 5-10% APY on bStocks deposits through Native Credit Pool. Unlike traditional AMM LPs, depositors earn trading yields without impermanent loss or the burden of active management. At the same time, liquidity deposited into the Credit Pool further deepens bStocks trading liquidity, creating a self-reinforcing flywheel.&#x20;
-* Explore more: [https://app.native.org/pool?action=deposit\&token=SPCXB\&chain=bsc](https://app.native.org/pool?action=deposit\&token=SPCXB\&chain=bsc)
-
-<figure><img src="../../../.gitbook/assets/image (81).png" alt=""><figcaption></figcaption></figure>
+* Native's CLOB and PMM infrastructure supports deep, capital-efficient bStocks markets without relying on a traditional AMM liquidity pair. This helps market makers quote competitively while users access liquidity through their preferred trading interface.
 
 
 

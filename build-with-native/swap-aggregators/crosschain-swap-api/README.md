@@ -7,7 +7,7 @@ noIndex: true
 
 ## Overview
 
-The Native Relay Bridge API enables seamless cross-chain token bridging and swapping across multiple blockchain networks, utilising the same reliable Native Core and Native Pool for superb pricing and performance.
+The Native Relay Bridge API enables seamless cross-chain token bridging and swapping across multiple blockchain networks, using Native Core for pricing and settlement.
 
 ## Endpoints
 

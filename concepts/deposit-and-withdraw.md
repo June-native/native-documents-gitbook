@@ -5,17 +5,18 @@ noIndex: true
 
 # Deposit & Withdraw
 
-**Deposit & Withdraw** is the pipeline that helps users start trading directly on Native Core. It is enforced by Native Pool vault contracts together with an independent accounting service.
+**Deposit & Withdraw** is the pipeline that helps users fund and withdraw assets on Native Core. A deposit can fund an available Core balance for trading or, when selected in the app, start earning in Native Pool.
 
 ### Key Components
 
-* **Vault contract (Public Networks):** accepts user deposits, locks assets in the vault, and releases them on withdrawal.
+* **Vault contract (Public Networks):** accepts user deposits, transfers them into Native Core, and releases assets on withdrawal.
 * **Accounting service:** an independent, multi-node, distributed service to help process deposits and withdrawals.
 
 ### Deposit and Withdraw Flow
 
 1. The user deposits on a source chain.
 2. The accounting service credits the user on Native Core.
+3. The user can move an available Core balance into Native Pool to start earning.
 
 ### Withdrawal Flow
 
@@ -30,5 +31,5 @@ To prevent dusting attacks, the system limits total addresses, tokens, and marke
 
 ### Related
 
-* [Native Pool](../modules/native-pool.md)
+* [Native Pool / Core Earn](../modules/native-pool.md)
 * [Unified Balance](unified-balance.md)
