@@ -34,11 +34,15 @@
 
 ## Products
 
-* [Native Liquidity Provisioning](products/native-liquidity-provisioning/README.md)
-  * [Tokenized Stocks & Equities (RWAs)](products/native-liquidity-provisioning/tokenized-stocks-and-equities-rwas.md)
-  * [Yield-Bearing Assets](products/native-liquidity-provisioning/native-liquidity-provisioning.md)
-* [Native Pool Yield](products/native-earn/README.md)
-  * [Native Pool FAQ](products/native-earn/native-earn-faq.md)
+***
+
+* [Native Liquidity Provisioning](native-liquidity-provisioning/README.md)
+  * [Tokenized Stocks & Equities (RWAs)](native-liquidity-provisioning/tokenized-stocks-and-equities-rwas.md)
+  * [Yield-Bearing Assets](native-liquidity-provisioning/native-liquidity-provisioning.md)
+* [Native Pool Yield](native-earn/README.md)
+  * [Native Pool FAQ](native-earn/native-earn-faq.md)
+* [User Guides for Products](user-guides-for-products/README.md)
+  * [Deposit & Withdrawal on Native Core](user-guides-for-products/deposit-and-withdrawal-on-native-core.md)
 
 ## USER GUIDE
 
