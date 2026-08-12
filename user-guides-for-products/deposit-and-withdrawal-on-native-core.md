@@ -100,10 +100,6 @@ Please note:
 * The minimum withdrawal amount varies by asset. Please refer to the withdrawal interface for the applicable minimum.
 {% endhint %}
 
-{% hint style="info" %}
-The minimum withdrawal amount varies by asset. Please refer to the withdrawal interface for the applicable minimum.
-{% endhint %}
-
 ### Step 3: Wait for Processing
 
 At this stage, withdrawal requests may be processed instantly or within **T+1**, depending on the withdrawal amount and available liquidity. You can track the status of your request in the **Account History** tab below.
