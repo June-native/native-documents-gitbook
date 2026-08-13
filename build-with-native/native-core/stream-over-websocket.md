@@ -79,7 +79,7 @@ Assume the connection will drop. On reconnect, resubscribe and take the first sn
 Only `trades` and `orderUpdates` can leave a hole, because they are pure increments. Fill it from `POST /info`: [`userFills`](post-info.md#userfills) takes a `from_height` / `to_height` range within the recent query window, and [`orderStatus`](post-info.md#orderstatus) settles the fate of any single order by `oid` or `cloid`.
 
 {% hint style="info" %}
-Deduplicate fills on `tid` — a snapshot fill and the live frame for the same trade carry the same value.
+Deduplicate fills on `tid`. The snapshot, the live frame, and `POST /info` all report one value for a trade. Parse it as a `BigInt`, not a JS `Number`.
 {% endhint %}
 
 ## Trade on the same socket
