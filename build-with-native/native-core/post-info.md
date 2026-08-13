@@ -579,9 +579,9 @@ Pass `market_id: -1` (as the number `-1` or the string `"-1"`) to get the owner'
 }
 ```
 
-`time` is the block timestamp of the fill, in milliseconds. `side` is the **querying owner's own** direction — `B` bought, `A` sold. It reads `null` when the taker order has already aged out of the recent window; the direction is never guessed.
+`time` is the fill's block timestamp in milliseconds. `side` is the **querying owner's own** direction (`B` bought, `A` sold), and is `null` once the taker order has aged out of the window.
 
-`tid` is the unique id of the trade. The WebSocket [`trades`](websocket.md#trades) and [`userFills`](websocket.md#userfills) frames carry the same value for it, so a backfill merges into a live stream on `tid` alone, with no double counting and no matching on price and time. Read it as a 64-bit integer: it runs past the 53 bits of integer precision a JSON number carries, so a JavaScript `Number` rounds it silently and collapses fills that are genuinely distinct.
+`tid` is the unique id of the trade. The WebSocket [`trades`](websocket.md#trades) and [`userFills`](websocket.md#userfills) frames report the same value, so a backfill merges into a live stream on it. It exceeds JavaScript's safe integer range: parse it as a `BigInt` or a string.
 
 Each fill reports only the **querying owner's side** fee (chosen by `role`). `fee_asset_id` is the asset the fee was charged in (the asset that side received: base for a bid, quote for an ask), `fee` is the decimal amount formatted with that asset's `balance_decimals`, and `fee_mode` is `"balance"` or `"credit"`. (Internally — in canonical events and the query model — the fee `amount` is a raw atom; only this public JSON `fee` is the formatted decimal string.) Trading fees activate at a network-specific height defined by the code protocol-rules schedule. There are two distinct null cases:
 

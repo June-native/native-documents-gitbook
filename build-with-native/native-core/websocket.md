@@ -107,11 +107,11 @@ One frame per matched trade. `data` is an array.
 | --- | --- |
 | `side` | Aggressor direction — `B` the taker bought, `A` the taker sold |
 | `time` | Block timestamp, milliseconds |
-| `tid` | Unique id for this trade. The [`userFills`](#userfills) channel and [`POST /info userFills`](post-info.md#userfills) report the same value for it, so the three feeds join on `tid`. Read it as a 64-bit integer. |
+| `tid` | Unique id for this trade. [`userFills`](#userfills) and [`POST /info userFills`](post-info.md#userfills) report the same value, so the feeds join on it. |
 | `users` | `[buyer, seller]` |
 
 {% hint style="warning" %}
-**`tid` does not fit a JavaScript `Number`.** It runs past the 53 bits of integer precision a JSON number carries, so a plain `JSON.parse` in the browser silently rounds it. One taker order sweeping two price levels produces two trades in the same block whose ids differ by one — `277789649957552128` and `277789649957552129` — and JavaScript reads both as `277789649957552128`, so one of them vanishes from anything keyed on `tid`. Parse it as a `BigInt` or a string. Rust, Go, and Python read it as a native 64-bit integer and are unaffected.
+`tid` exceeds JavaScript's safe integer range. Parse it as a `BigInt` or a string. A plain `JSON.parse` rounds it, and two fills read back as one.
 {% endhint %}
 
 #### `l2Book`
@@ -216,7 +216,7 @@ Your fills, both sides of the book. The first packet after subscribing is a snap
 | `side` | **Your** direction — `B` you bought, `A` you sold |
 | `crossed` | `true` when you were the taker |
 | `fee` / `feeToken` | The fee charged on **your** side of this fill, and the asset it was charged in. A zero-rate fill reports `fee: "0"` **with** `feeToken` present — this is the common case on zero-fee markets. `feeToken` is omitted only when the fill carries no fee record at all. |
-| `tid` | The same trade id the [`trades`](#trades) channel and [`POST /info userFills`](post-info.md#userfills) report for this trade. Read it as a 64-bit integer, [never a JS `Number`](#trades). Both sides of a trade share it, so a connection carrying several accounts deduplicates on `(user, tid)`. |
+| `tid` | Same id as [`trades`](#trades) and [`POST /info userFills`](post-info.md#userfills). Both sides of a trade share it, so a multi-account connection dedups on `(user, tid)`. |
 
 A snapshot fill is built exactly like the live frame for the same trade — same `tid` — so you can deduplicate cleanly across the snapshot-to-stream boundary after a reconnect. The snapshot lists fills oldest-first.
 
