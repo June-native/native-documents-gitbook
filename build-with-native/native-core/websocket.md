@@ -107,12 +107,8 @@ One frame per matched trade. `data` is an array.
 | --- | --- |
 | `side` | Aggressor direction — `B` the taker bought, `A` the taker sold |
 | `time` | Block timestamp, milliseconds |
-| `tid` | Unique id for this trade. [`userFills`](#userfills) and [`POST /info userFills`](post-info.md#userfills) report the same value, so the feeds join on it. |
+| `tid` | Unique id for this trade. [`userFills`](#userfills) and [`POST /info userFills`](post-info.md#userfills) report the same value, so the feeds join on it. Parse it as a `BigInt`, not a JS `Number`. |
 | `users` | `[buyer, seller]` |
-
-{% hint style="warning" %}
-`tid` exceeds JavaScript's safe integer range. Parse it as a `BigInt` or a string. A plain `JSON.parse` rounds it, and two fills read back as one.
-{% endhint %}
 
 #### `l2Book`
 

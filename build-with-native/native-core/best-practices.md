@@ -25,7 +25,6 @@ description: The core habits a live Native Core integration should follow.
 
 * **Send price and quantity as strings, never floats** — a binary float silently corrupts a price.
 * **Snap to the market's precision before signing.** Take `price_decimals` / `base_quantity_decimals` from [`markets`](post-info.md#markets) and the minimum from [`quoteAssets`](post-info.md#quoteassets).
-* **Parse a fill's `tid` as a `BigInt` or a string, never a JS `Number`.** It exceeds JavaScript's safe integer range, so `JSON.parse` folds two distinct fills into one id and the dedup below drops a real fill.
 
 ## Reads & rate limits
 
