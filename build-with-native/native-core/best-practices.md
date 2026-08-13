@@ -25,6 +25,7 @@ description: The core habits a live Native Core integration should follow.
 
 * **Send price and quantity as strings, never floats** — a binary float silently corrupts a price.
 * **Snap to the market's precision before signing.** Take `price_decimals` / `base_quantity_decimals` from [`markets`](post-info.md#markets) and the minimum from [`quoteAssets`](post-info.md#quoteassets).
+* **Never read a fill's `tid` as a JavaScript `Number`.** It runs past the 53 bits of integer precision a JSON number carries, so `JSON.parse` rounds it and two distinct fills collapse into one id — the dedup below then throws away a real fill. Parse it as a `BigInt` or a string. Rust, Go, and Python are unaffected.
 
 ## Reads & rate limits
 
@@ -38,7 +39,7 @@ description: The core habits a live Native Core integration should follow.
 * **`orderUpdates` is the event stream; `openOrders` is the reconciliation.** `openOrders` is a full replacement at most every five seconds, so driving state off it silently drops every transition in between. Track lifecycle on `orderUpdates` and use `openOrders` to catch drift.
 * **A partial fill arrives as `status: "open"`.** Compare `sz` (remaining) against `origSz` on every update — branching on `status` alone misses partials entirely.
 * **Never wait on the stream to confirm a submission.** `orderUpdates` carries only orders that reached the matching engine; a bad nonce or signature comes back on the `/trade` response and will never arrive as a frame.
-* **Deduplicate fills on `tid`.** After a reconnect the `userFills` snapshot overlaps the live stream by design. Resubscribe and rebuild from the snapshot packets rather than trying to patch the gap.
+* **Deduplicate fills on `tid`.** After a reconnect the `userFills` snapshot overlaps the live stream by design. Resubscribe and rebuild from the snapshot packets rather than trying to patch the gap. The same `tid` also identifies that fill in [`POST /info userFills`](post-info.md#userfills), so a backfill merges in on it. Both sides of a trade share a `tid` — key on `(user, tid)` if one connection carries several accounts.
 * **On a credit account, watch `pending_exposure`, not just `actual`.** It moves the moment an order rests or cancels, so it is your live risk ahead of settlement — see [`spotCreditState`](websocket.md#spotcreditstate).
 * **Don't share the `post` channel between market data and trading.** One `post` may be in flight per IP, and a synchronous `/trade` holds that slot for up to a block — a cheap `info` query queued behind it just gets a `429`.
 
