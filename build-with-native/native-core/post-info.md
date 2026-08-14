@@ -504,6 +504,8 @@ Pass `market_id: -1` (as the number `-1` or the string `"-1"`) to get the owner'
 
 `original_qty` is the submitted order quantity. For an order that partially fills and then rests on the book, `filled_qty` is nonzero and `remaining_qty` is the currently open quantity. `owner_index` is the protocol's internal account index for the owner; it also appears on the order objects returned by `orderStatus`.
 
+This listing is deliberately lean. To read back how an order was placed — its `tif` and `order_type` — query [`orderStatus`](#orderstatus) for that single `oid`.
+
 ### userAgents
 
 ```json
@@ -631,6 +633,8 @@ Open order response:
     "market_id": 0,
     "oid": 773094113280001,
     "cloid": "0x11111111111111111111111111111111",
+    "tif": "alo",
+    "order_type": "limit",
     "remaining_qty": "1"
   }
 }
@@ -648,6 +652,8 @@ Terminal order response:
     "market_id": 0,
     "oid": 773094113280001,
     "cloid": "0x11111111111111111111111111111111",
+    "tif": "gtc",
+    "order_type": "limit",
     "filled_qty": "1",
     "remaining_qty": "0",
     "is_resting": false,
@@ -656,6 +662,22 @@ Terminal order response:
   }
 }
 ```
+
+`tif` and `order_type` echo the [order action](post-trade.md#order) the order was submitted with, in the same spelling you sent: `tif` is `"gtc"`, `"ioc"`, `"fok"`, or `"alo"`, and `order_type` is `"limit"` or `"market"`. They are most useful on the failure statuses — `ioccancel`, `fokcancel`, and `badalopx` are each explained by the `tif` the order carried:
+
+```json
+{
+  "status": "ioccancel",
+  "oid": 773094113280002,
+  "tif": "ioc",
+  "order_type": "market",
+  "filled_qty": "0",
+  "remaining_qty": "1",
+  "is_resting": false
+}
+```
+
+The [`openOrders`](#openorders) listing does not carry either field — it is the bulk view, and a caller listing hundreds of its own resting orders already knows how it placed them.
 
 Not found:
 
