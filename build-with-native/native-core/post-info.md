@@ -677,8 +677,6 @@ Terminal order response:
 }
 ```
 
-An order still resting on the book always reports both, and its `order_type` is always `"limit"`: a market order is rejected outright with `gtc`/`alo`, and with `ioc`/`fok` it never rests. Both keys are always present but are declared nullable, so keep your client tolerant of `null` even though a record that reaches `orderStatus` normally carries the placement it was created from.
-
 The [`openOrders`](#openorders) listing does not carry either field — it is the bulk view, and a caller listing hundreds of its own resting orders already knows how it placed them.
 
 Not found:
