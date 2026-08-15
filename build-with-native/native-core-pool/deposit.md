@@ -167,15 +167,7 @@ curl -sS -X POST "https://api.native.org/trade" \
   }'
 ```
 
-{% hint style="warning" %}
-Three requirements have no field-level error to guide you:
-
-* **`cloid` is required.** Omitting it returns `missing_cloid`, and a wrong length returns `invalid_cloid`. Sign with `cloidPresent: true` so the typed data matches the action body.
-* **`auth_scheme: "eip712"` is required.** The binary signing scheme is rejected for `transfer` on every path.
-* **The action carries no unknown fields.** An extra key is a parse error, not a silently ignored one.
-
-A typed-data struct that does not match the definition above recovers a different signer, and the transfer fails as an unknown account rather than as a signature error.
-{% endhint %}
+A typed-data struct that does not match the definition above recovers a different signer, so a mistake there surfaces as an unknown account rather than as a signature error.
 
 The `transfer` action goes to Native Core's `/trade`, which returns the Native Core envelope rather than the Pool envelope. Branch on `submission_status` and treat `timeout` as unresolved rather than failed. See [POST /trade](../native-core/post-trade.md), [Transaction Signing](../native-core/transaction-signing.md), and [Handle outcomes & timeouts](../native-core/handle-timeouts.md).
 
@@ -219,7 +211,9 @@ Paging returns `next_before_id` whenever a page comes back exactly `limit` long,
 | Deposit mined, never appears                        | `actionFlag` was not `1`, so it credited the trading balance instead | Check the balance on Native Core; the funds are not lost      |
 | Deposit mined, never appears, `actionFlag` was `1`  | The amount or the activation fee broke a rule on the Native Core deposit page | See [What can go wrong](../deposit-withdraw/deposit.md#what-can-go-wrong) there |
 | `status: "rejected"`                                | The asset is not listed for the Pool, or has `deposit_enabled: false` | Read `config` before building the transaction                |
-| Transfer returns `missing_cloid`                    | `cloid` omitted from the action body                                 | Send a 16-byte `cloid` and sign with `cloidPresent: true`     |
+| Transfer returns `missing_cloid` or `invalid_cloid` | `cloid` omitted, or not 16 bytes                                     | Send a 16-byte `cloid` and sign with `cloidPresent: true`     |
+| Transfer rejected for its signing scheme            | The binary scheme was used; `transfer` accepts only `auth_scheme: "eip712"` | Sign the typed data above and post the 65-byte signature |
+| Transfer returns a parse error                      | The action carried a field not listed above                          | Send only `type`, `to`, `asset_id`, `amount` and `cloid`      |
 | Transfer accepted, no `direct_transfer` row         | The asset is not deposit-enabled for the Pool                        | Nothing will appear; report it with the Core transaction hash |
 | `code: 131004` `limit exceeds max 200`              | `limit` above the cap                                                | The request failed entirely; resend with `limit` at most 200  |
 

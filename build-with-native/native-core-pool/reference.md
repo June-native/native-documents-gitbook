@@ -39,7 +39,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" -H 'content-type: application/json' -d '{"t
 | `fee_wallet_address` | string  | Where instant-withdrawal fees are paid                               |
 | `snapshot_time_utc`  | string  | Daily snapshot time, `HH:MM:SS.mmm`                                  |
 | `withdrawal_paused`  | boolean | Blocks creating and claiming; cancelling is unaffected               |
-| `eip712_domain`      | object  | `name`, `version`, `verifyingContract`. Pass through unchanged, never add `chainId` |
+| `eip712_domain`      | object  | `name`, `version`, `verifyingContract`. Pass through unchanged        |
 | `assets`             | array   | One entry per asset the Pool supports                                |
 
 Each `assets[]` entry:

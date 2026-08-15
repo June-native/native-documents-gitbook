@@ -74,10 +74,6 @@ Amounts are 8-decimal atom strings, digits only. A zero-padded or signed value i
 
 The domain is the `eip712_domain` object from `config`, passed through unchanged.
 
-{% hint style="danger" %}
-**Do not add `chainId` to the domain.** Native Core is not an EVM chain, so a wallet cannot switch to it, and a domain carrying `chainId` makes the signature request impossible to complete.
-{% endhint %}
-
 ```ts
 const { eip712_domain: domain } = config
 
