@@ -272,7 +272,25 @@ Lifecycle transitions of your accepted orders. `data` is an array of the transit
 
 * `order.sz` is the **remaining** quantity and `origSz` the original, so a partial fill shows as `status: "open"` with a shrunken `sz`.
 * **A terminal transition carries no filled quantity.** The canceled order above reports `sz: "0"` against an `origSz` of `164.016` — that zero is the order leaving the book, not a claim that all of it traded. Read the traded amount from [`orderStatus`](post-info.md#orderstatus), which returns `filled_qty`.
-* `status` is `open`, `filled`, `canceled`, or `rejected` — the last covers an order refused at execution, such as a post-only order that would have crossed.
+* `status` names both the transition and, when an order died at execution, **why**:
+
+| `status` | meaning |
+| --- | --- |
+| `open` | resting — including partially filled, which shows as a shrunken `sz` |
+| `filled` | fully filled |
+| `canceled` | taken off the book: your `cancel`, a `modify`, or the unfilled remainder of a partial fill |
+| `selfTradeCanceled` | cancelled by self-trade prevention |
+| `badAloPxRejected` | post-only (ALO) order would have crossed the book |
+| `iocCancelRejected` | IOC order found no fill |
+| `fokCancelRejected` | FOK order could not be filled in full |
+| `marketOrderNoLiquidityRejected` | market order found no liquidity |
+| `rejected` | refused at execution, with no more specific code available |
+
+  Every value meaning "the order died without resting" ends in `Rejected`, so
+  **match the suffix, not the exact word** — `status.endsWith("Rejected")` is the
+  stable test, and stays correct as codes are added. Treating `rejected` as an
+  exact value will miss the specific ones; post-only crossings alone arrive as
+  `badAloPxRejected` and are the most common rejection by a wide margin.
 * **Submission failures never appear here.** A write that fails before execution — bad nonce, expired transaction, bad signature — is reported synchronously on the [`POST /trade`](post-trade.md) response. This channel carries only orders that reached the matching engine.
 
 #### `openOrders`
