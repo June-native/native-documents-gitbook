@@ -96,6 +96,10 @@ Every `*_unix_ms` field is a millisecond timestamp.
 
 Read the routing table at runtime. Operations list and delist assets and change limits, so treat every address, id, and limit below as a read rather than a constant.
 
+{% hint style="warning" %}
+Addresses, transaction hashes and signatures in the examples throughout this section are placeholders. Resolve every address from `config` or the registry at runtime; none of them can be copied into your code as a constant.
+{% endhint %}
+
 | What you need                                                     | Where it comes from                                            |
 | ----------------------------------------------------------------- | -------------------------------------------------------------- |
 | `asset_id`, `balance_decimals`, fees, withdrawal limits            | [`config`](reference.md#config)                                 |
@@ -116,14 +120,14 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
   "code": 0,
   "data": {
     "native_chain_id": 696969,
-    "vault_address": "0x4017d1520D734C8fa6dd0fDEba150C3E0fEA65Ea",
-    "fee_wallet_address": "0x546EC2c2f548F64AE3D21f1B408A8023D116fFa3",
+    "vault_address": "0x1111111111111111111111111111111111111111",
+    "fee_wallet_address": "0x2222222222222222222222222222222222222222",
     "snapshot_time_utc": "00:00:00.000",
     "withdrawal_paused": false,
     "eip712_domain": {
       "name": "Native Core Earn",
       "version": "1",
-      "verifyingContract": "0x4017d1520D734C8fa6dd0fDEba150C3E0fEA65Ea"
+      "verifyingContract": "0x1111111111111111111111111111111111111111"
     },
     "assets": [
       {

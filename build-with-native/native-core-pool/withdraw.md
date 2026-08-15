@@ -25,14 +25,14 @@ Read [Native Core Pool](README.md) first for the base URL, the response envelope
 ```bash
 curl -sS "$POOL_API_URL/api/v3/earn" \
   -H 'content-type: application/json' \
-  -d '{"type":"account","user_address":"0xbf381e…"}'
+  -d '{"type":"account","user_address":"0x5555555555555555555555555555555555555555"}'
 ```
 
 ```json
 {
   "code": 0,
   "data": {
-    "user_address": "0xbf381e…",
+    "user_address": "0x5555555555555555555555555555555555555555",
     "next_user_nonce": 3,
     "active_withdraw_operation_id": "",
     "active_withdrawal": null,
@@ -123,13 +123,13 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
   -H 'content-type: application/json' \
   -d '{
     "type": "createWithdrawal",
-    "user_address": "0xbf381e…",
+    "user_address": "0x5555555555555555555555555555555555555555",
     "user_nonce": 3,
     "withdraw_type": "scheduled",
     "asset_id": 2,
     "amount": "200000000",
     "deadline_unix_ms": 1786700000000,
-    "user_signature": "0xa1bc51d1…52e9a0561c"
+    "user_signature": "0xd4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d41b"
   }'
 ```
 
@@ -144,7 +144,7 @@ A successful response returns the created withdrawal record, in the shape descri
 ```bash
 curl -sS "$POOL_API_URL/api/v3/earn" \
   -H 'content-type: application/json' \
-  -d '{"type":"withdrawals","user_address":"0xbf381e…","limit":20}'
+  -d '{"type":"withdrawals","user_address":"0x5555555555555555555555555555555555555555","limit":20}'
 ```
 
 ```json
@@ -154,8 +154,8 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
     "items": [
       {
         "id": 3,
-        "operation_id": "withdraw:0xbf381e…:1",
-        "user_address": "0xbf381e…",
+        "operation_id": "withdraw:0x5555555555555555555555555555555555555555:1",
+        "user_address": "0x5555555555555555555555555555555555555555",
         "user_nonce": 1,
         "withdraw_type": "scheduled",
         "asset_id": 2,
@@ -167,7 +167,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
         "claimable_at_unix_ms": 1786607271588,
         "status": "claimed",
         "created_at_unix_ms": 1786607261588,
-        "core_tx_hash": "0xe838b87fa9b1bafabc6c6c39f0f5c0199d307e4cb86767c5e751f962d135f3fc",
+        "core_tx_hash": "0xb2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
         "claimed_at_unix_ms": 1786607281588,
         "cancelled_at_unix_ms": null,
         "completed_at_unix_ms": 1786607281588
@@ -265,8 +265,8 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
   -H 'content-type: application/json' \
   -d '{
     "type": "claimWithdrawal",
-    "user_address": "0xbf381e…",
-    "operation_id": "withdraw:0xbf381e…:1",
+    "user_address": "0x5555555555555555555555555555555555555555",
+    "operation_id": "withdraw:0x5555555555555555555555555555555555555555:1",
     "deadline_unix_ms": 1786700000000,
     "user_signature": "0x…"
   }'
@@ -300,8 +300,8 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
   -H 'content-type: application/json' \
   -d '{
     "type": "cancelWithdrawal",
-    "user_address": "0xbf381e…",
-    "operation_id": "withdraw:0xbf381e…:1",
+    "user_address": "0x5555555555555555555555555555555555555555",
+    "operation_id": "withdraw:0x5555555555555555555555555555555555555555:1",
     "deadline_unix_ms": 1786700000000,
     "user_signature": "0x…"
   }'

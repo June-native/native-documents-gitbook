@@ -45,12 +45,12 @@ curl -sS "$POOL_API_URL/api/v3/core/registry"
       {
         "chainKey": "ethereum",
         "evmChainId": 1,
-        "address": "0xc91807C59B354437eaE0dE32F153c06665cD2270",
+        "address": "0x3333333333333333333333333333333333333333",
         "enabled": true,
         "underlyings": [
           {
             "symbol": "USDT",
-            "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+            "address": "0x4444444444444444444444444444444444444444",
             "decimals": 6,
             "assetId": 2,
             "minDepositDecimal": 8,
@@ -165,7 +165,7 @@ The deposit becomes visible when it is credited, and not before. Poll `deposits`
 ```bash
 curl -sS "$POOL_API_URL/api/v3/earn" \
   -H 'content-type: application/json' \
-  -d '{"type":"deposits","user_address":"0xbf381e…","limit":20}'
+  -d '{"type":"deposits","user_address":"0x5555555555555555555555555555555555555555","limit":20}'
 ```
 
 ```json
@@ -175,7 +175,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
     "items": [
       {
         "id": 9,
-        "operation_id": "deposit:1:0xc91807c59b354437eae0de32f153c06665cd2270:31",
+        "operation_id": "deposit:1:0x3333333333333333333333333333333333333333:31",
         "deposit_type": "bridge_deposit",
         "asset_id": 2,
         "amount": "10000000000",
@@ -183,8 +183,8 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
         "core_height": 153570000,
         "core_event_timestamp_ms": 1786620000000,
         "src_chain_id": 1,
-        "src_tx_hash": "0x2dd46662ecc762d70291e9475e50890ffb4c79c85e61c539f1e138a8b71b82a7",
-        "core_tx_hash": "0x04530cb273e03c64c141…"
+        "src_tx_hash": "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        "core_tx_hash": "0xc3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3"
       }
     ],
     "next_before_id": null
@@ -242,7 +242,7 @@ const message = {
   assetId: 2n,
   amount: 100000000n,            // 8-decimal atoms
   cloidPresent: true,
-  cloid: '0x44c25ffe3c4f091bf28501543b63a59f',
+  cloid: '0x22222222222222222222222222222222',
 }
 
 const signature = await wallet.signTypedData({ domain, types, primaryType: 'Transfer', message })
@@ -256,10 +256,10 @@ curl -sS -X POST "https://api.native.org/trade" \
   -d '{
     "action": {
       "type": "transfer",
-      "to": "0x4017d1520d734c8fa6dd0fdeba150c3e0fea65ea",
+      "to": "0x1111111111111111111111111111111111111111",
       "asset_id": "2",
       "amount": "100000000",
-      "cloid": "0x44c25ffe3c4f091bf28501543b63a59f"
+      "cloid": "0x22222222222222222222222222222222"
     },
     "nonce": "1786607374550",
     "auth_scheme": "eip712",
