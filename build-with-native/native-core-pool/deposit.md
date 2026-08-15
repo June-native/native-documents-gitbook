@@ -4,7 +4,7 @@ description: Move funds into a Native Core Pool earning balance, from an EVM cha
 
 # Deposit
 
-Two routes lead into the same `earn_balance`. Pick by where the money already is.
+Two routes lead into the same `earn_balance`. Choose the route by where the funds are now.
 
 |                | From an EVM chain                              | From a Native Core balance             |
 | -------------- | ---------------------------------------------- | -------------------------------------- |
@@ -74,7 +74,7 @@ curl -sS "$POOL_API_URL/api/v3/core/registry"
 A Native Core account is created by its owner's first deposit, and that deposit carries a one-time activation fee as `msg.value`, in the source chain's gas token.
 
 * Read [`accountStatus`](../native-core/post-info.md#accountstatus) for the credited address. `found: false` means this deposit pays the fee.
-* **Send `msg.value: 0` for every deposit into an account that already exists.** The fee is not checked on those, so anything you attach is kept.
+* **Send `msg.value: 0` for every deposit into an account that already exists.** Validation skips the fee check on those deposits, and any `msg.value` attached is not refunded.
 * Validation accepts a shortfall of up to **30%**, which absorbs price movement between your quote and settlement.
 
 ```bash
@@ -153,10 +153,10 @@ const receipt = await publicClient.waitForTransactionReceipt({ hash: depositHash
 ```
 
 {% hint style="danger" %}
-**Floor the amount onto the 8-decimal grid before you submit.** Native credits at 8 decimals, and an amount carrying more precision than that cannot be credited. Tokens with 8 decimals or fewer, including USDT and USDC on Ethereum, Base and Arbitrum, cannot carry excess precision and need no adjustment. The 18-decimal tokens, including USDT and USDC on BNB Smart Chain, do. `minDepositDecimal` in the registry is the grid.
+**Floor the amount onto the 8-decimal grid before you submit.** Native credits at 8 decimals, and an amount carrying more precision than that cannot be credited. Tokens with 8 decimals or fewer, including USDT and USDC on Ethereum, Base and Arbitrum, cannot carry excess precision and need no adjustment. Tokens with more than 8 decimals, including USDT and USDC on BNB Smart Chain, must be floored before submission. `minDepositDecimal` in the registry is the grid.
 {% endhint %}
 
-The contract surface, the read calls that tell you whether a deposit will succeed, and the ABI fragment are in [Vault Contract](../deposit-withdraw/vault-contract.md).
+[Vault Contract](../deposit-withdraw/vault-contract.md) covers the contract surface, the read calls that tell you whether a deposit will succeed, and the ABI fragment.
 
 ### 4. Wait for the credit
 
@@ -193,7 +193,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
 }
 ```
 
-`status: "credited"` means the amount is in `earn_balance` and earning. `status: "rejected"` means it will not be, and the funds need manual recovery.
+`status: "credited"` means the amount is in `earn_balance` and earning. `status: "rejected"` means the amount is not credited and the funds require manual recovery from Native.
 
 `amount` is in the asset's 8-decimal `balance_decimals`, rescaled from the token's own decimals: `100000000` sent as 6-decimal USDT arrives as `10000000000`.
 
@@ -270,18 +270,18 @@ curl -sS -X POST "https://api.native.org/trade" \
 {% hint style="warning" %}
 Three requirements have no field-level error to guide you:
 
-* **`cloid` is required.** Omitting it returns `missing_cloid`, and a wrong length returns `invalid_cloid`. Sign with `cloidPresent: true` to match.
+* **`cloid` is required.** Omitting it returns `missing_cloid`, and a wrong length returns `invalid_cloid`. Sign with `cloidPresent: true` so the typed data matches the action body.
 * **`auth_scheme: "eip712"` is required.** The binary signing scheme is rejected for `transfer` on every path.
 * **The action carries no unknown fields.** An extra key is a parse error, not a silently ignored one.
 
 A typed-data struct that does not match the definition above recovers a different signer, and the transfer fails as an unknown account rather than as a signature error.
 {% endhint %}
 
-This is Native Core's `/trade`, so it follows that endpoint's contract, not the Pool envelope: branch on `submission_status`, and treat `timeout` as unresolved rather than failed. See [POST /trade](../native-core/post-trade.md), [Transaction Signing](../native-core/transaction-signing.md), and [Handle outcomes & timeouts](../native-core/handle-timeouts.md).
+The `transfer` action goes to Native Core's `/trade`, which returns the Native Core envelope rather than the Pool envelope. Branch on `submission_status` and treat `timeout` as unresolved rather than failed. See [POST /trade](../native-core/post-trade.md), [Transaction Signing](../native-core/transaction-signing.md), and [Handle outcomes & timeouts](../native-core/handle-timeouts.md).
 
 ### 3. Wait for the credit
 
-An accepted transfer debits the Core balance immediately. The Pool credit follows once Core has moved past the transaction, usually within a block.
+An accepted transfer debits the Core balance immediately. The Pool credit lands about one Core block later. Treat that as typical latency rather than a guarantee, and poll for the row.
 
 The row appears in `deposits` with `deposit_type: "direct_transfer"` and no transaction hashes — the Pool does not record one for this route. Match on the asset, the amount, and `core_event_timestamp_ms`, then use `operation_id` as the key from that point on. `operation_id` is assigned when the event is ingested and cannot be computed before you submit; your `cloid` is the handle until the row exists.
 

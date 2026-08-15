@@ -6,7 +6,7 @@ description: Deposit into the Native Core Pool vault, earn distributed yield, an
 
 Native Core Pool pays yield on assets held in its vault. Funds enter from an EVM chain or from a Native Core balance, sit in an earning balance, and leave through a signed withdrawal request.
 
-This section is for teams building their own Pool experience — wallets, custodians, and front-ends that cannot route users through the Native web app. Reads need nothing but HTTP. Deposits and withdrawals need a wallet that can sign EIP-712 typed data, and the cross-chain route also needs an EVM RPC endpoint.
+This section is for teams building their own Pool experience — wallets, custodians, and front-ends that cannot route users through the Native web app. Reads require only HTTP. Deposits and withdrawals require a wallet that can sign EIP-712 typed data. The cross-chain deposit route also requires an EVM RPC endpoint.
 
 {% content-ref url="deposit.md" %}
 [deposit.md](deposit.md)
@@ -26,7 +26,7 @@ This section is for teams building their own Pool experience — wallets, custod
 
 ## The model
 
-Money moves in one direction at a time, and each move has exactly one thing to poll.
+Each direction gives you one request to send and one query to poll.
 
 |             | Deposit                                                   | Withdraw                                       |
 | ----------- | --------------------------------------------------------- | ---------------------------------------------- |
@@ -35,7 +35,7 @@ Money moves in one direction at a time, and each move has exactly one thing to p
 | You poll    | `deposits`                                                 | `withdrawals`                                  |
 | Correlate on | `src_tx_hash` on the EVM route, your `cloid` on the Core route | `operation_id`                             |
 
-A deposit cannot be cancelled. A withdrawal can, but only a scheduled one, and only before it becomes claimable.
+A deposit cannot be cancelled or reversed. A scheduled withdrawal can be cancelled until it becomes claimable. An instant withdrawal cannot be cancelled at any point.
 
 ## Endpoints
 
@@ -69,9 +69,9 @@ Every response carries a `trace_id` header. Include it when you report a problem
 
 Requests are metered per source IP, and **each `type` gets its own budget**, so a page that reads `config`, `account` and `deposits` at once does not compete with itself.
 
-Poll at no more than **one request per second per `type`** and leave the rest of the budget for retries. Signed writes are metered more tightly than reads; one withdrawal action at a time is well inside the limit.
+Poll at no more than **one request per second per `type`** and leave the rest of the budget for retries. Signed writes have a lower per-second budget than reads. Submit one withdrawal action at a time.
 
-Over the limit, the response is `code: 201005` with an empty body. Wait for the next second and retry.
+A request over the limit returns `code: 201005` and carries no `data`. Wait for the next second and retry.
 
 ```json
 { "code": 201005, "message": "rate reach limit" }
@@ -86,15 +86,15 @@ Amounts are **integer atom strings**, never numbers and never decimals.
 | Pool balances and amounts          | The asset's `balance_decimals` from `config`, currently `8` for every asset |
 | Cross-chain deposit call           | The source ERC20's own `decimals` from the registry                     |
 
-The two differ, so a cross-chain deposit needs a conversion: 1 USDT is `1000000` to the ERC20 on Ethereum (6 decimals) and `100000000` once credited to the Pool (8 decimals).
+The two precisions differ, so a cross-chain deposit requires a conversion. 1 USDT is `1000000` to the ERC20 on Ethereum (6 decimals) and `100000000` once credited to the Pool (8 decimals).
 
-Sizes exceed JavaScript's safe integer range on 18-decimal tokens. Parse every amount with `BigInt`, not `Number`.
+Amounts on 18-decimal tokens exceed JavaScript's safe integer range. Parse every amount with `BigInt`, not `Number`.
 
 Every `*_unix_ms` field is a millisecond timestamp.
 
 ## Discovery
 
-Read the routing table at runtime. Assets are listed and delisted, and limits are changed by operations, so treat every address, id, and limit below as a read rather than a constant.
+Read the routing table at runtime. Operations list and delist assets and change limits, so treat every address, id, and limit below as a read rather than a constant.
 
 | What you need                                                     | Where it comes from                                            |
 | ----------------------------------------------------------------- | -------------------------------------------------------------- |
@@ -144,7 +144,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
 }
 ```
 
-Three values in that response decide how your integration behaves:
+Three of these fields carry a meaning their name does not suggest:
 
 * `vault_address` is both the recipient of a Core-internal deposit and the EIP-712 `verifyingContract`.
 * `withdraw_pending_seconds` is the wait before a scheduled withdrawal can be claimed. It is also the entire window in which the withdrawal can be cancelled.
@@ -156,6 +156,6 @@ Field definitions are in [Reference](reference.md#config).
 
 A Pool balance belongs to an address, and that address needs a Native Core account. The account is created by its owner's first deposit, which carries a one-time activation fee — see [Deposit](deposit.md#2-size-the-activation-fee).
 
-One address can have **one withdrawal in flight at a time**, across all assets. `active_withdrawal` in [`account`](reference.md#account) is the check; a second request is rejected while it is non-null.
+One address can have **one withdrawal in flight at a time**, across all assets. Check `active_withdraw_operation_id` in [`account`](reference.md#account) before creating another. An empty string means nothing is in flight.
 
-Credit accounts cannot use this path. See [Account Types](../native-core/account-types.md).
+Credit accounts cannot deposit into or withdraw from the Pool. See [Account Types](../native-core/account-types.md).

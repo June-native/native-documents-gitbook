@@ -60,7 +60,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
   -d '{"type":"account","user_address":"0xbf381e…"}'
 ```
 
-It is **per asset**, and each asset has its own precision, so summing across assets produces a meaningless number. Report per asset, or convert to a common currency first.
+`lifetime_yield` is **per asset**. Assets use different precisions, so a sum across assets has no meaning. Report per asset, or convert to a common currency first.
 
 ## Distribution history
 
@@ -90,7 +90,13 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
 }
 ```
 
-Each row is self-contained: `snapshot_balance` is the basis the share was computed from, `yield_amount` is what was credited, and `applied_at_unix_ms` is when.
+Each row carries everything needed to render one payout, with no follow-up request:
+
+| Field                | Meaning                                    |
+| -------------------- | ------------------------------------------ |
+| `snapshot_balance`   | The balance the share was computed from     |
+| `yield_amount`       | The amount credited                         |
+| `applied_at_unix_ms` | When it was credited                        |
 
 `distribution_id` is an opaque grouping key. It contains no date; use `applied_at_unix_ms` for time.
 

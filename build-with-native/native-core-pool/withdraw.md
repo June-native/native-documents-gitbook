@@ -135,7 +135,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
 
 `user_signature` is the wallet's raw 65-byte signature, `0x` plus 130 hex characters.
 
-`deadline_unix_ms` must be in the future when the request arrives, or the response is `deadline_unix_ms must be in the future`. Five minutes ahead is a reasonable margin.
+`deadline_unix_ms` must be in the future when the request arrives. A request carrying a past deadline returns `deadline_unix_ms must be in the future`. Set it five minutes ahead.
 
 A successful response returns the created withdrawal record, in the shape described below.
 
@@ -232,7 +232,7 @@ withdraw_type === 'scheduled'
 && Date.now() >= claimable_at_unix_ms
 ```
 
-**Read `claimable_at_unix_ms`; do not recompute it.** It is set from server time when the withdrawal is created, so `created_at_unix_ms + withdraw_pending_seconds` lands a few milliseconds off and fails at the boundary.
+**Read `claimable_at_unix_ms`; do not recompute it.** The Pool sets it from server time when the withdrawal is created, so `created_at_unix_ms + withdraw_pending_seconds` does not reproduce it and fails at the boundary.
 
 The signature is the same domain with a different primary type. `operationId` is signed as the **keccak256 hash** of the trimmed string, typed `bytes32`, while the request body carries the plain string. This is the most common mistake on this endpoint.
 
@@ -282,7 +282,7 @@ The retry window is the deadline you signed. Past it, even the identical body fa
 
 ## 6. Cancel a scheduled withdrawal
 
-Available only before the claim window opens, which makes it the exact complement of claiming:
+A scheduled withdrawal can be cancelled only while all of the following hold:
 
 ```
 withdraw_type === 'scheduled'
@@ -313,7 +313,7 @@ The status becomes `cancelled` and the gross amount returns from `in_queue_balan
 
 `withdrawal_paused` in `config` blocks **creating and claiming**. Cancelling still works within its normal window, so a scheduled withdrawal that has not yet become claimable can still be reversed during a pause.
 
-Anything already past its cancel window is frozen until the pause lifts, including instant withdrawals mid-payout.
+During a pause, an instant withdrawal and any scheduled withdrawal past its cancel window stay in their current status until the pause lifts.
 
 ## What can go wrong
 

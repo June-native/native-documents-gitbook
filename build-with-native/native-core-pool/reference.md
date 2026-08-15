@@ -129,7 +129,7 @@ Parameters match `deposits`.
 | `yield_amount`       | The amount credited                                         |
 | `applied_at_unix_ms` | When it was credited                                        |
 
-Pass `asset_id` to compare a sum against `lifetime_yield`.
+Pass `asset_id` to sum that asset's `yield_amount` rows and reconcile the total against its `lifetime_yield`.
 
 ## withdrawals
 
@@ -141,7 +141,7 @@ Pass `asset_id` to compare a sum against `lifetime_yield`.
 | `before_id`    | No       | —       | Cursor                                               |
 | `limit`        | No       | `50`    | Over `200` the request fails                         |
 
-There is **no `operation_id` parameter**. Sending one is ignored without an error and returns an unfiltered page.
+`withdrawals` has **no `operation_id` parameter**. Sending one is ignored without an error, and the response is an unfiltered page.
 
 | Field                      | Meaning                                                            |
 | -------------------------- | ------------------------------------------------------------------ |
@@ -206,7 +206,7 @@ A record belonging to another address returns the same response as one that does
 | `deadline_unix_ms` | number | Must be in the future when the request arrives            |
 | `user_signature`   | string | `0x` plus 130 hex characters                              |
 
-Signed as `CreateWithdrawal`. Typed data and the encoding differences are in [Withdraw](withdraw.md#3-sign-and-submit).
+Sign this action as `CreateWithdrawal`. Typed data and the encoding differences are in [Withdraw](withdraw.md#3-sign-and-submit).
 
 Returns the created withdrawal record.
 
@@ -221,7 +221,7 @@ Both take the same four fields.
 | `deadline_unix_ms` | number | Must be in the future                                    |
 | `user_signature`   | string | `0x` plus 130 hex characters                             |
 
-Signed as `ClaimWithdrawal` and `CancelWithdrawal` respectively. A claim binds its digest on the first attempt: retry byte-identically, never re-signed. See [Withdraw](withdraw.md#5-claim-a-scheduled-withdrawal).
+Sign a claim as `ClaimWithdrawal` and a cancel as `CancelWithdrawal`. The first claim attempt binds its digest, so resend the identical bytes on every retry and never sign a new claim for the same `operation_id`. See [Withdraw](withdraw.md#5-claim-a-scheduled-withdrawal).
 
 ## GET /api/v3/core/registry
 
