@@ -58,7 +58,7 @@ Account channels are keyed by `user` — your **owner** address, not the API-wal
 {"method":"subscribe","subscription":{"type":"openOrders","user":"0x…"}}
 ```
 
-`userFills` opens with a snapshot of your 100 most recent fills marked `isSnapshot: true`, then streams each new one. `orderUpdates` reports every transition of your accepted orders — `open`, `filled`, `canceled`, `rejected` — batched one frame per block.
+`userFills` opens with a snapshot of your 100 most recent fills marked `isSnapshot: true`, then streams each new one. `orderUpdates` reports every transition of your accepted orders — `open`, `filled`, `canceled`, and a family of `*Rejected` codes naming why an order died at execution (`badAloPxRejected` and friends; see [orderUpdates](websocket.md#orderupdates)) — batched one frame per block.
 
 For balances, subscribe to `spotState`. If you trade on a credit line, subscribe to `spotCreditState` instead — a credit account's spot balances are empty. See [Account Types](account-types.md).
 
