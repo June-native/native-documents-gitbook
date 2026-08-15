@@ -57,7 +57,7 @@ The Pool has no interest-rate setting. Each distribution's size is decided when 
 ```bash
 curl -sS "$POOL_API_URL/api/v3/earn" \
   -H 'content-type: application/json' \
-  -d '{"type":"account","user_address":"0x5555555555555555555555555555555555555555"}'
+  -d '{"type":"account","user_address":"0x5555…5555"}'
 ```
 
 `lifetime_yield` is **per asset**. Assets use different precisions, so a sum across assets has no meaning. Report per asset, or convert to a common currency first.
@@ -67,7 +67,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
 ```bash
 curl -sS "$POOL_API_URL/api/v3/earn" \
   -H 'content-type: application/json' \
-  -d '{"type":"yieldHistory","user_address":"0x5555555555555555555555555555555555555555","asset_id":2,"limit":20}'
+  -d '{"type":"yieldHistory","user_address":"0x5555…5555","asset_id":2,"limit":20}'
 ```
 
 ```json

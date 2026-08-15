@@ -65,7 +65,7 @@ Instead of step 5 on the Native Core page, poll the Pool's `deposits` and match 
 ```bash
 curl -sS "$POOL_API_URL/api/v3/earn" \
   -H 'content-type: application/json' \
-  -d '{"type":"deposits","user_address":"0x5555555555555555555555555555555555555555","limit":20}'
+  -d '{"type":"deposits","user_address":"0x5555…5555","limit":20}'
 ```
 
 ```json
@@ -75,7 +75,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
     "items": [
       {
         "id": 9,
-        "operation_id": "deposit:1:0x3333333333333333333333333333333333333333:31",
+        "operation_id": "deposit:1:0x3333…3333:31",
         "deposit_type": "bridge_deposit",
         "asset_id": 2,
         "amount": "10000000000",
@@ -83,8 +83,8 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
         "core_height": 153570000,
         "core_event_timestamp_ms": 1786620000000,
         "src_chain_id": 1,
-        "src_tx_hash": "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
-        "core_tx_hash": "0xc3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3"
+        "src_tx_hash": "0xaaaa…aaaa",
+        "core_tx_hash": "0xcccc…cccc"
       }
     ],
     "next_before_id": null
@@ -142,7 +142,7 @@ const message = {
   assetId: 2n,
   amount: 100000000n,            // 8-decimal atoms
   cloidPresent: true,
-  cloid: '0x22222222222222222222222222222222',
+  cloid: '0x6666…6666',
 }
 
 const signature = await wallet.signTypedData({ domain, types, primaryType: 'Transfer', message })
@@ -156,10 +156,10 @@ curl -sS -X POST "https://api.native.org/trade" \
   -d '{
     "action": {
       "type": "transfer",
-      "to": "0x1111111111111111111111111111111111111111",
+      "to": "0x1111…1111",
       "asset_id": "2",
       "amount": "100000000",
-      "cloid": "0x22222222222222222222222222222222"
+      "cloid": "0x6666…6666"
     },
     "nonce": "1786607374550",
     "auth_scheme": "eip712",
