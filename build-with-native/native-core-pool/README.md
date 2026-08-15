@@ -45,7 +45,7 @@ Native Core Pool is served on mainnet at `https://api-ui.native.org`. There is n
 POOL_API_URL=https://api-ui.native.org
 ```
 
-Every Pool operation is `POST /api/v3/earn` with a `type` field naming it. Two supporting reads sit elsewhere: the token registry at `GET /api/v3/core/registry`, and the deposit fee quote at `POST /api/v3/accounting`.
+Every Pool operation is `POST /api/v3/earn` with a `type` field naming it.
 
 **The HTTP status is always 200.** Branch on the `code` field in the body instead.
 
@@ -84,7 +84,7 @@ Amounts are **integer atom strings**, never numbers and never decimals.
 | Where                              | Precision                                                              |
 | ---------------------------------- | ---------------------------------------------------------------------- |
 | Pool balances and amounts          | The asset's `balance_decimals` from `config`, currently `8` for every asset |
-| Cross-chain deposit call           | The source ERC20's own `decimals` from the registry                     |
+| Cross-chain deposit call           | The source ERC20's own `decimals`                                        |
 
 The two precisions differ, so a cross-chain deposit requires a conversion. 1 USDT is `1000000` to the ERC20 on Ethereum (6 decimals) and `100000000` once credited to the Pool (8 decimals).
 
@@ -97,17 +97,16 @@ Every `*_unix_ms` field is a millisecond timestamp.
 Read the routing table at runtime. Operations list and delist assets and change limits, so treat every address, id, and limit below as a read rather than a constant.
 
 {% hint style="warning" %}
-Addresses, transaction hashes and signatures in the examples throughout this section are placeholders. Resolve every address from `config` or the registry at runtime; none of them can be copied into your code as a constant.
+Addresses, transaction hashes and signatures in the examples throughout this section are placeholders. Resolve every address at runtime; none of them can be copied into your code as a constant.
 {% endhint %}
 
 | What you need                                                     | Where it comes from                                            |
 | ----------------------------------------------------------------- | -------------------------------------------------------------- |
 | `asset_id`, `balance_decimals`, fees, withdrawal limits            | [`config`](reference.md#config)                                 |
 | Vault address and the EIP-712 domain                               | [`config`](reference.md#config)                                 |
-| Depositable ERC20s per chain, and their minimums                   | [`GET /api/v3/core/registry`](reference.md#get-apiv3coreregistry) |
-| The gas-token fee a first deposit must carry                       | [`depositInitFee`](reference.md#depositinitfee)                 |
+| Depositable ERC20s and vault addresses per chain                   | [Deposit & Withdraw](../deposit-withdraw/README.md#discovery)   |
 
-`config` is the authority on which assets the Pool accepts. The registry lists every token Native Core supports, which is a much larger set — a token in the registry with no matching `asset_id` in `config` cannot be deposited into the Pool.
+`config` is the authority on which assets the Pool accepts. Native Core supports a much larger set of tokens, and one with no matching `asset_id` in `config` cannot be deposited into the Pool.
 
 ```bash
 curl -sS "$POOL_API_URL/api/v3/earn" \
@@ -158,7 +157,7 @@ Field definitions are in [Reference](reference.md#config).
 
 ## Accounts
 
-A Pool balance belongs to an address, and that address needs a Native Core account. The account is created by its owner's first deposit, which carries a one-time activation fee — see [Deposit](deposit.md#2-size-the-activation-fee).
+A Pool balance belongs to an address, and that address needs a Native Core account. The account is created by its owner's first deposit, which carries a one-time activation fee — see [Deposit](../deposit-withdraw/deposit.md#2-size-the-activation-fee).
 
 One address can have **one withdrawal in flight at a time**, across all assets. Check `active_withdraw_operation_id` in [`account`](reference.md#account) before creating another. An empty string means nothing is in flight.
 

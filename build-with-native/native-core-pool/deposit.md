@@ -13,7 +13,7 @@ Two routes lead into the same `earn_balance`. Choose the route by where the fund
 | Settles in     | Minutes                                         | About one Core block                   |
 | `deposit_type` | `bridge_deposit`                                | `direct_transfer`                      |
 
-Neither route can be cancelled or reversed once the first transaction lands. There is no minimum on the Pool side; the EVM route has a per-token minimum enforced by the bridge.
+Neither route can be cancelled or reversed once the first transaction lands.
 
 Read [Native Core Pool](README.md) first for the base URL, the response envelope, and discovery.
 
@@ -27,140 +27,36 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
   -d '{"type":"config"}'
 ```
 
-The token registry lists everything Native Core supports, which is a much larger set. A registry token whose `assetId` has no matching entry in `config` cannot reach the Pool: on the EVM route the deposit is recorded and then rejected, and on the Core route it lands in the vault with no record at all.
+Native Core supports a much larger set of tokens than the Pool does. A token whose `assetId` has no matching entry in `config` cannot reach the Pool: on the EVM route the deposit is recorded and then rejected, and on the Core route it lands in the vault with no record at all.
 
 ## From an EVM chain
 
-### 1. Resolve the token and its minimum
+**This is the Native Core deposit flow, with one argument changed.** Follow [Deposit](../deposit-withdraw/deposit.md) as written: check whether the account exists, size the activation fee, approve and call the vault, and read the deposit nonce from the receipt. Everything on that page applies here, including the amount precision rule and the activation fee a first deposit must carry.
 
-```bash
-curl -sS "$POOL_API_URL/api/v3/core/registry"
-```
+The one difference is `actionFlag`:
 
-```json
-{
-  "code": 0,
-  "data": {
-    "chains": [
-      {
-        "chainKey": "ethereum",
-        "evmChainId": 1,
-        "address": "0x3333333333333333333333333333333333333333",
-        "enabled": true,
-        "underlyings": [
-          {
-            "symbol": "USDT",
-            "address": "0x4444444444444444444444444444444444444444",
-            "decimals": 6,
-            "assetId": 2,
-            "minDepositDecimal": 8,
-            "minDepositAmountWei": "10000000",
-            "enabled": true
-          }
-        ]
-      }
-    ]
-  },
-  "message": "success"
-}
-```
-
-`chains[].address` is the vault to call on that chain. `underlyings[].address` is the ERC20 to deposit, in its own `decimals`.
-
-`minDepositAmountWei` is the enforced floor, in that ERC20's smallest unit. It is a **string**, and on 18-decimal tokens it exceeds JavaScript's safe integer range, so compare with `BigInt`. A deposit below the floor is accepted on-chain and then stalls off-chain, with nothing to poll and no refund.
-
-### 2. Size the activation fee
-
-A Native Core account is created by its owner's first deposit, and that deposit carries a one-time activation fee as `msg.value`, in the source chain's gas token.
-
-* Read [`accountStatus`](../native-core/post-info.md#accountstatus) for the credited address. `found: false` means this deposit pays the fee.
-* **Send `msg.value: 0` for every deposit into an account that already exists.** Validation skips the fee check on those deposits, and any `msg.value` attached is not refunded.
-* Validation accepts a shortfall of up to **30%**, which absorbs price movement between your quote and settlement.
-
-```bash
-curl -sS "$POOL_API_URL/api/v3/accounting" \
-  -H 'content-type: application/json' \
-  -d '{"type":"depositInitFee"}'
-```
-
-```json
-{
-  "code": 0,
-  "data": {
-    "items": [
-      {
-        "chain_id": 1,
-        "fee_usd": 1,
-        "gas_token_symbol": "ETH",
-        "gas_token_price_usd": "1875.224981",
-        "native_token_decimals": 18,
-        "fee_amount": "0.00053326934641556",
-        "fee_amount_wei": "533269346415560",
-        "available": true
-      }
-    ]
-  },
-  "message": "success"
-}
-```
-
-Take `fee_amount_wei` for your chain and send it as `msg.value`. It tracks the gas token's price, so quote it immediately before you build the transaction rather than caching it.
-
-`fee_amount` is the same value in decimal form. Do not send transactions with it; the float conversion loses precision.
-
-{% hint style="warning" %}
-`available: false` means the gateway could not price the fee right now, not that the chain is closed. On that row `fee_amount_wei` is not a usable number, so parsing it will throw. Retry the query instead of blocking the deposit permanently.
-
-`fee_usd` is set per chain by operations. It is `1` on every chain today, but read it rather than hardcoding a dollar.
-{% endhint %}
-
-### 3. Approve and deposit
+|                 | Native Core deposit                 | Native Core Pool deposit           |
+| --------------- | ----------------------------------- | ---------------------------------- |
+| `actionFlag`    | `0`                                 | **`1`**                            |
+| Credited to     | The Native Core trading balance     | `earn_balance`                     |
+| Confirmed with  | `POST /info` `deposits`             | Pool `deposits`, below             |
 
 ```solidity
 function deposit(address token, uint256 amount, uint256 actionFlag)
     external payable returns (uint256 wNLPAmount);
 ```
 
-**`actionFlag` must be `1`.** That is the value that routes the deposit into the Pool. `actionFlag: 0` is an ordinary Native Core deposit: it succeeds, credits the user's trading balance, and never appears in the Pool's deposit list.
-
-`deposit()` pulls the ERC20 from the caller, so set an allowance first. To credit an address other than the caller, use `depositFor(address token, uint256 amount, address user, uint256 actionFlag)`; the activation fee then follows `user`, not the caller.
-
-```ts
-import { createPublicClient, createWalletClient, http, erc20Abi, parseUnits } from 'viem'
-import { mainnet } from 'viem/chains'
-import { vaultAbi } from './vaultAbi'
-
-const publicClient = createPublicClient({ chain: mainnet, transport: http(RPC_URL) })
-const wallet = createWalletClient({ chain: mainnet, transport: http(RPC_URL), account })
-
-const requested = parseUnits('100', 6)                 // Ethereum USDT is 6-decimal
-const scale = 10n ** BigInt(Math.max(0, decimals - 8)) // 1 here, 10^10 on an 18-decimal token
-const amount = requested - (requested % scale)         // floor onto the 8-decimal grid
-if (amount < BigInt(minDepositAmountWei)) throw new Error('below the token minimum')
-
-const feeWei = accountExists ? 0n : BigInt(feeAmountWei)
-
-const approveHash = await wallet.writeContract({
-  address: token, abi: erc20Abi, functionName: 'approve', args: [vault, amount],
-})
-await publicClient.waitForTransactionReceipt({ hash: approveHash })
-
-const depositHash = await wallet.writeContract({
-  address: vault, abi: vaultAbi, functionName: 'deposit',
-  args: [token, amount, 1n], value: feeWei,
-})
-const receipt = await publicClient.waitForTransactionReceipt({ hash: depositHash })
-```
-
 {% hint style="danger" %}
-**Floor the amount onto the 8-decimal grid before you submit.** Native credits at 8 decimals, and an amount carrying more precision than that cannot be credited. Tokens with 8 decimals or fewer, including USDT and USDC on Ethereum, Base and Arbitrum, cannot carry excess precision and need no adjustment. Tokens with more than 8 decimals, including USDT and USDC on BNB Smart Chain, must be floored before submission. `minDepositDecimal` in the registry is the grid.
+**`actionFlag` must be `1`.** That value is what routes the deposit into the Pool.
+
+`actionFlag: 0` is a valid transaction that succeeds, credits the Native Core trading balance, and never appears in the Pool's deposit list. The funds are not lost, but they are not earning either, and no Pool record explains why.
 {% endhint %}
 
-[Vault Contract](../deposit-withdraw/vault-contract.md) covers the contract surface, the read calls that tell you whether a deposit will succeed, and the ABI fragment.
+`depositFor` carries the same argument, so a wallet or custodian depositing on a user's behalf passes `actionFlag: 1` the same way.
 
-### 4. Wait for the credit
+### Confirm the credit
 
-The deposit becomes visible when it is credited, and not before. Poll `deposits` and match your source transaction hash.
+Instead of step 5 on the Native Core page, poll the Pool's `deposits` and match your source transaction hash.
 
 ```bash
 curl -sS "$POOL_API_URL/api/v3/earn" \
@@ -197,7 +93,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
 
 `amount` is in the asset's 8-decimal `balance_decimals`, rescaled from the token's own decimals: `100000000` sent as 6-decimal USDT arrives as `10000000000`.
 
-Hold your own record between submitting the transaction and seeing it appear. The source transaction, the bridge, and Core settlement each take time, and none of those stages is queryable — the record does not exist until it reaches `credited` or `rejected`. A deposit that has not appeared long after the source transaction confirmed should be reported with its source transaction hash rather than retried.
+The deposit becomes visible when it is credited, and not before. Hold your own record between submitting the transaction and seeing it appear, because the record does not exist until it reaches `credited` or `rejected`. A deposit that has not appeared long after the source transaction confirmed should be reported with its source transaction hash rather than retried.
 
 ## From a Native Core balance
 
@@ -317,9 +213,8 @@ Paging returns `next_before_id` whenever a page comes back exactly `limit` long,
 | Symptom                                            | Cause                                                             | What to do                                                  |
 | -------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------ |
 | Deposit mined, never appears                        | `actionFlag` was not `1`, so it credited the trading balance instead | Check the balance on Native Core; the funds are not lost      |
-| Deposit mined, never appears, `actionFlag` was `1`  | Below `minDepositAmountWei`, or not on the 8-decimal grid            | Neither is self-recoverable; report the source transaction hash |
+| Deposit mined, never appears, `actionFlag` was `1`  | The amount or the activation fee broke a rule on the Native Core deposit page | See [What can go wrong](../deposit-withdraw/deposit.md#what-can-go-wrong) there |
 | `status: "rejected"`                                | The asset is not listed for the Pool, or has `deposit_enabled: false` | Read `config` before building the transaction                |
-| First deposit credited nothing                      | The activation fee underpaid past the 30% tolerance                  | Report the source transaction hash                           |
 | Transfer returns `missing_cloid`                    | `cloid` omitted from the action body                                 | Send a 16-byte `cloid` and sign with `cloidPresent: true`     |
 | Transfer accepted, no `direct_transfer` row         | The asset is not deposit-enabled for the Pool                        | Nothing will appear; report it with the Core transaction hash |
 | `code: 131004` `limit exceeds max 200`              | `limit` above the cap                                                | The request failed entirely; resend with `limit` at most 200  |

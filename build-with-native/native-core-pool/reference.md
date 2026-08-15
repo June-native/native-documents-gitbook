@@ -4,7 +4,7 @@ description: The Native Core Pool contract — every request type, its parameter
 
 # Reference
 
-Every operation is `POST /api/v3/earn` on `https://api-ui.native.org`, with a `type` field naming it. The token registry and the deposit fee quote live on two other paths, listed at the end.
+Every operation is `POST /api/v3/earn` on `https://api-ui.native.org`, with a `type` field naming it.
 
 ```bash
 POOL_API_URL=https://api-ui.native.org
@@ -222,48 +222,6 @@ Both take the same four fields.
 | `user_signature`   | string | `0x` plus 130 hex characters                             |
 
 Sign a claim as `ClaimWithdrawal` and a cancel as `CancelWithdrawal`. The first claim attempt binds its digest, so resend the identical bytes on every retry and never sign a new claim for the same `operation_id`. See [Withdraw](withdraw.md#5-claim-a-scheduled-withdrawal).
-
-## GET /api/v3/core/registry
-
-The only GET, and the only request with no body. It lists the depositable ERC20s per chain.
-
-```bash
-curl -sS "$POOL_API_URL/api/v3/core/registry"
-```
-
-| Field                            | Meaning                                                        |
-| -------------------------------- | -------------------------------------------------------------- |
-| `network`                        | `mainnet`                                                       |
-| `updated_at`                     | When the registry was last refreshed                            |
-| `chains[].chainKey`              | Short chain name                                                |
-| `chains[].evmChainId`            | EVM chain id                                                    |
-| `chains[].address`               | The vault contract to call on that chain                        |
-| `chains[].enabled`               | Whether the chain accepts deposits                              |
-| `underlyings[].address`          | The ERC20 to deposit                                            |
-| `underlyings[].decimals`         | That ERC20's own precision                                      |
-| `underlyings[].assetId`          | The Native asset it credits                                     |
-| `underlyings[].minDepositDecimal`| The decimal grid the amount must land on, `8`                   |
-| `underlyings[].minDepositAmountWei` | Enforced minimum, in the ERC20's smallest unit, as a string  |
-| `underlyings[].enabled`          | Whether the token accepts deposits                              |
-
-The registry covers all of Native Core, not just the Pool. Only tokens whose `assetId` appears in `config` can be deposited into the Pool.
-
-## depositInitFee
-
-`POST /api/v3/accounting` with `{"type":"depositInitFee"}`. No other parameters.
-
-| Field                  | Meaning                                                        |
-| ---------------------- | -------------------------------------------------------------- |
-| `chain_id`             | EVM chain id                                                    |
-| `fee_usd`              | The target value in USD, set per chain                          |
-| `gas_token_symbol`     | The gas token the fee is paid in                                |
-| `gas_token_price_usd`  | The price used for the conversion                               |
-| `native_token_decimals`| The gas token's precision                                       |
-| `fee_amount`           | Decimal form, for display only                                  |
-| `fee_amount_wei`       | **The value to send as `msg.value`**                            |
-| `available`            | `false` means the fee could not be priced; `fee_amount_wei` is then unusable |
-
-The fee applies to an address's first deposit only. See [Deposit](deposit.md#2-size-the-activation-fee).
 
 ## Pagination
 
