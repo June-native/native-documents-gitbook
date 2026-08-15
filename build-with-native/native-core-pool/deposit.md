@@ -58,6 +58,10 @@ function deposit(address token, uint256 amount, uint256 actionFlag)
 
 Instead of step 5 on the Native Core page, poll the Pool's `deposits` and match your source transaction hash.
 
+{% hint style="info" %}
+`POST /info` `deposits` does not show a Pool deposit for the depositing address. A deposit carrying `actionFlag: 1` is credited on Native Core to the Pool vault rather than to the user, so the Native Core record is filed under the vault. Attribution to the depositing address happens afterwards, when the Pool credits `earn_balance`, and the Pool's own `deposits` query is what reports it.
+{% endhint %}
+
 ```bash
 curl -sS "$POOL_API_URL/api/v3/earn" \
   -H 'content-type: application/json' \
