@@ -31,9 +31,9 @@ Native Core supports a much larger set of tokens than the Pool does. A token who
 
 ## From an EVM chain
 
-**This is the Native Core deposit flow, with one argument changed.** Follow [Deposit](../deposit-withdraw/deposit.md) as written: check whether the account exists, size the activation fee, approve and call the vault, and read the deposit nonce from the receipt. Everything on that page applies here, including the amount precision rule and the activation fee a first deposit must carry.
+**This is the Native Core deposit flow, with one argument changed.** Follow [Deposit](../deposit-withdraw/deposit.md): check whether the account exists, size the activation fee, approve and call the vault, then read the deposit nonce from the receipt. Every rule on that page applies here.
 
-The one difference is `actionFlag`:
+`actionFlag` is that argument, and it also decides where the deposit lands and where you confirm it:
 
 |                 | Native Core deposit                 | Native Core Pool deposit           |
 | --------------- | ----------------------------------- | ---------------------------------- |
@@ -47,20 +47,14 @@ function deposit(address token, uint256 amount, uint256 actionFlag)
 ```
 
 {% hint style="danger" %}
-**`actionFlag` must be `1`.** That value is what routes the deposit into the Pool.
-
-`actionFlag: 0` is a valid transaction that succeeds, credits the Native Core trading balance, and never appears in the Pool's deposit list. The funds are not lost, but they are not earning either, and no Pool record explains why.
+Passing `actionFlag: 0` produces a transaction that succeeds and credits the Native Core trading balance instead. The funds are not lost, but they are not earning, and no Pool record explains why.
 {% endhint %}
 
 `depositFor` carries the same argument, so a wallet or custodian depositing on a user's behalf passes `actionFlag: 1` the same way.
 
 ### Confirm the credit
 
-Instead of step 5 on the Native Core page, poll the Pool's `deposits` and match your source transaction hash.
-
-{% hint style="info" %}
-`POST /info` `deposits` does not show a Pool deposit for the depositing address. A deposit carrying `actionFlag: 1` is credited on Native Core to the Pool vault rather than to the user, so the Native Core record is filed under the vault. Attribution to the depositing address happens afterwards, when the Pool credits `earn_balance`, and the Pool's own `deposits` query is what reports it.
-{% endhint %}
+Poll the Pool's `deposits` and match your source transaction hash.
 
 ```bash
 curl -sS "$POOL_API_URL/api/v3/earn" \
