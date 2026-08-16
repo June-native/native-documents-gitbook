@@ -110,7 +110,7 @@ Addresses, transaction hashes and signatures in the examples throughout this sec
 | Vault address and the EIP-712 domain                               | [`config`](reference.md#config)                                 |
 | Depositable ERC20s and vault addresses per chain                   | [Deposit & Withdraw](../deposit-withdraw/README.md#discovery)   |
 
-`config` is the authority on which assets the Pool accepts. Native Core supports a much larger set of tokens, and one with no matching `asset_id` in `config` cannot be deposited into the Pool.
+`config.assets[]` lists every asset the Pool accepts.
 
 ```bash
 curl -sS "$POOL_API_URL/api/v3/earn" \

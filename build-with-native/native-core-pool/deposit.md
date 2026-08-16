@@ -19,7 +19,7 @@ Read [Native Core Pool](README.md) first for the base URL, the response envelope
 
 ## Which assets you can deposit
 
-`config` is the authority. An asset accepts deposits when it appears in `assets[]` with `deposit_enabled: true`.
+An asset accepts deposits when it appears in `config.assets[]` with `deposit_enabled: true`.
 
 ```bash
 curl -sS "$POOL_API_URL/api/v3/earn" \
