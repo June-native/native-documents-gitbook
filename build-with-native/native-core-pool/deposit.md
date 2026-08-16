@@ -27,8 +27,6 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
   -d '{"type":"config"}'
 ```
 
-Native Core supports a much larger set of tokens than the Pool does. A token whose `assetId` has no matching entry in `config` cannot reach the Pool: on the EVM route the deposit is recorded and then rejected, and on the Core route it lands in the vault with no record at all.
-
 ## From an EVM chain
 
 **This is the Native Core deposit flow, with one argument changed.** Follow [Deposit](../deposit-withdraw/deposit.md): check whether the account exists, size the activation fee, approve and call the vault, then read the deposit nonce from the receipt. Every rule on that page applies here.
