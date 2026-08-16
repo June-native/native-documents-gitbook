@@ -243,7 +243,6 @@ Sign a claim as `ClaimWithdrawal` and a cancel as `CancelWithdrawal`. The first 
 | `131002` | Backend unavailable                     | Retry. Never read it as an empty result          |
 | `131004` | Invalid parameter or state not satisfied | Read `message`                                  |
 | `131006` | Upstream timeout                        | Retry                                            |
-| `201003` | Source IP could not be determined       | Check the proxy configuration                    |
 | `201005` | Rate limit exceeded                     | Wait for the next second and retry                |
 
 These six are the complete set for `/api/v3/earn`. The Core-internal deposit route uses Native Core's `/trade`, which has its own status codes and error shape; see [Error Responses](../native-core/error-responses.md).

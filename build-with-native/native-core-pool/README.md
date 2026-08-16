@@ -39,7 +39,7 @@ A deposit cannot be cancelled or reversed. A scheduled withdrawal can be cancell
 
 ## Endpoints
 
-Native Core Pool is served on mainnet at `https://api-ui.native.org`. There is no API key; requests are metered by source IP.
+Native Core Pool is served on mainnet at `https://api-ui.native.org`. There is no API key; requests are metered per `user_address`.
 
 ```bash
 POOL_API_URL=https://api-ui.native.org
@@ -67,11 +67,15 @@ Every response carries a `trace_id` header. Include it when you report a problem
 
 ## Rate limits
 
-Requests are metered per source IP, and **each `type` gets its own budget**, so a page that reads `config`, `account` and `deposits` at once does not compete with itself.
+Requests are metered **per `user_address`**, and each `type` gets its own budget. Serving many users from one backend gives each of them a full budget, and a screen that reads `account` and `deposits` at once does not compete with itself.
 
-Poll at no more than **one request per second per `type`** and leave the rest of the budget for retries. Signed writes have a lower per-second budget than reads. Submit one withdrawal action at a time.
+| Request                                                                  | Budget           |
+| ------------------------------------------------------------------------ | ---------------- |
+| `config`                                                                  | Not metered      |
+| Reads: `account`, `deposits`, `withdrawals`, `withdrawal`, `yieldHistory` | 3 per second     |
+| Writes: `createWithdrawal`, `claimWithdrawal`, `cancelWithdrawal`         | 1 per second     |
 
-A request over the limit returns `code: 201005` and carries no `data`. Wait for the next second and retry.
+The window resets every second. A request over the budget returns `code: 201005` and carries no `data`.
 
 ```json
 { "code": 201005, "message": "rate reach limit" }
