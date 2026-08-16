@@ -292,10 +292,6 @@ Lifecycle transitions of your accepted orders. `data` is an array of the transit
   as reasons are added. Post-only crossings are by far the most common
   rejection, and arrive as `badAloPxRejected`.
 
-  Treat any status you do not recognise as **terminal-until-proven-otherwise**:
-  read the order back with [`orderStatus`](post-info.md#orderstatus) and use its
-  `filled_qty` and `is_resting` rather than assuming the order is still working.
-
 * **`selfTradeCanceled` is a cancel, not a rejection, and it may have traded.**
   A crossing order can sweep several price levels and only then meet your own
   resting order, at which point it stops. The fills before that point are real.
