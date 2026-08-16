@@ -279,19 +279,40 @@ Lifecycle transitions of your accepted orders. `data` is an array of the transit
 | `open` | resting — including partially filled, which shows as a shrunken `sz` |
 | `filled` | fully filled |
 | `canceled` | taken off the book: your `cancel`, a `modify`, or the unfilled remainder of a partial fill |
-| `selfTradeCanceled` | cancelled by self-trade prevention |
+| `selfTradeCanceled` | cancelled by self-trade prevention — see the note below, this one can carry fills |
 | `badAloPxRejected` | post-only (ALO) order would have crossed the book |
 | `iocCancelRejected` | IOC order found no fill |
 | `fokCancelRejected` | FOK order could not be filled in full |
 | `marketOrderNoLiquidityRejected` | market order found no liquidity |
-| `rejected` | refused at execution, with no more specific code available |
 
-  Every value meaning "the order died without resting" ends in `Rejected`, so
-  **match the suffix, not the exact word** — `status.endsWith("Rejected")` is the
-  stable test, and stays correct as codes are added. Treating `rejected` as an
-  exact value will miss the specific ones; post-only crossings alone arrive as
-  `badAloPxRejected` and are the most common rejection by a wide margin.
-* **Submission failures never appear here.** A write that fails before execution — bad nonce, expired transaction, bad signature — is reported synchronously on the [`POST /trade`](post-trade.md) response. This channel carries only orders that reached the matching engine.
+  There is no bare `rejected` — every rejection names its reason.
+
+  Values meaning "the order died without resting" end in `Rejected`, so **match
+  the suffix, not the exact word** — `status.endsWith("Rejected")` stays correct
+  as reasons are added. Post-only crossings are by far the most common
+  rejection, and arrive as `badAloPxRejected`.
+
+* **`selfTradeCanceled` is a cancel, not a rejection, and it may have traded.**
+  A crossing order can sweep several price levels and only then meet your own
+  resting order, at which point it stops. The fills before that point are real.
+  Read `filled_qty` from [`orderStatus`](post-info.md#orderstatus) before
+  replacing the order — treating it like a rejection and re-sending the full
+  size double-fills the traded part.
+
+* **Two kinds of failure never appear here — and their absence is not a success
+  signal.**
+  * **Envelope failures** — bad nonce, expired transaction, bad signature. The
+    transaction never executed.
+  * **Order-validation failures** — tick size, minimum notional, insufficient
+    balance. The transaction *did* execute, but the order was refused before it
+    was assigned an order id, so no order status exists to push.
+
+  Both are reported synchronously on the [`POST /trade`](post-trade.md)
+  response, and that response is the only place they appear. Do **not** infer
+  "the order is working" from silence on this channel, and note that
+  [`orderStatus`](post-info.md#orderstatus) cannot disambiguate either: a
+  refused order and an order that has not been published yet both read back
+  `found: false`.
 
 #### `openOrders`
 
