@@ -10,8 +10,6 @@ You use three parts of it: the two deposit entry points, the view calls that dec
 
 ## Addresses
 
-One vault per source chain:
-
 | Chain (chain id)     | `DepositWithdrawVault`                       |
 | -------------------- | -------------------------------------------- |
 | Ethereum (1)         | `0xc91807C59B354437eaE0dE32F153c06665cD2270` |
@@ -19,7 +17,7 @@ One vault per source chain:
 | Base (8453)          | `0x79292d171531673Ff97035315Fda568189c3c8A5` |
 | Arbitrum (42161)     | `0x5d4C35e9C9a06061BA80e34b531BBA88bF9952Bc` |
 
-Vaults get redeployed, and a deposit sent to a superseded vault is not credited. [`accountingDepositContracts`](../native-core/post-info.md#accountingdepositcontracts) returns the current set keyed by `src_chain_id` — read it at startup instead of shipping the table above as a constant.
+Read [`accountingDepositContracts`](../native-core/post-info.md#accountingdepositcontracts) at startup instead of shipping the table above as a constant. It returns the current set keyed by `src_chain_id`. Vaults get redeployed, and a deposit sent to a superseded vault is not credited.
 
 ```bash
 curl -sS -X POST "https://api.native.org/info" \
@@ -40,7 +38,7 @@ Pulls `amount` of `token` from `msg.sender` and credits that address's Native Co
 
 `msg.value` carries the one-time account activation fee and must be `0` for an account that already exists. The contract does not validate it — an incorrect value produces a successful transaction that later fails validation off-chain. See [Deposit](deposit.md#2-size-the-activation-fee).
 
-`amount` is in the token's own decimals. The contract does **not** constrain its precision, but Native's settlement does: an amount that is not a whole number of units at 8 decimal places is accepted on-chain and then held off-chain, with no refund. Floor it before you submit — see [Deposit](deposit.md#3-approve-and-deposit).
+`amount` is in the token's own decimals — floor it to 8 decimal places and keep it worth at least 10 USD before you submit ([Deposit](deposit.md#3-validate-the-amount)). The contract does **not** constrain either rule but settlement does: an amount that breaks one is accepted on-chain and then held off-chain, with no refund.
 
 ### depositFor
 
@@ -80,11 +78,11 @@ Every deposit-blocking condition is readable before you build a transaction. Che
 | `getDepositRecord(uint256 nonce)`                | `(address token, address user, uint256 amount, uint256 msgValue)` | Look up a deposit by its nonce; `msgValue` is the activation fee it carried |
 | `usedNonces(address user, uint256 nonce)`        | `bool`     | `true` once a withdrawal to `user` with that nonce has been released |
 
-`usedNonces` is the contract's permanent replay guard: set in the same transaction that transfers the tokens, never cleared, keyed by the withdrawal's payout address and the `withdraw_nonce` you signed. That makes it the confirmation surface for a withdrawal — poll it instead of parsing logs.
+Poll `usedNonces` to confirm a withdrawal, instead of parsing logs — see [Withdraw](withdraw.md#4-watch-the-destination-chain). It is the contract's permanent replay guard: set in the same transaction that transfers the tokens, never cleared, keyed by the payout address and the `withdraw_nonce` you signed.
 
 ## Deposit event
 
-Emitted once per successful deposit. `nonce` is the vault's per-deposit id and ties the transaction to Native Core's credit record.
+Emitted once per successful deposit.
 
 ```solidity
 event Deposit(
@@ -105,8 +103,6 @@ Topic 0 is `0x259af91af89c9a6b13d53607d57f43b151235f69d54d2339133e57cfb62bf4c5`.
 * `amount` is in the token's decimals; Native credits the same value rescaled to the asset's 8-decimal `balance_decimals`.
 * `fee` is the `msg.value` the transaction carried — `0` for a deposit into an existing account.
 * `nonce` is what you match against `deposit_nonce` in [`deposits`](../native-core/post-info.md#deposits).
-
-Confirm a withdrawal with `usedNonces` — see [Withdraw](withdraw.md#4-watch-the-destination-chain).
 
 ## Reverts
 

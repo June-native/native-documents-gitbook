@@ -30,7 +30,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
 
 ## From an EVM chain
 
-**This is the Native Core deposit flow, with one argument changed.** Follow [Deposit](../deposit-withdraw/deposit.md): check whether the account exists, size the activation fee, meet the [10 USD minimum](../deposit-withdraw/deposit.md#3-approve-and-deposit), approve and call the vault, then read the deposit nonce from the receipt. Every rule on that page applies here, including the minimum: a deposit below it is held before it ever reaches the Pool.
+**This is the Native Core deposit flow, with one argument changed.** Follow [Deposit](../deposit-withdraw/deposit.md): check whether the account exists, size the activation fee, [validate the amount](../deposit-withdraw/deposit.md#3-validate-the-amount) against the 8-decimal grid and the 10 USD minimum, approve and call the vault, then read the deposit nonce from the receipt. Every rule on that page applies here. A deposit that breaks one is held before it ever reaches the Pool, so no Pool record explains it.
 
 `actionFlag` is that argument, and it also decides where the deposit lands and where you confirm it:
 

@@ -4,30 +4,25 @@ description: Move funds from a Native Core balance out to an EVM chain — the s
 
 # Withdraw
 
-Four steps: validate the amount against the route's limits, sign and submit the action, confirm Native Core executed it, then watch the destination chain for the release.
-
-You initiate on Native Core. The signer network co-signs the release and submits it to the vault — you never call the contract yourself.
-
 <figure><img src="../../.gitbook/assets/native-withdraw-flow.svg" alt=""><figcaption></figcaption></figure>
 
 Read [Deposit & Withdraw](README.md) first for the shared endpoints, discovery queries, and rate limits.
 
 ## 1. Validate the amount
 
-Read the route's constraints first. Both come from `/info` and are enforced at admission.
+Three rules govern the amount. The first two come from `/info` and are enforced at admission. The third is enforced nowhere: break it and Native Core accepts the action, debits the balance, and the release is never constructed.
 
 * **Minimum** — `min_withdraw_atoms` from the [`accountingWithdrawTokens`](../native-core/post-info.md#accountingwithdrawtokens) row whose `chain_id` and `asset_id` match your destination chain and asset.
 * **Fee** — `withdraw_fee_atoms` for the asset from [`assets`](../native-core/post-info.md#assets). It is recorded, not deducted: you sign the **gross** amount, Native debits the gross, and the destination chain releases `amount − fee`. `amount` must be strictly greater than the fee.
-
-{% hint style="info" %}
-**Cap withdrawal amounts at 6 decimal places.** Native balances are 8-decimal, and the release rescales the amount into the destination token's decimals. USDT and USDC are 6-decimal on Ethereum, Arbitrum and Base, so an amount that is not a whole number of atoms at 6 decimals cannot be rescaled exactly. Native Core accepts and executes the action — the balance is debited — but the release is never constructed and the withdrawal stalls. A 6-decimal cap divides evenly into every destination token currently listed.
-{% endhint %}
+* **Decimal cap** — cap the amount at 6 decimal places. Native balances are 8-decimal and the release rescales into the destination token's decimals. USDT and USDC are 6-decimal on Ethereum, Arbitrum and Base, so a 6-decimal cap divides evenly into every destination token currently listed.
 
 ## 2. Sign and submit
 
 `withdraw` is an owner action: sign it with your main wallet under `auth_scheme: "eip712"`, never with an API wallet. The field reference is [`withdraw`](../native-core/post-trade.md#withdraw); the scheme is [EIP-712 signing](../native-core/transaction-signing.md#eip-712-signing-auth_scheme-eip712).
 
-Use the current Unix millisecond timestamp for both `withdraw_nonce` and the envelope `nonce`, incrementing locally if you send more than one withdrawal for the same account in the same millisecond. `withdraw_nonce` is the handle you use for the rest of this flow, on both chains — persist it before you sign.
+Use the current Unix millisecond timestamp for both `withdraw_nonce` and the envelope `nonce`, incrementing locally if two withdrawals for the same account land in the same millisecond.
+
+Persist `withdraw_nonce` before you sign. It is the handle for the rest of this flow, on both chains.
 
 The typed data is the common EIP-712 prefix followed by the action's own fields:
 
@@ -84,7 +79,7 @@ const signer = await recoverTypedDataAddress({ domain, types, primaryType: 'With
 if (signer.toLowerCase() !== wallet.account.address.toLowerCase()) throw new Error('typed data mismatch')
 ```
 
-The digest is pinned and identical across implementations, so you can also assert it directly. Keep this vector in your test suite and a malformed struct can never reach production:
+The digest is pinned and identical across implementations, so you can also assert it directly:
 
 ```ts
 hashTypedData({
@@ -120,7 +115,13 @@ curl -sS -X POST "$API_URL/trade" \
   }'
 ```
 
-Branch on `submission_status`, never on the HTTP status — `/trade` returns the same body shape for 200, 400, 429, 503 and 504. `accepted` means the action executed and the balance is debited. `rejected` carries an `error.code` to fix before you sign a fresh action. `timeout` is **not** a rejection: the withdrawal may still commit, so reconcile it by `cloid` with `txStatusByCloid` instead of re-signing. The decision playbook is [Handle outcomes & timeouts](../native-core/handle-timeouts.md); the code catalog is [Error Responses](../native-core/error-responses.md).
+Branch on `submission_status`, never on the HTTP status — `/trade` returns the same body shape for 200, 400, 429, 503 and 504.
+
+* `accepted` — the action executed and the balance is debited.
+* `rejected` — fix the `error.code` before you sign a fresh action.
+* `timeout` — **not** a rejection. The withdrawal may still commit, so reconcile by `cloid` with `txStatusByCloid` instead of re-signing.
+
+The decision playbook is [Handle outcomes & timeouts](../native-core/handle-timeouts.md); the code catalog is [Error Responses](../native-core/error-responses.md).
 
 The authority is the recovered signer, so the debited account is whoever signed. `dst_address` is only the EVM payout target — watch it on the destination chain.
 
@@ -145,9 +146,9 @@ https://app.native.org/explorer/address/<user>
 
 ## 4. Watch the destination chain
 
-Native's signer network co-signs the release and submits it to the vault. You do not call `withdraw()` on the contract — the vault rejects anything but the operator's multi-signed call.
+Poll `usedNonces(dstAddress, withdrawNonce)` on the destination chain until it returns `true`, on an interval that suits that chain. You never call `withdraw()` yourself — the vault rejects anything but the operator's multi-signed call.
 
-`usedNonces` is the vault's permanent replay guard, keyed by the payout address and your `withdraw_nonce`. It flips to `true` in the same transaction that transfers the tokens:
+`usedNonces` is the vault's permanent replay guard, keyed by the payout address and your `withdraw_nonce`. It flips to `true` in the same transaction that transfers the tokens, so `true` is terminal.
 
 ```solidity
 function usedNonces(address user, uint256 nonce) external view returns (bool);
@@ -160,9 +161,11 @@ const released = await publicClient.readContract({
 })
 ```
 
-`true` is terminal — poll on an interval that suits the destination chain and stop on the first `true`. For the exact credited amount take `amount − withdraw_fee_atoms` from the values you already hold. `/info` does not map `(asset_id, chain_id)` onto a destination ERC20 address, and matching by symbol does not work on the wrapped-native routes — `ETH` is `WETH`, `BNB` is `WBNB` — or on Arbitrum `USDT`, which is `USD₮0`. If you would rather read the token's `Transfer` event, pin the addresses for the routes you support at integration time.
+Compute the credited amount yourself: `amount − withdraw_fee_atoms`, from values you already hold.
 
-A withdrawal debited on Native that still shows `usedNonces == false` after a long wait is stalled, not lost. The release pipeline retries and never drops a debited withdrawal; the amount-precision rule in step 1 is the most common cause.
+To watch the token's `Transfer` event instead, pin the destination ERC20 addresses for the routes you support at integration time. `/info` does not map `(asset_id, chain_id)` onto an address, and symbol matching breaks on the wrapped-native routes — `ETH` is `WETH`, `BNB` is `WBNB` — and on Arbitrum `USDT`, which is `USD₮0`.
+
+A withdrawal debited on Native that still shows `usedNonces == false` after a long wait is stalled, not lost. The release pipeline retries and never drops a debited withdrawal; the decimal cap in step 1 is the most common cause.
 
 ## What can go wrong
 
