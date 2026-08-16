@@ -10,6 +10,7 @@ Two routes lead into the same `earn_balance`. Choose the route by where the fund
 | -------------- | ---------------------------------------------- | -------------------------------------- |
 | You send       | `deposit()` on the vault contract               | A signed `transfer` action             |
 | Signed with    | An EVM transaction                              | EIP-712 typed data                     |
+| Minimum        | Worth at least 10 USD                           | None                                   |
 | Settles in     | Minutes                                         | About one Core block                   |
 | `deposit_type` | `bridge_deposit`                                | `direct_transfer`                      |
 
@@ -29,7 +30,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
 
 ## From an EVM chain
 
-**This is the Native Core deposit flow, with one argument changed.** Follow [Deposit](../deposit-withdraw/deposit.md): check whether the account exists, size the activation fee, approve and call the vault, then read the deposit nonce from the receipt. Every rule on that page applies here.
+**This is the Native Core deposit flow, with one argument changed.** Follow [Deposit](../deposit-withdraw/deposit.md): check whether the account exists, size the activation fee, meet the [10 USD minimum](../deposit-withdraw/deposit.md#3-approve-and-deposit), approve and call the vault, then read the deposit nonce from the receipt. Every rule on that page applies here, including the minimum: a deposit below it is held before it ever reaches the Pool.
 
 `actionFlag` is that argument, and it also decides where the deposit lands and where you confirm it:
 
@@ -201,7 +202,7 @@ Paging returns `next_before_id` whenever a page comes back exactly `limit` long,
 | Symptom                                            | Cause                                                             | What to do                                                  |
 | -------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------ |
 | Deposit mined, never appears                        | `actionFlag` was not `1`, so it credited the trading balance instead | Check the balance on Native Core; the funds are not lost      |
-| Deposit mined, never appears, `actionFlag` was `1`  | The amount or the activation fee broke a rule on the Native Core deposit page | See [What can go wrong](../deposit-withdraw/deposit.md#what-can-go-wrong) there |
+| Deposit mined, never appears, `actionFlag` was `1`  | The amount was below the 10 USD minimum, or the amount or activation fee broke another rule on the Native Core deposit page | See [What can go wrong](../deposit-withdraw/deposit.md#what-can-go-wrong) there |
 | `status: "rejected"`                                | The asset is not listed for the Pool, or has `deposit_enabled: false` | Read `config` before building the transaction                |
 | Transfer returns `missing_cloid` or `invalid_cloid` | `cloid` omitted, or not 16 bytes                                     | Send a 16-byte `cloid` and sign with `cloidPresent: true`     |
 | Transfer rejected for its signing scheme            | The binary scheme was used; `transfer` accepts only `auth_scheme: "eip712"` | Sign the typed data above and post the 65-byte signature |
