@@ -198,7 +198,7 @@ instant     created → authorizing → authorized → transferring → complete
 
 These nine are also the accepted values for the `status` filter; any other value is rejected.
 
-{% hint style="warning" %}
+{% hint style="info" %}
 **A failed payout does not get its own status.** The status stops advancing and `failure_code` with `failure_message` appear on the record. A withdrawal sitting in a non-terminal state with `failure_code` set is stuck, not in flight, and `manual_review` never resolves on its own. Treat both as terminal for your own polling and report them.
 {% endhint %}
 
@@ -268,7 +268,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
   }'
 ```
 
-{% hint style="warning" %}
+{% hint style="info" %}
 **After a network timeout, resend the identical request body. Do not re-sign.**
 
 The first claim binds its signature digest to the withdrawal. A byte-identical resend short-circuits and returns the same result; a fresh signature with a new deadline is rejected against the bound digest. Keep the exact body you sent.

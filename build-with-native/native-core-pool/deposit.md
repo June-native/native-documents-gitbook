@@ -44,7 +44,7 @@ function deposit(address token, uint256 amount, uint256 actionFlag)
     external payable returns (uint256 wNLPAmount);
 ```
 
-{% hint style="warning" %}
+{% hint style="info" %}
 Passing `actionFlag: 0` produces a transaction that succeeds and credits the Native Core trading balance instead. The funds are not lost, but they are not earning, and no Pool record explains why.
 {% endhint %}
 
@@ -169,7 +169,7 @@ An accepted transfer debits the Core balance immediately. The Pool credit lands 
 
 The row appears in `deposits` with `deposit_type: "direct_transfer"` and no transaction hashes — the Pool does not record one for this route. Match on the asset, the amount, and `core_event_timestamp_ms`, then use `operation_id` as the key from that point on. `operation_id` is assigned when the event is ingested and cannot be computed before you submit; your `cloid` is the handle until the row exists.
 
-{% hint style="warning" %}
+{% hint style="info" %}
 A direct transfer that cannot be credited leaves **no record at all**. Sending an asset the Pool has not listed, or one with `deposit_enabled: false`, moves the funds into the vault and produces nothing to poll: no row, no `rejected` status. Check `config` before you sign, and stop a client that is waiting for a row rather than letting it poll forever.
 {% endhint %}
 

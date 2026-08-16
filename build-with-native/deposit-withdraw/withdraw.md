@@ -19,7 +19,7 @@ Read the route's constraints first. Both come from `/info` and are enforced at a
 * **Minimum** — `min_withdraw_atoms` from the [`accountingWithdrawTokens`](../native-core/post-info.md#accountingwithdrawtokens) row whose `chain_id` and `asset_id` match your destination chain and asset.
 * **Fee** — `withdraw_fee_atoms` for the asset from [`assets`](../native-core/post-info.md#assets). It is recorded, not deducted: you sign the **gross** amount, Native debits the gross, and the destination chain releases `amount − fee`. `amount` must be strictly greater than the fee.
 
-{% hint style="warning" %}
+{% hint style="info" %}
 **Cap withdrawal amounts at 6 decimal places.** Native balances are 8-decimal, and the release rescales the amount into the destination token's decimals. USDT and USDC are 6-decimal on Ethereum, Arbitrum and Base, so an amount that is not a whole number of atoms at 6 decimals cannot be rescaled exactly. Native Core accepts and executes the action — the balance is debited — but the release is never constructed and the withdrawal stalls. A 6-decimal cap divides evenly into every destination token currently listed.
 {% endhint %}
 
@@ -74,7 +74,7 @@ const signature = await wallet.signTypedData({ domain, types, primaryType: 'With
 
 The domain carries **no `chainId`**, so a wallet signs it while connected to any EVM chain. Post the wallet's raw 65-byte `r‖s‖v` signature verbatim.
 
-{% hint style="warning" %}
+{% hint style="info" %}
 Assert the recovery locally while you build the integration. Native derives the account from the recovered signer, so typed data that does not match this definition recovers a *different* address — one with no account — and the withdrawal comes back as `OwnerDoesNotExist`, never as a signature error. A wrong struct, a stray `chainId` in the domain, and a field in the wrong order all fail this way.
 
 ```ts

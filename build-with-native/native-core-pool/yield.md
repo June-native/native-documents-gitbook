@@ -42,7 +42,7 @@ Holding time within a day does not matter. Only the balance at `snapshot_time_ut
 
 `projected_apy` is a **ratio, not a percentage**: `"0.12"` is 12%.
 
-{% hint style="warning" %}
+{% hint style="info" %}
 `projected_apy` returns `"0"` both for a genuine zero and for every case where the figure cannot be computed: fewer than two completed distributions, a non-positive TVL, or a non-positive latest distribution. The two are indistinguishable, so `"0"` cannot be read as a rate.
 
 Both fields are omitted from the response when the backend returns nothing for them, so read them defensively.

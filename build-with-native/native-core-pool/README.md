@@ -59,7 +59,7 @@ Every Pool operation is `POST /api/v3/earn` with a `type` field naming it.
 { "code": 131004, "message": "limit exceeds max 200" }
 ```
 
-{% hint style="warning" %}
+{% hint style="info" %}
 Read `code` before you read `data`. A rate-limited or failed request that you treat as a 200 with an empty body reads as "no deposits yet" and never recovers. The full list is in [Error codes](reference.md#error-codes).
 {% endhint %}
 
@@ -100,7 +100,7 @@ Every `*_unix_ms` field is a millisecond timestamp.
 
 Read the routing table at runtime. Operations list and delist assets and change limits, so treat every address, id, and limit below as a read rather than a constant.
 
-{% hint style="warning" %}
+{% hint style="info" %}
 Addresses, transaction hashes and signatures in the examples throughout this section are placeholders, shortened to `0x1111…1111` form for readability. Substitute full-length values, and resolve every address at runtime rather than copying one into your code as a constant.
 {% endhint %}
 

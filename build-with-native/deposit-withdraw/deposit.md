@@ -63,7 +63,7 @@ const usdAtoms = BigInt(markPrices.find(p => p.asset_id === gasAssetId).usd_atom
 const activationFeeWei = 10n ** 26n / usdAtoms
 ```
 
-{% hint style="warning" %}
+{% hint style="info" %}
 A first deposit that underpays past the tolerance is a **permanent** validation failure. The tokens sit in the vault, the balance is never credited, and the order is not retried — recovering it takes manual intervention from Native. Read `accountStatus` immediately before you build the transaction, and never guess the fee to zero.
 {% endhint %}
 
@@ -108,7 +108,7 @@ const depositHash = await wallet.writeContract({
 const receipt = await publicClient.waitForTransactionReceipt({ hash: depositHash })
 ```
 
-{% hint style="warning" %}
+{% hint style="info" %}
 **Floor the amount to 8 decimal places yourself — the vault does not.** Native credits at 8 decimals (`balance_decimals`) and settlement refuses any deposit whose amount does not convert to 8 decimals exactly. The contract carries no matching check: an over-precise amount produces a **successful** transaction, and the credit is then held for manual review. Deposits are forward-only, so nothing is returned.
 
 ```ts
