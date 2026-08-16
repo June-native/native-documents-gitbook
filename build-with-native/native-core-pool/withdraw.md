@@ -268,7 +268,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
   }'
 ```
 
-{% hint style="danger" %}
+{% hint style="warning" %}
 **After a network timeout, resend the identical request body. Do not re-sign.**
 
 The first claim binds its signature digest to the withdrawal. A byte-identical resend short-circuits and returns the same result; a fresh signature with a new deadline is rejected against the bound digest. Keep the exact body you sent.

@@ -44,7 +44,7 @@ function deposit(address token, uint256 amount, uint256 actionFlag)
     external payable returns (uint256 wNLPAmount);
 ```
 
-{% hint style="danger" %}
+{% hint style="warning" %}
 Passing `actionFlag: 0` produces a transaction that succeeds and credits the Native Core trading balance instead. The funds are not lost, but they are not earning, and no Pool record explains why.
 {% endhint %}
 
