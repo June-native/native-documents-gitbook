@@ -284,16 +284,17 @@ Lifecycle transitions of your accepted orders. `data` is an array of the transit
 | `iocCancelRejected` | IOC order found no fill |
 | `fokCancelRejected` | FOK order could not be filled in full |
 | `marketOrderNoLiquidityRejected` | market order found no liquidity |
-| `insufficientspotcredit` | spot-credit account had no room left for this order |
 
-  That is the complete list — there is no bare `rejected`.
+  There is no bare `rejected` — every rejection names its reason.
 
-  Every value meaning "the order died without resting" ends in `Rejected`, **with
-  one exception**: `insufficientspotcredit` belongs to the same class but is
-  currently emitted in the engine's own spelling. So test for
-  `status.endsWith("Rejected") || status === "insufficientspotcredit"` rather
-  than the suffix alone. Post-only crossings are by far the most common
+  Values meaning "the order died without resting" end in `Rejected`, so **match
+  the suffix, not the exact word** — `status.endsWith("Rejected")` stays correct
+  as reasons are added. Post-only crossings are by far the most common
   rejection, and arrive as `badAloPxRejected`.
+
+  Treat any status you do not recognise as **terminal-until-proven-otherwise**:
+  read the order back with [`orderStatus`](post-info.md#orderstatus) and use its
+  `filled_qty` and `is_resting` rather than assuming the order is still working.
 
 * **`selfTradeCanceled` is a cancel, not a rejection, and it may have traded.**
   A crossing order can sweep several price levels and only then meet your own
