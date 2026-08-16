@@ -119,6 +119,10 @@ const amount = requested - (requested % scale)
 Tokens with 8 decimals or fewer — WBTC, cbBTC, and USDC/USDT on Ethereum, Base and Arbitrum — cannot carry excess precision and need no adjustment. `minDepositDecimalByUnderlying(token)` returns the grid (`8` on every listed token) if you would rather read it than assume it.
 {% endhint %}
 
+**A deposit must also be worth at least 10 USD.** Settlement enforces that floor and the vault does not, so an amount below it produces a successful transaction that is never credited, never appears in `deposits`, and is never retried. Recovering it takes manual intervention from Native.
+
+The floor is a fixed amount of the deposited token, set per chain and token, rather than a conversion from the current price. On a stablecoin it is 10 tokens. On a volatile token, quote above 10 USD rather than exactly at it: a rise in that token's price lifts the floor above what 10 USD buys.
+
 The one condition the vault does gate is **pause**: `isDepositPaused(token)` covers a single token, `emergencyPaused()` the whole vault. Read both before you build the transaction so the user sees a reason instead of a revert.
 
 To fund an address other than the caller — a wallet or aggregator depositing on a user's behalf — use `depositFor`, which credits `user` instead of `msg.sender`:
@@ -191,7 +195,7 @@ The address page lists the account's deposits and withdrawals, which is the quic
 | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | `deposit()` reverts `UnsupportedUnderlying`    | Token is not listed on this vault                                                                                            | Read `getSupportedUnderlyings()` before submitting                       |
 | `deposit()` reverts with no data to decode     | Allowance or balance too low — most ERC20s revert here without a reason string, so nothing decodes                            | Re-check the allowance you set in step 3                                |
-| Mined, still no credit well past 5 minutes     | Amount was not on the 8-decimal grid, or a first deposit underpaid the activation fee — read `getDepositRecord(nonce)` and check `amount` and `msgValue` | Neither is self-recoverable — contact Native with the source tx hash     |
+| Mined, still no credit well past 5 minutes     | Amount was below the 10 USD minimum, was not on the 8-decimal grid, or a first deposit underpaid the activation fee — read `getDepositRecord(nonce)` and check `amount` and `msgValue` | None of the three is self-recoverable — contact Native with the source tx hash |
 | Mined, no credit yet, account already existed  | Still inside the normal settlement delay                                                                                     | Keep polling; report a credit that has not landed well past 5 minutes    |
 | `429` with `RateLimited`                       | More than 1 `/info` request per second from one IP                                                                           | Wait the `retry after` interval in the error, and share one budget across loops |
 
