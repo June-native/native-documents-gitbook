@@ -12,7 +12,7 @@ Read [Deposit & Withdraw](README.md) first for the shared endpoints, discovery q
 
 Three rules govern the amount. The first two come from `/info` and are enforced at admission. The third is enforced nowhere: break it and Native Core accepts the action, debits the balance, and the release is never constructed.
 
-* **Minimum** — `min_withdraw_atoms` from the [`accountingWithdrawTokens`](../native-core/post-info.md#accountingwithdrawtokens) row whose `chain_id` and `asset_id` match your destination chain and asset.
+* **Minimum** — `min_withdraw_atoms` from the [`accountingWithdrawTokens`](../native-core/post-info.md#accountingwithdrawtokens) entry whose `chain_id` and `asset_id` match your destination chain and asset.
 * **Fee** — `withdraw_fee_atoms` for the asset from [`assets`](../native-core/post-info.md#assets). It is recorded, not deducted: you sign the **gross** amount, Native debits the gross, and the destination chain releases `amount − fee`. `amount` must be strictly greater than the fee.
 * **Decimal cap** — cap the amount at 6 decimal places. Native balances are 8-decimal and the release rescales into the destination token's decimals. USDT and USDC are 6-decimal on Ethereum, Arbitrum and Base, so a 6-decimal cap divides evenly into every destination token currently listed.
 

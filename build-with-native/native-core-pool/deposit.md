@@ -35,7 +35,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
 {% hint style="warning" %}
 **Deposit at least 10 USD, and carry the activation fee as `msg.value` on a first deposit.**
 
-Break either rule and the transaction still succeeds. Nothing is credited and no `deposits` row appears.
+Break either rule and the transaction still succeeds. The funds are never credited, and `deposits` never returns them.
 {% endhint %}
 
 `actionFlag` is that argument, and it also decides where the deposit lands and where you confirm it:
@@ -172,12 +172,12 @@ The `transfer` action goes to Native Core's `/trade`, which returns the Native C
 
 ### 3. Wait for the credit
 
-An accepted transfer debits the Core balance immediately. The Pool credit lands about one Core block later. Treat that as typical latency rather than a guarantee, and poll for the row.
+An accepted transfer debits the Core balance immediately. The Pool credit lands about one Core block later. Treat that as typical latency rather than a guarantee, and poll for the deposit.
 
-The row appears in `deposits` with `deposit_type: "direct_transfer"` and no transaction hashes — the Pool does not record one for this route. Match on the asset, the amount, and `core_event_timestamp_ms`, then use `operation_id` as the key from that point on. `operation_id` is assigned when the event is ingested and cannot be computed before you submit; your `cloid` is the handle until the row exists.
+The deposit appears in `deposits` with `deposit_type: "direct_transfer"` and no transaction hashes — the Pool does not record one for this route. Match on the asset, the amount, and `core_event_timestamp_ms`, then use `operation_id` as the key from that point on. `operation_id` is assigned when the event is ingested and cannot be computed before you submit; your `cloid` is the handle until it appears.
 
 {% hint style="info" %}
-A direct transfer that cannot be credited leaves **no record at all**. Sending an asset the Pool has not listed, or one with `deposit_enabled: false`, moves the funds into the vault and produces nothing to poll: no row, no `rejected` status. Check `config` before you sign, and stop a client that is waiting for a row rather than letting it poll forever.
+A direct transfer that cannot be credited leaves **no record at all**. Sending an asset the Pool has not listed, or one with `deposit_enabled: false`, moves the funds into the vault and produces nothing to poll: no entry in `deposits`, no `rejected` status. Check `config` before you sign, and stop a client that is waiting for the credit rather than letting it poll forever.
 {% endhint %}
 
 ## Reading the deposit list
@@ -213,7 +213,7 @@ Paging returns `next_before_id` whenever a page comes back exactly `limit` long,
 | Transfer returns `missing_cloid` or `invalid_cloid` | `cloid` omitted, or not 16 bytes                                     | Send a 16-byte `cloid` and sign with `cloidPresent: true`     |
 | Transfer rejected for its signing scheme            | The binary scheme was used; `transfer` accepts only `auth_scheme: "eip712"` | Sign the typed data above and post the 65-byte signature |
 | Transfer returns a parse error                      | The action carried a field not listed above                          | Send only `type`, `to`, `asset_id`, `amount` and `cloid`      |
-| Transfer accepted, no `direct_transfer` row         | The asset is not deposit-enabled for the Pool                        | Nothing will appear; report it with the Core transaction hash |
+| Transfer accepted, nothing in `deposits`             | The asset is not deposit-enabled for the Pool                        | Nothing will appear; report it with the Core transaction hash |
 | `code: 131004` `limit exceeds max 200`              | `limit` above the cap                                                | The request failed entirely; resend with `limit` at most 200  |
 
 ## Next steps

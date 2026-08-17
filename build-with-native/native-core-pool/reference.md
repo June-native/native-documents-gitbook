@@ -108,7 +108,7 @@ The three balance buckets are disjoint. Only `earn_balance` earns.
 
 | Field                    | Meaning                                                             |
 | ------------------------ | ------------------------------------------------------------------- |
-| `id`                     | Row id, also the pagination cursor                                   |
+| `id`                     | The entry id, also the pagination cursor                                   |
 | `operation_id`           | `deposit:<src_chain_id>:<vault>:<nonce>` or `direct-transfer:<native_chain_id>:<height>:<tx_index>:<event_index>` |
 | `deposit_type`           | `bridge_deposit` or `direct_transfer`                                |
 | `asset_id`               | The credited asset                                                   |
@@ -128,14 +128,14 @@ Parameters match `deposits`.
 
 | Field                | Meaning                                                    |
 | -------------------- | ---------------------------------------------------------- |
-| `id`                 | Row id, also the pagination cursor                          |
+| `id`                 | The entry id, also the pagination cursor                          |
 | `distribution_id`    | Opaque grouping key. Contains no date                       |
 | `asset_id`           | The asset                                                   |
 | `snapshot_balance`   | The balance the share was computed from                     |
 | `yield_amount`       | The amount credited                                         |
 | `applied_at_unix_ms` | When it was credited                                        |
 
-Pass `asset_id` to sum that asset's `yield_amount` rows and reconcile the total against its `lifetime_yield`.
+Pass `asset_id` to sum that asset's `yield_amount` values and reconcile the total against its `lifetime_yield`.
 
 ## withdrawals
 
@@ -151,7 +151,7 @@ Pass `asset_id` to sum that asset's `yield_amount` rows and reconcile the total 
 
 | Field                      | Meaning                                                            |
 | -------------------------- | ------------------------------------------------------------------ |
-| `id`                       | Row id, also the pagination cursor                                  |
+| `id`                       | The entry id, also the pagination cursor                                  |
 | `operation_id`             | `withdraw:<user_address>:<user_nonce>`                              |
 | `user_address`             | Owner                                                               |
 | `user_nonce`               | The nonce signed at creation                                        |

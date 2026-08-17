@@ -11,11 +11,11 @@ Each distribution runs in four steps:
 1. At `snapshot_time_utc` each day, the Pool records every account's `earn_balance` for each asset. The snapshot is the balance at that instant, not a daily average.
 2. Operations decides the amount to distribute for that asset.
 3. Each account receives `distribution × its snapshot balance ÷ the sum of all snapshot balances`, using integer division. The undivided remainder stays with the Pool.
-4. The share is added to `earn_balance` and written as a row in `yieldHistory`.
+4. The share is added to `earn_balance` and recorded in `yieldHistory`.
 
 Because the share lands in `earn_balance`, it is included in the next snapshot and compounds.
 
-Distributions are triggered rather than scheduled, so the history is a sparse series with gaps, not one row per day.
+Distributions are triggered rather than scheduled, so the history is a sparse series with gaps, not one entry per day.
 
 ## What earns
 
@@ -90,7 +90,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
 }
 ```
 
-Each row carries everything needed to render one payout, with no follow-up request:
+Each entry carries everything needed to render one payout, with no follow-up request:
 
 | Field                | Meaning                                    |
 | -------------------- | ------------------------------------------ |
@@ -100,9 +100,9 @@ Each row carries everything needed to render one payout, with no follow-up reque
 
 `distribution_id` is an opaque grouping key. It contains no date; use `applied_at_unix_ms` for time.
 
-The list contains applied rows only, so it sums to `lifetime_yield` — but only within one asset. **Pass `asset_id`.** Without it the response mixes every asset the address holds, and comparing that sum against a single `lifetime_yield` will never reconcile.
+The list contains applied distributions only, so it sums to `lifetime_yield` — but only within one asset. **Pass `asset_id`.** Without it the response mixes every asset the address holds, and comparing that sum against a single `lifetime_yield` will never reconcile.
 
-An account whose pro-rata share rounds down to zero gets no row for that distribution.
+An account whose pro-rata share rounds down to zero gets no entry for that distribution.
 
 `asset_id`, `before_id` and `limit` behave as they do on the other lists; see [Pagination](reference.md#pagination).
 
