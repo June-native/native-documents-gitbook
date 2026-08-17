@@ -30,15 +30,12 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
 
 ## From an EVM chain
 
-**This is the Native Core deposit flow, with one argument changed.** Follow [Deposit](../deposit-withdraw/deposit.md): check whether the account exists, size the activation fee, validate the amount, approve and call the vault, then read the deposit nonce from the receipt. Every rule on that page applies here.
+**This is the Native Core deposit flow, with one argument changed.** Follow [Deposit](../deposit-withdraw/deposit.md): check whether the account exists, [size the activation fee](../deposit-withdraw/deposit.md#2-size-the-activation-fee), [validate the amount](../deposit-withdraw/deposit.md#3-validate-the-amount), approve and call the vault, then read the deposit nonce from the receipt. Every rule on that page applies here.
 
 {% hint style="info" %}
-**Two of those rules decide whether the deposit is credited at all, and both fail silently.**
+**Two of those rules decide whether the deposit is credited at all, and both fail silently.** The amount must be worth at least 10 USD. A first deposit, from an address with no Native Core account, must also carry the activation fee as `msg.value`, worth 1 USD in the source chain's gas token and short by no more than 30%.
 
-* **Deposit at least 10 USD.** Below that floor, settlement holds the deposit before it ever reaches the Pool. See [Validate the amount](../deposit-withdraw/deposit.md#3-validate-the-amount).
-* **Pay the activation fee on a first deposit.** An address with no Native Core account owes a one-time fee worth 1 USD in the source chain's gas token, sent as `msg.value`. Underpay past the 30% tolerance and the deposit is never credited. See [Size the activation fee](../deposit-withdraw/deposit.md#2-size-the-activation-fee).
-
-Break either one and the transaction still succeeds on-chain. Nothing appears in the Pool's `deposits` — not even a `rejected` row — and recovery takes manual intervention from Native.
+Break either rule and the transaction still succeeds on-chain. Nothing is credited, nothing appears in the Pool's `deposits`, not even a `rejected` row, and recovery takes manual intervention from Native.
 {% endhint %}
 
 `actionFlag` is that argument, and it also decides where the deposit lands and where you confirm it:
