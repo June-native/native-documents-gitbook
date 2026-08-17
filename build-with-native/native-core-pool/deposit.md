@@ -35,7 +35,7 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
 {% hint style="warning" %}
 **Deposit at least 10 USD, and carry the activation fee as `msg.value` on a first deposit.**
 
-Break either rule and the transaction still succeeds, but the funds will not be credited.
+Break either rule and the funds will not be credited.
 {% endhint %}
 
 `actionFlag` is that argument, and it also decides where the deposit lands and where you confirm it:
