@@ -36,7 +36,7 @@ function deposit(address token, uint256 amount, uint256 actionFlag)
 
 Pulls `amount` of `token` from `msg.sender` and credits that address's Native Core account. Requires an ERC20 allowance for the vault. Pass `actionFlag: 0`.
 
-`msg.value` carries the one-time account activation fee and must be `0` for an account that already exists. The contract does not validate it — an incorrect value produces a successful transaction that later fails validation off-chain. See [Deposit](deposit.md#2-size-the-activation-fee).
+`msg.value` carries the one-time account activation fee and must be `0` for an account that already exists. The contract does not validate it. An incorrect value passes on-chain and then fails settlement, so the funds are not credited. See [Deposit](deposit.md#2-size-the-activation-fee).
 
 `amount` is in the token's own decimals — floor it to 8 decimal places and keep it worth at least 10 USD before you submit ([Deposit](deposit.md#3-validate-the-amount)). The contract does **not** constrain either rule but settlement does: an amount that breaks one is accepted on-chain and then held off-chain, with no refund.
 

@@ -52,7 +52,7 @@ function deposit(address token, uint256 amount, uint256 actionFlag)
 ```
 
 {% hint style="info" %}
-Passing `actionFlag: 0` produces a transaction that succeeds and credits the Native Core trading balance instead. The funds are not lost, but they are not earning, and no Pool record explains why.
+Passing `actionFlag: 0` credits the Native Core trading balance instead. The funds are not lost, but they are not earning, and the Pool has no record of them.
 {% endhint %}
 
 `depositFor` carries the same argument, so a wallet or custodian depositing on a user's behalf passes `actionFlag: 1` the same way.

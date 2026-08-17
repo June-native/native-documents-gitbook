@@ -59,16 +59,17 @@ const usdAtoms = BigInt(markPrices.find(p => p.asset_id === gasAssetId).usd_atom
 const activationFeeWei = 10n ** 26n / usdAtoms
 ```
 
-{% hint style="info" %}
-A first deposit that underpays past the tolerance is a **permanent** validation failure. The tokens sit in the vault, the balance is never credited, and the order is not retried — recovering it takes manual intervention from Native. Read `accountStatus` immediately before you build the transaction, and never guess the fee to zero.
+{% hint style="warning" %}
+**Never guess the fee to zero.** Read `accountStatus` immediately before you build the transaction. A first deposit that underpays past the tolerance is permanent: the funds will not be credited.
 {% endhint %}
 
 ## 3. Validate the amount
 
-Two rules the vault does not enforce. Break either one and the transaction still succeeds: nothing is credited, nothing is retried, and recovery takes manual intervention from Native.
+{% hint style="warning" %}
+**Floor the amount to 8 decimal places, and deposit at least 10 USD.** The vault enforces neither rule. Break either one and the funds will not be credited.
+{% endhint %}
 
-* **8-decimal grid** — floor the amount to 8 decimal places. Native credits at 8 decimals (`balance_decimals`) and settlement refuses any amount that does not convert exactly. Tokens with 8 decimals or fewer need no adjustment: WBTC, cbBTC, and USDC/USDT on Ethereum, Base and Arbitrum cannot carry excess precision.
-* **10 USD minimum** — the floor is a fixed amount of the deposited token, set per chain and token, rather than a conversion from the current price. On a stablecoin it is 10 tokens. On a volatile token, quote above 10 USD rather than exactly at it: a rise in that token's price lifts the floor above what 10 USD buys.
+**8-decimal grid.** Native credits at 8 decimals (`balance_decimals`), and settlement refuses any amount that does not convert exactly. Tokens with 8 decimals or fewer need no adjustment: WBTC, cbBTC, and USDC/USDT on Ethereum, Base and Arbitrum cannot carry excess precision.
 
 ```ts
 const scale = 10n ** BigInt(Math.max(0, decimals - 8))   // 10^10 for an 18-decimal token
@@ -76,6 +77,8 @@ const amount = requested - (requested % scale)
 ```
 
 `minDepositDecimalByUnderlying(token)` returns the grid (`8` on every listed token).
+
+**10 USD minimum.** The floor is a fixed amount of the deposited token, set per chain and token, not a conversion from the current price. On a stablecoin it is 10 tokens. On a volatile token, quote above 10 USD rather than exactly at it: a rise in that token's price lifts the floor above what 10 USD buys.
 
 ## 4. Approve and deposit
 
