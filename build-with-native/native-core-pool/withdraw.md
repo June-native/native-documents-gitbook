@@ -199,7 +199,7 @@ instant     created → authorizing → authorized → transferring → complete
 These nine are also the accepted values for the `status` filter; any other value is rejected.
 
 {% hint style="info" %}
-**A failed payout does not get its own status.** The status stops advancing and `failure_code` with `failure_message` appear on the record. A withdrawal sitting in a non-terminal state with `failure_code` set is stuck, not in flight, and `manual_review` never resolves on its own. Treat both as terminal for your own polling and report them.
+**A failed payout does not get its own status.** The status stops advancing and `failure_code` with `failure_message` appear on the record: `core_transfer_rejected` when Native Core did not accept the payout transfer, `core_transfer_committed_failure` when it was submitted and did not succeed. Neither retries on its own. A record in either state still holds the address's single in-flight slot, so no new withdrawal can be created for that address on any asset, and the gross amount stays out of `earn_balance`. Report it with its `operation_id`.
 {% endhint %}
 
 `claimed_at_unix_ms`, `cancelled_at_unix_ms` and `completed_at_unix_ms` are always present, and `null` until they happen. They are not mutually exclusive: claiming a scheduled withdrawal sets `claimed_at` and `completed_at` to the same value.
