@@ -181,7 +181,7 @@
                         "balances": [
                           {
                             "asset_id": 2,
-                            "earn_balance": "10000000000",
+                            "earn_balance": "10003287671",
                             "in_queue_balance": "0",
                             "withdraw_locked_balance": "0",
                             "lifetime_deposit": "10000000000",
