@@ -32,10 +32,10 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
 
 **This is the Native Core deposit flow, with one argument changed.** Follow [Deposit](../deposit-withdraw/deposit.md): check whether the account exists, [size the activation fee](../deposit-withdraw/deposit.md#2-size-the-activation-fee), [validate the amount](../deposit-withdraw/deposit.md#3-validate-the-amount), approve and call the vault, then read the deposit nonce from the receipt. Every rule on that page applies here.
 
-{% hint style="info" %}
-**Two of those rules decide whether the deposit is credited at all, and both fail silently.** The amount must be worth at least 10 USD. A first deposit, from an address with no Native Core account, must also carry the activation fee as `msg.value`, worth 1 USD in the source chain's gas token and short by no more than 30%.
+{% hint style="warning" %}
+**Deposit at least 10 USD, and carry the activation fee as `msg.value` on a first deposit.**
 
-Break either rule and the transaction still succeeds on-chain. Nothing is credited, nothing appears in the Pool's `deposits`, not even a `rejected` row, and recovery takes manual intervention from Native.
+Break either rule and the transaction still succeeds. Nothing is credited and no `deposits` row appears.
 {% endhint %}
 
 `actionFlag` is that argument, and it also decides where the deposit lands and where you confirm it:
