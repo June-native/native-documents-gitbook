@@ -22,7 +22,7 @@ This section is for teams building their own deposit and withdrawal experience â
 
 ## The model
 
-Both directions are asymmetric: you act on one chain, and Native's settlement pipeline acts on the other. You never wait on your own second transaction.
+You never wait on your own second transaction.
 
 |                               | Deposit                                 | Withdraw                               |
 | ----------------------------- | --------------------------------------- | -------------------------------------- |
@@ -61,6 +61,6 @@ The current vault addresses are listed in [Vault Contract](vault-contract.md#add
 
 ## Accounts
 
-A Native Core account is created by its owner's first deposit. That first deposit carries a one-time activation fee, which [Deposit](deposit.md#2-size-the-activation-fee) covers in full â€” get it wrong and the funds are not credited.
+A first deposit creates the account and carries a one-time activation fee. Get it wrong and the funds are not credited, so read [Size the activation fee](deposit.md#2-size-the-activation-fee) before you build one.
 
 Credit accounts cannot deposit or withdraw through this path. See [Account Types](../native-core/account-types.md).

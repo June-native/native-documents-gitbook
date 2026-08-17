@@ -1,0 +1,420 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Native Core Pool API",
+    "version": "1.0.0",
+    "description": "Every Pool operation is a POST to /api/v3/earn. The `type` field in the request body names the operation. There is no API key. The HTTP status is always 200 — branch on the `code` field in the body, where `0` is success and a failure carries no `data` key."
+  },
+  "servers": [
+    {
+      "url": "https://api-ui.native.org",
+      "description": "Mainnet"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Native Core Pool",
+      "description": "Deposit, yield and withdrawal operations."
+    }
+  ],
+  "paths": {
+    "/api/v3/earn": {
+      "post": {
+        "tags": [
+          "Native Core Pool"
+        ],
+        "summary": "Native Core Pool operations",
+        "description": "Select the operation with the `type` field.\n\nThe six read operations need no signature. The three write operations carry an EIP-712 signature in `user_signature`.\n\nEach operation's parameters and response fields are documented below this block.",
+        "operationId": "earn",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EarnRequest"
+              },
+              "examples": {
+                "config": {
+                  "summary": "config — global settings and the asset list",
+                  "value": {
+                    "type": "config"
+                  }
+                },
+                "account": {
+                  "summary": "account — balances, nonce, active withdrawal",
+                  "value": {
+                    "type": "account",
+                    "user_address": "0x1111111111111111111111111111111111111111"
+                  }
+                },
+                "deposits": {
+                  "summary": "deposits — credited and rejected deposits",
+                  "value": {
+                    "type": "deposits",
+                    "user_address": "0x1111111111111111111111111111111111111111",
+                    "limit": 20
+                  }
+                },
+                "yieldHistory": {
+                  "summary": "yieldHistory — applied yield distributions",
+                  "value": {
+                    "type": "yieldHistory",
+                    "user_address": "0x1111111111111111111111111111111111111111",
+                    "asset_id": 2,
+                    "limit": 20
+                  }
+                },
+                "withdrawals": {
+                  "summary": "withdrawals — withdrawal records with payout hashes",
+                  "value": {
+                    "type": "withdrawals",
+                    "user_address": "0x1111111111111111111111111111111111111111",
+                    "limit": 20
+                  }
+                },
+                "withdrawal": {
+                  "summary": "withdrawal — one record by operation_id",
+                  "value": {
+                    "type": "withdrawal",
+                    "user_address": "0x1111111111111111111111111111111111111111",
+                    "operation_id": "withdraw:0x1111111111111111111111111111111111111111:7"
+                  }
+                },
+                "createWithdrawal": {
+                  "summary": "createWithdrawal — signed",
+                  "value": {
+                    "type": "createWithdrawal",
+                    "user_address": "0x1111111111111111111111111111111111111111",
+                    "user_nonce": 7,
+                    "withdraw_type": "scheduled",
+                    "asset_id": 2,
+                    "amount": "100000000",
+                    "deadline_unix_ms": 1786607374550,
+                    "user_signature": "0x2222222222222222222222222222222222222222222222222222222222222222333333333333333333333333333333333333333333333333333333333333333301"
+                  }
+                },
+                "claimWithdrawal": {
+                  "summary": "claimWithdrawal — signed",
+                  "value": {
+                    "type": "claimWithdrawal",
+                    "user_address": "0x1111111111111111111111111111111111111111",
+                    "operation_id": "withdraw:0x1111111111111111111111111111111111111111:7",
+                    "deadline_unix_ms": 1786607374550,
+                    "user_signature": "0x2222222222222222222222222222222222222222222222222222222222222222333333333333333333333333333333333333333333333333333333333333333301"
+                  }
+                },
+                "cancelWithdrawal": {
+                  "summary": "cancelWithdrawal — signed",
+                  "value": {
+                    "type": "cancelWithdrawal",
+                    "user_address": "0x1111111111111111111111111111111111111111",
+                    "operation_id": "withdraw:0x1111111111111111111111111111111111111111:7",
+                    "deadline_unix_ms": 1786607374550,
+                    "user_signature": "0x2222222222222222222222222222222222222222222222222222222222222222333333333333333333333333333333333333333333333333333333333333333301"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Always 200. Read `code` before `data`: `0` is success, anything else is a failure and carries no `data` key.",
+            "headers": {
+              "trace_id": {
+                "description": "Include this value when you report a problem.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EarnResponse"
+                },
+                "examples": {
+                  "config": {
+                    "summary": "config",
+                    "value": {
+                      "code": 0,
+                      "data": {
+                        "native_chain_id": 696969,
+                        "vault_address": "0x1111111111111111111111111111111111111111",
+                        "fee_wallet_address": "0x2222222222222222222222222222222222222222",
+                        "snapshot_time_utc": "00:00:00.000",
+                        "withdrawal_paused": false,
+                        "eip712_domain": {
+                          "name": "Native Core Earn",
+                          "version": "1",
+                          "verifyingContract": "0x1111111111111111111111111111111111111111"
+                        },
+                        "assets": [
+                          {
+                            "asset_id": 2,
+                            "symbol": "USDT",
+                            "balance_decimals": 8,
+                            "deposit_enabled": true,
+                            "scheduled_withdraw_enabled": true,
+                            "instant_withdraw_enabled": true,
+                            "withdraw_pending_seconds": 10,
+                            "instant_fee_bps": 5,
+                            "min_withdraw_amount": "0",
+                            "max_single_withdraw_amount": "0",
+                            "projected_apy": "0.12",
+                            "realtime_tvl_amount": "500000000000"
+                          }
+                        ]
+                      },
+                      "message": "success"
+                    }
+                  },
+                  "account": {
+                    "summary": "account",
+                    "value": {
+                      "code": 0,
+                      "data": {
+                        "user_address": "0x1111111111111111111111111111111111111111",
+                        "next_user_nonce": 7,
+                        "active_withdraw_operation_id": "",
+                        "active_withdrawal": null,
+                        "balances": [
+                          {
+                            "asset_id": 2,
+                            "earn_balance": "10000000000",
+                            "in_queue_balance": "0",
+                            "withdraw_locked_balance": "0",
+                            "lifetime_deposit": "10000000000",
+                            "lifetime_yield": "3287671",
+                            "lifetime_withdraw": "0"
+                          }
+                        ]
+                      },
+                      "message": "success"
+                    }
+                  },
+                  "deposits": {
+                    "summary": "deposits",
+                    "value": {
+                      "code": 0,
+                      "data": {
+                        "items": [
+                          {
+                            "id": 9,
+                            "operation_id": "deposit:1:0x3333333333333333333333333333333333333333:31",
+                            "deposit_type": "bridge_deposit",
+                            "asset_id": 2,
+                            "amount": "10000000000",
+                            "status": "credited",
+                            "core_height": 153570000,
+                            "core_event_timestamp_ms": 1786620000000,
+                            "src_chain_id": 1,
+                            "src_tx_hash": "0xaaaa000000000000000000000000000000000000000000000000000000000000",
+                            "core_tx_hash": "0xcccc000000000000000000000000000000000000000000000000000000000000"
+                          }
+                        ],
+                        "next_before_id": null
+                      },
+                      "message": "success"
+                    }
+                  },
+                  "yieldHistory": {
+                    "summary": "yieldHistory",
+                    "value": {
+                      "code": 0,
+                      "data": {
+                        "items": [
+                          {
+                            "id": 41,
+                            "distribution_id": "d-8f2c",
+                            "asset_id": 2,
+                            "snapshot_balance": "10000000000",
+                            "yield_amount": "3287671",
+                            "applied_at_unix_ms": 1786620000000
+                          }
+                        ],
+                        "next_before_id": null
+                      },
+                      "message": "success"
+                    }
+                  },
+                  "withdrawals": {
+                    "summary": "withdrawals",
+                    "value": {
+                      "code": 0,
+                      "data": {
+                        "items": [
+                          {
+                            "id": 12,
+                            "operation_id": "withdraw:0x1111111111111111111111111111111111111111:7",
+                            "user_address": "0x1111111111111111111111111111111111111111",
+                            "user_nonce": 7,
+                            "withdraw_type": "scheduled",
+                            "asset_id": 2,
+                            "gross_amount": "100000000",
+                            "user_amount": "100000000",
+                            "fee_amount": "0",
+                            "fee_bps_snapshot": 0,
+                            "request_deadline_unix_ms": 1786607374550,
+                            "claimable_at_unix_ms": 1786607384550,
+                            "status": "queued",
+                            "created_at_unix_ms": 1786607374550,
+                            "claimed_at_unix_ms": null,
+                            "cancelled_at_unix_ms": null,
+                            "completed_at_unix_ms": null
+                          }
+                        ],
+                        "next_before_id": null
+                      },
+                      "message": "success"
+                    }
+                  },
+                  "rateLimited": {
+                    "summary": "Rate limited — note the absent data key",
+                    "value": {
+                      "code": 201005,
+                      "message": "rate reach limit"
+                    }
+                  },
+                  "invalidParameter": {
+                    "summary": "Invalid parameter",
+                    "value": {
+                      "code": 131004,
+                      "message": "limit exceeds max 200"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EarnRequest": {
+        "type": "object",
+        "description": "One body shape for every operation. `type` selects the operation and decides which of the fields below apply.",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "The operation to run.",
+            "enum": [
+              "config",
+              "account",
+              "deposits",
+              "yieldHistory",
+              "withdrawals",
+              "withdrawal",
+              "createWithdrawal",
+              "claimWithdrawal",
+              "cancelWithdrawal"
+            ]
+          },
+          "user_address": {
+            "type": "string",
+            "description": "The account to act on. Required by every operation except config. On the three write operations it must match the address recovered from the signature. `0x` plus 40 hex characters.",
+            "pattern": "^0x[0-9a-fA-F]{40}$",
+            "example": "0x1111111111111111111111111111111111111111"
+          },
+          "asset_id": {
+            "type": "integer",
+            "description": "Optional filter on deposits, yieldHistory and withdrawals. Required on createWithdrawal. Read the available ids from the config response.",
+            "example": 2
+          },
+          "operation_id": {
+            "type": "string",
+            "description": "Required on withdrawal, claimWithdrawal and cancelWithdrawal, in the form `withdraw:<user_address>:<user_nonce>`.\n\nThe withdrawals operation has no such parameter. Sending one is ignored without an error and returns an unfiltered page.",
+            "example": "withdraw:0x1111111111111111111111111111111111111111:7"
+          },
+          "status": {
+            "type": "string",
+            "description": "Optional filter on withdrawals. Any value outside this list fails the request.\n\nClaimed, completed and cancelled are terminal. Manual review does not resolve on its own.",
+            "enum": [
+              "created",
+              "queued",
+              "authorizing",
+              "authorized",
+              "transferring",
+              "claimed",
+              "completed",
+              "cancelled",
+              "manual_review"
+            ]
+          },
+          "before_id": {
+            "type": "integer",
+            "description": "Pagination cursor on deposits, yieldHistory and withdrawals. Use the previous page's `next_before_id`."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Page size on deposits, yieldHistory and withdrawals.\n\nAbove 200 the request fails with `limit exceeds max 200`. It is not clamped down.",
+            "default": 50,
+            "maximum": 200,
+            "example": 20
+          },
+          "user_nonce": {
+            "type": "integer",
+            "description": "Required on createWithdrawal. Take `next_user_nonce` from the account response.",
+            "example": 7
+          },
+          "withdraw_type": {
+            "type": "string",
+            "description": "Required on createWithdrawal. Sent as this string, signed as 1 for scheduled and 2 for instant.\n\nA scheduled withdrawal waits `withdraw_pending_seconds` and charges no fee. An instant one pays `instant_fee_bps` and cannot be cancelled.",
+            "enum": [
+              "scheduled",
+              "instant"
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "description": "Required on createWithdrawal. The gross amount before fee, in the asset's 8-decimal atoms, digits only.\n\nAmounts on 18-decimal tokens exceed JavaScript's safe integer range. Parse with BigInt, never Number.",
+            "pattern": "^[0-9]+$",
+            "example": "100000000"
+          },
+          "deadline_unix_ms": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Required on the three write operations. A millisecond timestamp that must still be in the future when the request arrives.",
+            "example": 1786607374550
+          },
+          "user_signature": {
+            "type": "string",
+            "description": "Required on createWithdrawal, claimWithdrawal and cancelWithdrawal. The EIP-712 signature over the action's typed data: `0x` plus 130 hex characters (65 bytes).\n\nThe first claim binds its digest. Resend byte-identical bytes on every retry rather than signing again.",
+            "pattern": "^0x[0-9a-fA-F]{130}$",
+            "example": "0x2222222222222222222222222222222222222222222222222222222222222222333333333333333333333333333333333333333333333333333333333333333301"
+          }
+        }
+      },
+      "EarnResponse": {
+        "type": "object",
+        "description": "One envelope for every operation. The HTTP status is always 200.",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "`0` is success. `131002` backend unavailable, retry. `131004` invalid parameter or state not satisfied, read `message`. `131006` upstream timeout, retry. `201005` rate limit exceeded, wait for the next second.",
+            "example": 0
+          },
+          "data": {
+            "type": "object",
+            "description": "The operation's payload. Absent as a key on every failure, so read `code` first.\n\nA failed request treated as an empty result reads as \"no deposits yet\" and never recovers. Field-by-field definitions are documented per operation below this block.",
+            "additionalProperties": true
+          },
+          "message": {
+            "type": "string",
+            "description": "`success` when `code` is `0`, otherwise the failure detail.",
+            "example": "success"
+          }
+        }
+      }
+    }
+  }
+}
