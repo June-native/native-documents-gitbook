@@ -67,7 +67,7 @@ Every response carries a `trace_id` header. Include it when you report a problem
 
 ## Rate limits
 
-Requests are metered **per `user_address`**, and each `type` gets its own budget. Serving many users from one backend gives each of them a full budget, and a screen that reads `account` and `deposits` at once does not compete with itself.
+The budgets below apply to `POST /api/v3/earn`. Requests are metered **per `user_address`**, and each `type` holds its own budget.
 
 | Request                                                                  | Budget           |
 | ------------------------------------------------------------------------ | ---------------- |
@@ -80,6 +80,8 @@ The window resets every second. A request over the budget returns `code: 201005`
 ```json
 { "code": 201005, "message": "rate reach limit" }
 ```
+
+The Core-internal deposit route posts to `api.native.org/trade`, which is metered separately: **1 request per second per IP**, applied before the signature is checked. Over-quota requests return HTTP `429` with `error.code: "RateLimited"` and an `error.retry_after_ms` hint. `RateLimited` is the only `/trade` rejection that is resent with the same signed action; see [Rate limits & errors](../native-core/api-access.md#rate-limits-errors).
 
 ## Amounts and time
 
