@@ -42,8 +42,8 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
         "earn_balance": "4000000000",
         "in_queue_balance": "0",
         "withdraw_locked_balance": "0",
-        "lifetime_deposit": "6200000000",
-        "lifetime_yield": "0",
+        "lifetime_deposit": "5000000000",
+        "lifetime_yield": "200000000",
         "lifetime_withdraw": "1200000000"
       }
     ]
