@@ -1,0 +1,578 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Native Core Pool API",
+    "version": "1.0.0",
+    "description": "Every Pool operation is a POST to /api/v3/earn. The `type` field in the request body names the operation. There is no API key. The HTTP status is always 200 — branch on the `code` field in the body, where `0` is success and a failure carries no `data` key."
+  },
+  "servers": [
+    { "url": "https://api-ui.native.org", "description": "Mainnet" }
+  ],
+  "tags": [
+    { "name": "Native Core Pool", "description": "Deposit, yield and withdrawal operations." }
+  ],
+  "paths": {
+    "/api/v3/earn": {
+      "post": {
+        "tags": ["Native Core Pool"],
+        "summary": "Native Core Pool operations",
+        "description": "Select the operation with the `type` field. Reads (`config`, `account`, `deposits`, `yieldHistory`, `withdrawals`, `withdrawal`) need no signature. Writes (`createWithdrawal`, `claimWithdrawal`, `cancelWithdrawal`) carry an EIP-712 `user_signature`.\n\nRate limits are metered per `user_address`, each `type` with its own budget: `config` is not metered, reads get 3 per second, writes get 1 per second.",
+        "operationId": "earn",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  { "$ref": "#/components/schemas/ConfigRequest" },
+                  { "$ref": "#/components/schemas/AccountRequest" },
+                  { "$ref": "#/components/schemas/DepositsRequest" },
+                  { "$ref": "#/components/schemas/YieldHistoryRequest" },
+                  { "$ref": "#/components/schemas/WithdrawalsRequest" },
+                  { "$ref": "#/components/schemas/WithdrawalRequest" },
+                  { "$ref": "#/components/schemas/CreateWithdrawalRequest" },
+                  { "$ref": "#/components/schemas/ClaimWithdrawalRequest" },
+                  { "$ref": "#/components/schemas/CancelWithdrawalRequest" }
+                ],
+                "discriminator": {
+                  "propertyName": "type",
+                  "mapping": {
+                    "config": "#/components/schemas/ConfigRequest",
+                    "account": "#/components/schemas/AccountRequest",
+                    "deposits": "#/components/schemas/DepositsRequest",
+                    "yieldHistory": "#/components/schemas/YieldHistoryRequest",
+                    "withdrawals": "#/components/schemas/WithdrawalsRequest",
+                    "withdrawal": "#/components/schemas/WithdrawalRequest",
+                    "createWithdrawal": "#/components/schemas/CreateWithdrawalRequest",
+                    "claimWithdrawal": "#/components/schemas/ClaimWithdrawalRequest",
+                    "cancelWithdrawal": "#/components/schemas/CancelWithdrawalRequest"
+                  }
+                }
+              },
+              "examples": {
+                "config": {
+                  "summary": "config — global settings and the asset list",
+                  "value": { "type": "config" }
+                },
+                "account": {
+                  "summary": "account — balances, nonce, active withdrawal",
+                  "value": { "type": "account", "user_address": "0x1111111111111111111111111111111111111111" }
+                },
+                "deposits": {
+                  "summary": "deposits — credited and rejected deposits",
+                  "value": { "type": "deposits", "user_address": "0x1111111111111111111111111111111111111111", "limit": 20 }
+                },
+                "yieldHistory": {
+                  "summary": "yieldHistory — applied yield distributions",
+                  "value": { "type": "yieldHistory", "user_address": "0x1111111111111111111111111111111111111111", "asset_id": 2, "limit": 20 }
+                },
+                "withdrawals": {
+                  "summary": "withdrawals — withdrawal records with payout hashes",
+                  "value": { "type": "withdrawals", "user_address": "0x1111111111111111111111111111111111111111", "limit": 20 }
+                },
+                "withdrawal": {
+                  "summary": "withdrawal — one record by operation_id",
+                  "value": { "type": "withdrawal", "user_address": "0x1111111111111111111111111111111111111111", "operation_id": "withdraw:0x1111111111111111111111111111111111111111:7" }
+                },
+                "createWithdrawal": {
+                  "summary": "createWithdrawal — signed",
+                  "value": {
+                    "type": "createWithdrawal",
+                    "user_address": "0x1111111111111111111111111111111111111111",
+                    "user_nonce": 7,
+                    "withdraw_type": "scheduled",
+                    "asset_id": 2,
+                    "amount": "100000000",
+                    "deadline_unix_ms": 1786607374550,
+                    "user_signature": "0x2222222222222222222222222222222222222222222222222222222222222222333333333333333333333333333333333333333333333333333333333333333301"
+                  }
+                },
+                "claimWithdrawal": {
+                  "summary": "claimWithdrawal — signed",
+                  "value": {
+                    "type": "claimWithdrawal",
+                    "user_address": "0x1111111111111111111111111111111111111111",
+                    "operation_id": "withdraw:0x1111111111111111111111111111111111111111:7",
+                    "deadline_unix_ms": 1786607374550,
+                    "user_signature": "0x2222222222222222222222222222222222222222222222222222222222222222333333333333333333333333333333333333333333333333333333333333333301"
+                  }
+                },
+                "cancelWithdrawal": {
+                  "summary": "cancelWithdrawal — signed",
+                  "value": {
+                    "type": "cancelWithdrawal",
+                    "user_address": "0x1111111111111111111111111111111111111111",
+                    "operation_id": "withdraw:0x1111111111111111111111111111111111111111:7",
+                    "deadline_unix_ms": 1786607374550,
+                    "user_signature": "0x2222222222222222222222222222222222222222222222222222222222222222333333333333333333333333333333333333333333333333333333333333333301"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Always 200. Read `code` before `data`: `0` is success, anything else is a failure and carries no `data` key.",
+            "headers": {
+              "trace_id": {
+                "description": "Include this value when you report a problem.",
+                "schema": { "type": "string" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/ConfigResponse" },
+                    { "$ref": "#/components/schemas/AccountResponse" },
+                    { "$ref": "#/components/schemas/DepositsResponse" },
+                    { "$ref": "#/components/schemas/YieldHistoryResponse" },
+                    { "$ref": "#/components/schemas/WithdrawalsResponse" },
+                    { "$ref": "#/components/schemas/WithdrawalResponse" },
+                    { "$ref": "#/components/schemas/ErrorResponse" }
+                  ]
+                },
+                "examples": {
+                  "config": {
+                    "summary": "config",
+                    "value": {
+                      "code": 0,
+                      "data": {
+                        "native_chain_id": 696969,
+                        "vault_address": "0x1111111111111111111111111111111111111111",
+                        "fee_wallet_address": "0x2222222222222222222222222222222222222222",
+                        "snapshot_time_utc": "00:00:00.000",
+                        "withdrawal_paused": false,
+                        "eip712_domain": {
+                          "name": "Native Core Earn",
+                          "version": "1",
+                          "verifyingContract": "0x1111111111111111111111111111111111111111"
+                        },
+                        "assets": [
+                          {
+                            "asset_id": 2,
+                            "symbol": "USDT",
+                            "balance_decimals": 8,
+                            "deposit_enabled": true,
+                            "scheduled_withdraw_enabled": true,
+                            "instant_withdraw_enabled": true,
+                            "withdraw_pending_seconds": 10,
+                            "instant_fee_bps": 5,
+                            "min_withdraw_amount": "0",
+                            "max_single_withdraw_amount": "0",
+                            "projected_apy": "0.12",
+                            "realtime_tvl_amount": "500000000000"
+                          }
+                        ]
+                      },
+                      "message": "success"
+                    }
+                  },
+                  "account": {
+                    "summary": "account",
+                    "value": {
+                      "code": 0,
+                      "data": {
+                        "user_address": "0x1111111111111111111111111111111111111111",
+                        "next_user_nonce": 7,
+                        "active_withdraw_operation_id": "",
+                        "active_withdrawal": null,
+                        "balances": [
+                          {
+                            "asset_id": 2,
+                            "earn_balance": "10000000000",
+                            "in_queue_balance": "0",
+                            "withdraw_locked_balance": "0",
+                            "lifetime_deposit": "10000000000",
+                            "lifetime_yield": "3287671",
+                            "lifetime_withdraw": "0"
+                          }
+                        ]
+                      },
+                      "message": "success"
+                    }
+                  },
+                  "rateLimited": {
+                    "summary": "Rate limited — note the absent `data` key",
+                    "value": { "code": 201005, "message": "rate reach limit" }
+                  },
+                  "invalidParameter": {
+                    "summary": "Invalid parameter",
+                    "value": { "code": 131004, "message": "limit exceeds max 200" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ConfigRequest": {
+        "type": "object",
+        "description": "Global settings and the asset list. Takes no parameters and is not rate limited.",
+        "required": ["type"],
+        "properties": {
+          "type": { "type": "string", "enum": ["config"] }
+        }
+      },
+      "AccountRequest": {
+        "type": "object",
+        "description": "Balances, the next withdrawal nonce, and the in-flight withdrawal.",
+        "required": ["type", "user_address"],
+        "properties": {
+          "type": { "type": "string", "enum": ["account"] },
+          "user_address": { "$ref": "#/components/schemas/UserAddress" }
+        }
+      },
+      "DepositsRequest": {
+        "type": "object",
+        "description": "Credited and rejected deposits, newest first. Nothing in flight is listed.",
+        "required": ["type", "user_address"],
+        "properties": {
+          "type": { "type": "string", "enum": ["deposits"] },
+          "user_address": { "$ref": "#/components/schemas/UserAddress" },
+          "asset_id": { "type": "integer", "description": "Filter to one asset. Omit for all assets.", "example": 2 },
+          "before_id": { "type": "integer", "description": "Cursor from the previous page's `next_before_id`." },
+          "limit": { "$ref": "#/components/schemas/Limit" }
+        }
+      },
+      "YieldHistoryRequest": {
+        "type": "object",
+        "description": "Applied yield distributions. Pass `asset_id` to reconcile one asset's rows against its `lifetime_yield`.",
+        "required": ["type", "user_address"],
+        "properties": {
+          "type": { "type": "string", "enum": ["yieldHistory"] },
+          "user_address": { "$ref": "#/components/schemas/UserAddress" },
+          "asset_id": { "type": "integer", "example": 2 },
+          "before_id": { "type": "integer", "description": "Cursor from the previous page's `next_before_id`." },
+          "limit": { "$ref": "#/components/schemas/Limit" }
+        }
+      },
+      "WithdrawalsRequest": {
+        "type": "object",
+        "description": "Withdrawal records, with payout transaction hashes. There is no `operation_id` parameter here — sending one is ignored without an error and returns an unfiltered page. Use `withdrawal` to fetch one record.",
+        "required": ["type", "user_address"],
+        "properties": {
+          "type": { "type": "string", "enum": ["withdrawals"] },
+          "user_address": { "$ref": "#/components/schemas/UserAddress" },
+          "asset_id": { "type": "integer", "example": 2 },
+          "status": { "$ref": "#/components/schemas/WithdrawalStatus" },
+          "before_id": { "type": "integer", "description": "Cursor from the previous page's `next_before_id`." },
+          "limit": { "$ref": "#/components/schemas/Limit" }
+        }
+      },
+      "WithdrawalRequest": {
+        "type": "object",
+        "description": "One withdrawal by `operation_id`, without `core_tx_hash` or `fee_core_tx_hash`. A record belonging to another address returns the same response as one that does not exist.",
+        "required": ["type", "user_address", "operation_id"],
+        "properties": {
+          "type": { "type": "string", "enum": ["withdrawal"] },
+          "user_address": { "$ref": "#/components/schemas/UserAddress" },
+          "operation_id": { "$ref": "#/components/schemas/WithdrawalOperationId" }
+        }
+      },
+      "CreateWithdrawalRequest": {
+        "type": "object",
+        "description": "Create a withdrawal. Sign the action as `CreateWithdrawal`. One address can have only one withdrawal in flight at a time, across all assets.",
+        "required": ["type", "user_address", "user_nonce", "withdraw_type", "asset_id", "amount", "deadline_unix_ms", "user_signature"],
+        "properties": {
+          "type": { "type": "string", "enum": ["createWithdrawal"] },
+          "user_address": { "$ref": "#/components/schemas/UserAddress" },
+          "user_nonce": { "type": "integer", "description": "`next_user_nonce` from `account`.", "example": 7 },
+          "withdraw_type": {
+            "type": "string",
+            "enum": ["scheduled", "instant"],
+            "description": "Sent as this string, signed as `1` for scheduled and `2` for instant."
+          },
+          "asset_id": { "type": "integer", "example": 2 },
+          "amount": {
+            "type": "string",
+            "description": "Gross amount, before fee, in the asset's 8-decimal atoms. Digits only.",
+            "pattern": "^[0-9]+$",
+            "example": "100000000"
+          },
+          "deadline_unix_ms": { "$ref": "#/components/schemas/DeadlineUnixMs" },
+          "user_signature": { "$ref": "#/components/schemas/UserSignature" }
+        }
+      },
+      "ClaimWithdrawalRequest": {
+        "type": "object",
+        "description": "Claim a matured scheduled withdrawal. Sign the action as `ClaimWithdrawal`, hashing `operation_id` with keccak256. The first attempt binds its digest, so resend byte-identical bytes on every retry and never sign a fresh claim for the same `operation_id`.",
+        "required": ["type", "user_address", "operation_id", "deadline_unix_ms", "user_signature"],
+        "properties": {
+          "type": { "type": "string", "enum": ["claimWithdrawal"] },
+          "user_address": { "$ref": "#/components/schemas/UserAddress" },
+          "operation_id": { "$ref": "#/components/schemas/WithdrawalOperationId" },
+          "deadline_unix_ms": { "$ref": "#/components/schemas/DeadlineUnixMs" },
+          "user_signature": { "$ref": "#/components/schemas/UserSignature" }
+        }
+      },
+      "CancelWithdrawalRequest": {
+        "type": "object",
+        "description": "Cancel a scheduled withdrawal before `claimable_at_unix_ms`. Sign the action as `CancelWithdrawal`. An instant withdrawal cannot be cancelled.",
+        "required": ["type", "user_address", "operation_id", "deadline_unix_ms", "user_signature"],
+        "properties": {
+          "type": { "type": "string", "enum": ["cancelWithdrawal"] },
+          "user_address": { "$ref": "#/components/schemas/UserAddress" },
+          "operation_id": { "$ref": "#/components/schemas/WithdrawalOperationId" },
+          "deadline_unix_ms": { "$ref": "#/components/schemas/DeadlineUnixMs" },
+          "user_signature": { "$ref": "#/components/schemas/UserSignature" }
+        }
+      },
+
+      "UserAddress": {
+        "type": "string",
+        "description": "`0x` plus 40 hex characters.",
+        "pattern": "^0x[0-9a-fA-F]{40}$",
+        "example": "0x1111111111111111111111111111111111111111"
+      },
+      "UserSignature": {
+        "type": "string",
+        "description": "EIP-712 signature, `0x` plus 130 hex characters (65 bytes).",
+        "pattern": "^0x[0-9a-fA-F]{130}$",
+        "example": "0x2222222222222222222222222222222222222222222222222222222222222222333333333333333333333333333333333333333333333333333333333333333301"
+      },
+      "DeadlineUnixMs": {
+        "type": "integer",
+        "format": "int64",
+        "description": "Millisecond timestamp. Must be in the future when the request arrives.",
+        "example": 1786607374550
+      },
+      "WithdrawalOperationId": {
+        "type": "string",
+        "description": "`withdraw:<user_address>:<user_nonce>`.",
+        "example": "withdraw:0x1111111111111111111111111111111111111111:7"
+      },
+      "Limit": {
+        "type": "integer",
+        "default": 50,
+        "maximum": 200,
+        "description": "Page size. Above 200 the request fails with `limit exceeds max 200`; it is not clamped down.",
+        "example": 20
+      },
+      "Amount": {
+        "type": "string",
+        "description": "Integer atom string in the asset's `balance_decimals` (8). Parse with BigInt, never Number.",
+        "example": "10000000000"
+      },
+      "WithdrawalStatus": {
+        "type": "string",
+        "description": "Terminal statuses are `claimed`, `completed` and `cancelled`. `manual_review` does not resolve on its own.",
+        "enum": ["created", "queued", "authorizing", "authorized", "transferring", "claimed", "completed", "cancelled", "manual_review"]
+      },
+
+      "Envelope": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "type": "integer", "description": "`0` is success. `131002` backend unavailable, `131004` invalid parameter or state, `131006` upstream timeout, `201005` rate limit exceeded.", "example": 0 },
+          "message": { "type": "string", "example": "success" }
+        }
+      },
+      "ErrorResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Envelope" },
+          {
+            "type": "object",
+            "description": "A failure carries no `data` key at all. Test with the `code` field, never by reading `data` as empty."
+          }
+        ]
+      },
+
+      "ConfigResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Envelope" },
+          {
+            "type": "object",
+            "properties": { "data": { "$ref": "#/components/schemas/ConfigData" } }
+          }
+        ]
+      },
+      "ConfigData": {
+        "type": "object",
+        "properties": {
+          "native_chain_id": { "type": "integer", "description": "The Native chain id to sign with, `696969` on mainnet.", "example": 696969 },
+          "vault_address": { "type": "string", "description": "Recipient of a Core-internal deposit, and the EIP-712 `verifyingContract`." },
+          "fee_wallet_address": { "type": "string", "description": "Where instant-withdrawal fees are paid." },
+          "snapshot_time_utc": { "type": "string", "description": "Daily snapshot time, `HH:MM:SS.mmm`.", "example": "00:00:00.000" },
+          "withdrawal_paused": { "type": "boolean", "description": "Blocks creating and claiming. Cancelling is unaffected." },
+          "eip712_domain": {
+            "type": "object",
+            "description": "Pass through unchanged. Carries no `chainId`.",
+            "properties": {
+              "name": { "type": "string", "example": "Native Core Earn" },
+              "version": { "type": "string", "example": "1" },
+              "verifyingContract": { "type": "string" }
+            }
+          },
+          "assets": { "type": "array", "items": { "$ref": "#/components/schemas/Asset" } }
+        }
+      },
+      "Asset": {
+        "type": "object",
+        "properties": {
+          "asset_id": { "type": "integer", "description": "The id used by every other request.", "example": 2 },
+          "symbol": { "type": "string", "example": "USDT" },
+          "balance_decimals": { "type": "integer", "description": "Precision of every Pool amount for this asset.", "example": 8 },
+          "deposit_enabled": { "type": "boolean" },
+          "scheduled_withdraw_enabled": { "type": "boolean" },
+          "instant_withdraw_enabled": { "type": "boolean" },
+          "withdraw_pending_seconds": { "type": "integer", "description": "Scheduled wait before claiming. Also the entire cancel window." },
+          "instant_fee_bps": { "type": "integer", "description": "Instant fee in basis points, applied to the gross amount.", "example": 5 },
+          "min_withdraw_amount": { "type": "string", "description": "Minimum gross. `\"0\"` means no minimum, not a minimum of zero.", "example": "0" },
+          "max_single_withdraw_amount": { "type": "string", "description": "Maximum gross. `\"0\"` means no maximum.", "example": "0" },
+          "projected_apy": { "type": "string", "description": "Annualized ratio: `\"0.12\"` is 12%. Omitted when the backend has no value.", "example": "0.12" },
+          "realtime_tvl_amount": { "type": "string", "description": "Total earning balance for the asset, in its atoms. Omitted when the backend has no value." }
+        }
+      },
+
+      "AccountResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Envelope" },
+          { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/AccountData" } } }
+        ]
+      },
+      "AccountData": {
+        "type": "object",
+        "properties": {
+          "user_address": { "type": "string" },
+          "next_user_nonce": { "type": "integer", "description": "The `user_nonce` to sign the next `createWithdrawal` with." },
+          "active_withdraw_operation_id": { "type": "string", "description": "The in-flight withdrawal. Empty string when there is none. This is the gate — check it before creating another." },
+          "active_withdrawal": { "type": "object", "nullable": true, "description": "The same withdrawal in full. A convenience view that can be `null` while a withdrawal is active." },
+          "balances": { "type": "array", "items": { "$ref": "#/components/schemas/Balance" } }
+        }
+      },
+      "Balance": {
+        "type": "object",
+        "description": "The three balance buckets are disjoint. Only `earn_balance` earns.",
+        "properties": {
+          "asset_id": { "type": "integer" },
+          "earn_balance": { "type": "string", "description": "Available and earning." },
+          "in_queue_balance": { "type": "string", "description": "Gross amount of a pending scheduled withdrawal." },
+          "withdraw_locked_balance": { "type": "string", "description": "Gross amount of an instant withdrawal in flight." },
+          "lifetime_deposit": { "type": "string" },
+          "lifetime_yield": { "type": "string", "description": "Total yield ever credited, for this asset only." },
+          "lifetime_withdraw": { "type": "string" }
+        }
+      },
+
+      "DepositsResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Envelope" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "items": { "type": "array", "items": { "$ref": "#/components/schemas/Deposit" } },
+                  "next_before_id": { "type": "integer", "nullable": true, "description": "`null` on the last page. Set whenever a page comes back exactly `limit` long, so the final full page still carries a cursor." }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Deposit": {
+        "type": "object",
+        "description": "The three source-chain fields are absent as keys, not null, on a `direct_transfer`. Test with `if (row.src_tx_hash)`.",
+        "properties": {
+          "id": { "type": "integer", "description": "Row id, also the pagination cursor." },
+          "operation_id": { "type": "string", "description": "`deposit:<src_chain_id>:<vault>:<nonce>` or `direct-transfer:<native_chain_id>:<height>:<tx_index>:<event_index>`." },
+          "deposit_type": { "type": "string", "enum": ["bridge_deposit", "direct_transfer"] },
+          "asset_id": { "type": "integer" },
+          "amount": { "$ref": "#/components/schemas/Amount" },
+          "status": { "type": "string", "enum": ["credited", "rejected"], "description": "`rejected` means the funds require manual recovery from Native." },
+          "core_height": { "type": "integer" },
+          "core_event_timestamp_ms": { "type": "integer", "format": "int64" },
+          "src_chain_id": { "type": "integer", "description": "`bridge_deposit` only." },
+          "src_tx_hash": { "type": "string", "description": "`bridge_deposit` only. Match this against your source transaction." },
+          "core_tx_hash": { "type": "string", "description": "`bridge_deposit` only." }
+        }
+      },
+
+      "YieldHistoryResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Envelope" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "items": { "type": "array", "items": { "$ref": "#/components/schemas/YieldRow" } },
+                  "next_before_id": { "type": "integer", "nullable": true }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "YieldRow": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "description": "Row id, also the pagination cursor." },
+          "distribution_id": { "type": "string", "description": "Opaque grouping key. Contains no date." },
+          "asset_id": { "type": "integer" },
+          "snapshot_balance": { "type": "string", "description": "The balance the share was computed from." },
+          "yield_amount": { "type": "string", "description": "The amount credited." },
+          "applied_at_unix_ms": { "type": "integer", "format": "int64" }
+        }
+      },
+
+      "WithdrawalsResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Envelope" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "items": { "type": "array", "items": { "$ref": "#/components/schemas/Withdrawal" } },
+                  "next_before_id": { "type": "integer", "nullable": true }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "WithdrawalResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Envelope" },
+          { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/Withdrawal" } } }
+        ]
+      },
+      "Withdrawal": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "description": "Row id, also the pagination cursor." },
+          "operation_id": { "$ref": "#/components/schemas/WithdrawalOperationId" },
+          "user_address": { "type": "string" },
+          "user_nonce": { "type": "integer", "description": "The nonce signed at creation." },
+          "withdraw_type": { "type": "string", "enum": ["scheduled", "instant"] },
+          "asset_id": { "type": "integer" },
+          "gross_amount": { "type": "string", "description": "The signed amount, before fee." },
+          "user_amount": { "type": "string", "description": "What the user receives: `gross_amount − fee_amount`." },
+          "fee_amount": { "type": "string", "description": "`0` for a scheduled withdrawal." },
+          "fee_bps_snapshot": { "type": "integer", "description": "The rate applied, recorded at creation." },
+          "request_deadline_unix_ms": { "type": "integer", "format": "int64" },
+          "claimable_at_unix_ms": { "type": "integer", "format": "int64", "nullable": true, "description": "When claiming opens. `null` for an instant withdrawal." },
+          "status": { "$ref": "#/components/schemas/WithdrawalStatus" },
+          "created_at_unix_ms": { "type": "integer", "format": "int64" },
+          "core_tx_hash": { "type": "string", "description": "Payout transfer to the user. Key absent until submitted, and never present on the `withdrawal` request." },
+          "fee_core_tx_hash": { "type": "string", "description": "Payout transfer to the fee wallet. Key absent unless a fee was charged." },
+          "failure_code": { "type": "string", "description": "Payout failure. Key absent when there is none." },
+          "failure_message": { "type": "string", "description": "Payout failure detail. Key absent when there is none." },
+          "claimed_at_unix_ms": { "type": "integer", "format": "int64", "nullable": true, "description": "Always present, `null` until claimed." },
+          "cancelled_at_unix_ms": { "type": "integer", "format": "int64", "nullable": true, "description": "Always present, `null` until cancelled." },
+          "completed_at_unix_ms": { "type": "integer", "format": "int64", "nullable": true, "description": "Always present, `null` until paid." }
+        }
+      }
+    }
+  }
+}

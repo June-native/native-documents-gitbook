@@ -12,6 +12,12 @@ POOL_API_URL=https://api-ui.native.org
 
 The HTTP status is always 200. Success is `code: 0`; a failure carries `code` and `message` and no `data` key. See [Error codes](#error-codes).
 
+{% openapi src="../../.gitbook/assets/native-core-pool-api.json" path="/api/v3/earn" method="post" %}
+[native-core-pool-api.json](../../.gitbook/assets/native-core-pool-api.json)
+{% endopenapi %}
+
+Pick an operation from the request examples above to send it against mainnet. Every operation shares one path and one method, so the `type` field is what selects it.
+
 | `type`             | Purpose                                       | Signed |
 | ------------------ | --------------------------------------------- | ------ |
 | `config`           | Global settings and the asset list             | No     |
@@ -245,7 +251,7 @@ Sign a claim as `ClaimWithdrawal` and a cancel as `CancelWithdrawal`. The first 
 | `131006` | Upstream timeout                        | Retry                                            |
 | `201005` | Rate limit exceeded                     | Wait for the next second and retry                |
 
-These six are the complete set for `/api/v3/earn`. The Core-internal deposit route uses Native Core's `/trade`, which has its own status codes and error shape; see [Error Responses](../native-core/error-responses.md).
+These five are the complete set for `/api/v3/earn`. The Core-internal deposit route uses Native Core's `/trade`, which has its own status codes and error shape; see [Error Responses](../native-core/error-responses.md).
 
 ### Common `131004` messages
 
