@@ -73,27 +73,27 @@ Each `assets[]` entry:
 | -------------- | -------- | ------------------------- |
 | `user_address` | Yes      | `0x` plus 40 hex characters |
 
-| Field                          | Type          | Meaning                                                    |
-| ------------------------------ | ------------- | ---------------------------------------------------------- |
-| `user_address`                 | string        | The queried address                                         |
-| `next_user_nonce`              | number        | The `user_nonce` to sign the next `createWithdrawal` with   |
-| `active_withdraw_operation_id` | string        | The in-flight withdrawal, `""` when there is none           |
-| `active_withdrawal`            | object / null | The same withdrawal in full, when it can be loaded          |
-| `balances`                     | array         | One entry per asset held                                    |
-
-Use `active_withdraw_operation_id` as the gate. `active_withdrawal` is a convenience view and can be `null` while a withdrawal is active.
+| Field             | Type   | Meaning                                                   |
+| ----------------- | ------ | --------------------------------------------------------- |
+| `user_address`    | string | The queried address                                        |
+| `next_user_nonce` | number | The `user_nonce` to sign the next `createWithdrawal` with. One counter per address, shared by every asset |
+| `balances`        | array  | One entry per asset held                                   |
 
 Each `balances[]` entry:
 
-| Field                     | Meaning                                                   |
-| ------------------------- | --------------------------------------------------------- |
-| `asset_id`                | The asset                                                  |
-| `earn_balance`            | Available and earning                                      |
-| `in_queue_balance`        | Gross amount of a pending scheduled withdrawal             |
-| `withdraw_locked_balance` | Gross amount of an instant withdrawal in flight            |
-| `lifetime_deposit`        | Total ever deposited, counting only deposits that reached `credited` |
-| `lifetime_yield`          | Total yield ever credited, for this asset only             |
-| `lifetime_withdraw`       | Total ever withdrawn, **gross**. The instant fee is inside this number, so it is larger than the amount that arrived |
+| Field                          | Type          | Meaning                                              |
+| ------------------------------ | ------------- | ----------------------------------------------------- |
+| `asset_id`                     | number        | The asset                                             |
+| `earn_balance`                 | string        | Available and earning                                 |
+| `in_queue_balance`             | string        | Gross amount of a pending scheduled withdrawal        |
+| `withdraw_locked_balance`      | string        | Gross amount of an instant withdrawal in flight       |
+| `lifetime_deposit`             | string        | Total ever deposited, counting only deposits that reached `credited` |
+| `lifetime_yield`               | string        | Total yield ever credited, for this asset only        |
+| `lifetime_withdraw`            | string        | Total ever withdrawn, **gross**. The instant fee is inside this number, so it is larger than the amount that arrived |
+| `active_withdraw_operation_id` | string        | The in-flight withdrawal **for this asset**, `""` when there is none |
+| `active_withdrawal`            | object / null | The same withdrawal in full, when it can be loaded    |
+
+Use the entry's `active_withdraw_operation_id` as the gate. The withdrawal slot is per `(address, asset)`: a busy USDT entry says nothing about USDC. `active_withdrawal` is a convenience view and can be `null` while that asset's withdrawal is active, so gate on the id.
 
 The three balance buckets are disjoint. Only `earn_balance` earns.
 
@@ -276,7 +276,7 @@ These five are the complete set for `/api/v3/earn`. The Core-internal deposit ro
 | `deadline_unix_ms must be in the future`            | The deadline has passed                                       |
 | `withdrawal signer does not match user`             | Typed data mismatch; a different address was recovered        |
 | `invalid signature recovery id`                     | The signature's `v` byte is not `0`, `1`, `27` or `28`        |
-| `user already has an active withdrawal`             | One is already in flight for this address                     |
+| `user asset already has an active withdrawal`       | One is already in flight for this address and asset           |
 | `insufficient earn balance`                         | Gross amount exceeds `earn_balance`                           |
 | `withdrawal amount is below minimum`                | Below `min_withdraw_amount`                                   |
 | `withdrawal amount exceeds maximum`                 | Above `max_single_withdraw_amount`                            |

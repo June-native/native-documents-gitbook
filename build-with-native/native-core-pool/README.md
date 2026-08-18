@@ -165,6 +165,6 @@ Field definitions are in [Reference](reference.md#config).
 
 A Pool balance belongs to an address, and that address needs a Native Core account. The account is created by its owner's first deposit, which carries a one-time activation fee — see [Deposit](../deposit-withdraw/deposit.md#2-size-the-activation-fee).
 
-One address can have **one withdrawal in flight at a time**, across all assets. Check `active_withdraw_operation_id` in [`account`](reference.md#account) before creating another. An empty string means nothing is in flight.
+An address can have **one withdrawal in flight per asset**. A USDT withdrawal does not block a USDC one. Check `active_withdraw_operation_id` on that asset's entry in [`account`](reference.md#account) `balances[]` before creating another. An empty string means nothing is in flight for that asset.
 
 Credit accounts cannot deposit into or withdraw from the Pool. See [Account Types](../native-core/account-types.md).

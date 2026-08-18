@@ -16,7 +16,7 @@ Choose a type at creation. The choice is permanent.
 | Cancellable  | During the wait only          | Never                            |
 | Ends at      | `claimed`                     | `completed`                      |
 
-**One address can have one withdrawal in flight at a time**, across all assets. The next one cannot be created until the current one reaches a terminal state.
+**One address can have one withdrawal in flight per asset.** The next one *for that asset* cannot be created until the current one reaches a terminal state; other assets are unaffected. The `user_nonce` is the one thing that is not per asset — a single counter per address covers all of them.
 
 Read [Native Core Pool](README.md) first for the base URL, the response envelope, and discovery.
 
@@ -34,8 +34,6 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
   "data": {
     "user_address": "0x5555…5555",
     "next_user_nonce": 3,
-    "active_withdraw_operation_id": "",
-    "active_withdrawal": null,
     "balances": [
       {
         "asset_id": 2,
@@ -44,7 +42,9 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
         "withdraw_locked_balance": "0",
         "lifetime_deposit": "5000000000",
         "lifetime_yield": "200000000",
-        "lifetime_withdraw": "1200000000"
+        "lifetime_withdraw": "1200000000",
+        "active_withdraw_operation_id": "",
+        "active_withdrawal": null
       }
     ]
   },
@@ -53,7 +53,9 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
 ```
 
 * `next_user_nonce` is required to create a withdrawal. Read it fresh each time.
-* **`active_withdraw_operation_id` is the gate.** An empty string means nothing is in flight. Use this rather than `active_withdrawal`, which is a convenience view that can be `null` even while a withdrawal is active. Creating against a stale reading costs the user a signature and returns `user already has an active withdrawal`.
+* **`active_withdraw_operation_id` is the gate, and it is per asset.** It lives on each `balances[]` entry, not at the top level. Find the entry whose `asset_id` you are withdrawing and read it there; an empty string means nothing is in flight **for that asset**. Another asset can be busy and this one still free.
+* Use the id rather than `active_withdrawal`, which is a convenience view that can be `null` even while a withdrawal is active. Creating against a stale reading costs the user a signature and returns `user asset already has an active withdrawal`.
+* `next_user_nonce` stays at the top level because it is one counter per address, shared by every asset. Opening a USDT withdrawal also raises the nonce a later USDC withdrawal must beat.
 
 ## 2. Size the amount
 
@@ -199,7 +201,7 @@ instant     created → authorizing → authorized → transferring → complete
 These nine are also the accepted values for the `status` filter; any other value is rejected.
 
 {% hint style="info" %}
-**A failed payout does not get its own status.** The status stops advancing and `failure_code` with `failure_message` appear on the record: `core_transfer_rejected` when Native Core did not accept the payout transfer, `core_transfer_committed_failure` when it was submitted and did not succeed. Neither retries on its own. A record in either state still holds the address's single in-flight slot, so no new withdrawal can be created for that address on any asset, and the gross amount stays out of `earn_balance`. Report it with its `operation_id`.
+**A failed payout does not get its own status.** The status stops advancing and `failure_code` with `failure_message` appear on the record: `core_transfer_rejected` when Native Core did not accept the payout transfer, `core_transfer_committed_failure` when it was submitted and did not succeed. Neither retries on its own. A record in either state still holds that asset's slot, so no new withdrawal can be created for the address on that asset, and the gross amount stays out of `earn_balance`. Other assets are unaffected. Report it with its `operation_id`.
 {% endhint %}
 
 `claimed_at_unix_ms`, `cancelled_at_unix_ms` and `completed_at_unix_ms` are always present, and `null` until they happen. They are not mutually exclusive: claiming a scheduled withdrawal sets `claimed_at` and `completed_at` to the same value.
@@ -212,7 +214,7 @@ Two payout transaction hashes appear once the transfers are submitted, and are *
 | `fee_core_tx_hash` | The transfer to the fee wallet | Instant withdrawals with a non-zero fee |
 
 {% hint style="info" %}
-Both hashes come from a join the Pool performs only for the list query. `{type:"withdrawals"}` and `account.active_withdrawal` carry them; the single-record `{type:"withdrawal"}` query does not.
+Every response that returns a withdrawal carries both: `{type:"withdrawals"}`, `{type:"withdrawal"}`, and `account.balances[].active_withdrawal` all return the same shape.
 
 The list query also has **no `operation_id` parameter**. Sending one does not filter and does not error — you get an unfiltered page back. Fetch the list and match on `operation_id` in your own code, narrowing with `status` or `asset_id` if the history is long.
 {% endhint %}
@@ -315,7 +317,7 @@ During a pause, an instant withdrawal and any scheduled withdrawal past its canc
 
 | Message                                    | Cause                                                                     | What to do                                              |
 | ------------------------------------------ | ------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `user already has an active withdrawal`    | One is already in flight for this address                                  | Check `active_withdraw_operation_id` before signing      |
+| `user asset already has an active withdrawal` | One is already in flight for this address **and asset**                 | Check `active_withdraw_operation_id` on that asset's `balances[]` entry before signing |
 | `withdrawal signer does not match user`    | The typed data does not match, so a different address was recovered        | Check the `uint8` type code, the `bytes32` `operationId`, the millisecond `deadline`, and that no `chainId` reached the domain |
 | `invalid signature recovery id`            | The 65-byte signature's `v` byte is not `0`, `1`, `27` or `28`             | Post the wallet's raw `r‖s‖v`; do not reorder or re-encode it |
 | `deadline_unix_ms must be in the future`   | The deadline has passed, including on a delayed claim retry                | For a create, sign a new one; for a claim, poll `withdrawals` first |
