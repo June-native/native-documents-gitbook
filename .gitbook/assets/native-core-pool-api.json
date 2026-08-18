@@ -176,8 +176,6 @@
                       "data": {
                         "user_address": "0x1111111111111111111111111111111111111111",
                         "next_user_nonce": 7,
-                        "active_withdraw_operation_id": "",
-                        "active_withdrawal": null,
                         "balances": [
                           {
                             "asset_id": 2,
@@ -186,7 +184,9 @@
                             "withdraw_locked_balance": "0",
                             "lifetime_deposit": "10000000000",
                             "lifetime_yield": "3287671",
-                            "lifetime_withdraw": "0"
+                            "lifetime_withdraw": "0",
+                            "active_withdraw_operation_id": "",
+                            "active_withdrawal": null
                           }
                         ]
                       },
