@@ -594,22 +594,16 @@ The response shape is unchanged, but the `fee` amount may reflect code-defined p
 
 ### userFillsByTime
 
-Fills for one account over a wall-clock window. Returns at most 1000 fills per response, and only the 10000 most recent fills are available.
+Per-user fills over a wall-clock window, sorted oldest first. Requires `user` and `start_time_ms`; `end_time_ms` is inclusive like `start_time_ms` and defaults to the newest indexed block. At most 1000 fills per response, and only the 10000 most recent fills are available. There is no `limit` — one sent anyway is ignored, not rejected.
 
-| Name             | Type   | Description                                                    |
-| ---------------- | ------ | -------------------------------------------------------------- |
-| `type`\*         | String | `"userFillsByTime"`                                             |
-| `user`\*         | String | 42-character hex address                                        |
-| `start_time_ms`\*| int    | Start time in milliseconds, inclusive                           |
-| `end_time_ms`    | int    | End time in milliseconds, inclusive. Defaults to the newest block |
-
-```sh
-curl -sS -X POST "$API_URL/info" \
-  -H 'content-type: application/json' \
-  -d '{"type":"userFillsByTime","user":"0x...","start_time_ms":1785338100000}'
+```json
+{
+  "type": "userFillsByTime",
+  "user": "0x0000000000000000000000000000000000000001",
+  "start_time_ms": 1785338100000,
+  "end_time_ms": 1785338171296
+}
 ```
-
-Response:
 
 ```json
 {
@@ -639,17 +633,16 @@ Response:
 }
 ```
 
-Each fill is the same shape [`userFills`](#userfills) returns, so one decoder handles both. Three things differ from it, and each will bite a client that assumes otherwise:
+Each fill is the shape [`userFills`](#userfills) returns, field for field, so one decoder handles both — but the envelope and the failures are not the same, and both will bite a parser written against that endpoint:
 
-* No `limit` — the page size is fixed. One sent anyway is ignored, not rejected.
-* Errors are **HTTP 400** with no `fills` key (`InvalidFillsQuery`, `InvalidOwner`), not an in-band `error` object. **HTTP 503** `IndexerUnavailable` means the query could not be answered — never an empty array.
-* The body is only `fills`: no `query_height`, no `app_hash`.
+* The body is only `fills`. No `query_height`, no `app_hash`, no echoed limits.
+* Every rejection is **HTTP 400** with no `fills` key — `InvalidFillsQuery` (missing or non-numeric `start_time_ms`, a negative timestamp, `start_time_ms` past `end_time_ms`) or `InvalidOwner`. There is no in-band `error` object to check. **HTTP 503** `IndexerUnavailable` means the query could not be answered, and is never served as an empty array.
 
-Fills come back oldest first. To page, pass the last fill's `time` as the next `start_time_ms`; since the bound is inclusive that fill repeats, so deduplicate on `tid`.
+To page, pass the last fill's `time` as the next `start_time_ms`. The bound is inclusive, so that fill repeats — deduplicate on `tid`.
 
-`tid` is `null` on fills predating this endpoint — every other field on them, `fee` included, is exact. Fall back to `tx_hash` + `taker_oid`.
+`tid` is `null` on fills recorded before this endpoint existed: the per-order index it packs was not stored then, and a made-up one would collide with a real trade. Every other field on those fills, `fee` included, is exact — fall back to `tx_hash` + `taker_oid`.
 
-This is the one info type not read from the node's own state. It runs under a second behind, but it is not read-your-writes: to confirm a fill you just submitted, use [`userFills`](#userfills) or the `/trade` response.
+This is the one info type not answered from the node's own state, so it is not read-your-writes. It runs under a second behind, but to confirm a fill you just submitted use [`userFills`](#userfills) or the `/trade` response.
 
 ### orderStatus
 
