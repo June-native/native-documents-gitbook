@@ -91,11 +91,22 @@ Each `balances[]` entry:
 | `earn_balance`            | Available and earning                                      |
 | `in_queue_balance`        | Gross amount of a pending scheduled withdrawal             |
 | `withdraw_locked_balance` | Gross amount of an instant withdrawal in flight            |
-| `lifetime_deposit`        | Total ever deposited                                       |
+| `lifetime_deposit`        | Total ever deposited, counting only deposits that reached `credited` |
 | `lifetime_yield`          | Total yield ever credited, for this asset only             |
-| `lifetime_withdraw`       | Total ever withdrawn                                       |
+| `lifetime_withdraw`       | Total ever withdrawn, **gross**. The instant fee is inside this number, so it is larger than the amount that arrived |
 
 The three balance buckets are disjoint. Only `earn_balance` earns.
+
+The six fields hold to one identity, per asset:
+
+```
+earn_balance + in_queue_balance + withdraw_locked_balance
+    = lifetime_deposit + lifetime_yield − lifetime_withdraw
+```
+
+Every Pool operation preserves it, including the three that look like they would not. A rejected deposit writes neither side. A cancelled withdrawal moves between buckets and touches no lifetime counter. The instant fee sits inside the gross amount that both leaves the bucket and enters `lifetime_withdraw`.
+
+Fees paid are therefore not recoverable from these six numbers. Sum `fee_amount` across [`withdrawals`](#withdrawals) instead.
 
 ## deposits
 

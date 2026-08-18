@@ -168,7 +168,7 @@ curl -sS -X POST "https://api.native.org/trade" \
 
 A typed-data struct that does not match the definition above recovers a different signer, so a mistake there surfaces as an unknown account rather than as a signature error.
 
-The `transfer` action goes to Native Core's `/trade`, which returns the Native Core envelope rather than the Pool envelope. Branch on `submission_status` and treat `timeout` as unresolved rather than failed. See [POST /trade](../native-core/post-trade.md), [Transaction Signing](../native-core/transaction-signing.md), and [Handle outcomes & timeouts](../native-core/handle-timeouts.md).
+The `transfer` action goes to Native Core's `/trade`, which returns the Native Core envelope rather than the Pool envelope. Branch on `submission_status` and treat `timeout` as unresolved rather than failed. That endpoint is metered **per IP**, not per `user_address`, at **1 request per second**. See [POST /trade](../native-core/post-trade.md), [Transaction Signing](../native-core/transaction-signing.md), [Rate limits & errors](../native-core/api-access.md#rate-limits-errors), and [Handle outcomes & timeouts](../native-core/handle-timeouts.md).
 
 ### 3. Wait for the credit
 
