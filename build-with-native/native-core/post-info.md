@@ -592,6 +592,49 @@ Each fill reports only the **querying owner's side** fee (chosen by `role`). `fe
 
 The response shape is unchanged, but the `fee` amount may reflect code-defined per-market and per-account fee overrides (the effective rate is the minimum of the global rate and any matching market/account override). A fully waived market appears as a fee-active fill with `"fee": "0"` (the second null case above).
 
+### userFillsByTime
+
+Per-user fills over a wall-clock window, sorted oldest first. Requires `user` and `start_time_ms`; `end_time_ms` is inclusive like `start_time_ms` and defaults to the newest indexed block. At most 1000 fills per response, and only the 10000 most recent fills are available.
+
+```json
+{
+  "type": "userFillsByTime",
+  "user": "0x0000000000000000000000000000000000000001",
+  "start_time_ms": 1785338100000,
+  "end_time_ms": 1785338171296
+}
+```
+
+```json
+{
+  "fills": [
+    {
+      "height": 180000,
+      "time": 1785338171296,
+      "tid": 98956046499840256,
+      "tx_index": 1,
+      "tx_hash": "0x...",
+      "market_id": 0,
+      "role": "taker",
+      "side": "B",
+      "maker_oid": 773094113280001,
+      "maker_cloid": "0x11111111111111111111111111111111",
+      "maker_owner": "0x...",
+      "taker_oid": 773094113280002,
+      "taker_cloid": "0x22222222222222222222222222222222",
+      "taker_owner": "0x...",
+      "price": "10",
+      "quantity": "1",
+      "fee_asset_id": 1,
+      "fee": "0.0001",
+      "fee_mode": "credit"
+    }
+  ]
+}
+```
+
+To page, pass the last fill's `time` as the next `start_time_ms`. The bound is inclusive, so that fill repeats — deduplicate on `tid`.
+
 ### orderStatus
 
 Query by server order id:
