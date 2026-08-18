@@ -594,27 +594,22 @@ The response shape is unchanged, but the `fee` amount may reflect code-defined p
 
 ### userFillsByTime
 
-Fills for one account over a wall-clock window. Where [`userFills`](#userfills) is bounded by the node's recent block window, this one is served from retained history, so it reaches back days rather than minutes.
+Fills for one account over a wall-clock window. Returns at most 1000 fills per response, and only the 10000 most recent fills are available.
 
-```json
-{
-  "type": "userFillsByTime",
-  "user": "0x0000000000000000000000000000000000000001",
-  "start_time_ms": 1785338100000,
-  "end_time_ms": 1785338171296
-}
+| Name             | Type   | Description                                                    |
+| ---------------- | ------ | -------------------------------------------------------------- |
+| `type`\*         | String | `"userFillsByTime"`                                             |
+| `user`\*         | String | 42-character hex address                                        |
+| `start_time_ms`\*| int    | Start time in milliseconds, inclusive                           |
+| `end_time_ms`    | int    | End time in milliseconds, inclusive. Defaults to the newest block |
+
+```sh
+curl -sS -X POST "$API_URL/info" \
+  -H 'content-type: application/json' \
+  -d '{"type":"userFillsByTime","user":"0x...","start_time_ms":1785338100000}'
 ```
 
-`start_time_ms` is required. `end_time_ms` may be omitted or `null`, meaning "up to the newest indexed block". Both bounds are **inclusive** and both are milliseconds since the epoch.
-
-There is **no `limit`** — the page size is the server's, currently up to 1000 fills. A `limit` sent anyway is ignored rather than rejected, so an older client keeps working.
-
-Unlike `userFills`, every rejection here is an **HTTP 400** with no `fills` key — there is no in-band error object to check:
-
-* `InvalidFillsQuery` — `start_time_ms` is missing or not a number, a timestamp is negative, or `start_time_ms` is greater than `end_time_ms`.
-* `InvalidOwner` — `user` is not a 20-byte hex address.
-
-A query that simply has nothing to report returns HTTP `200` with an empty array. The one other failure to handle is **HTTP 503** `IndexerUnavailable`: this endpoint could not reach its backing store. It is deliberately not reported as an empty result, because "you have no fills" and "we could not tell" must never look the same.
+Response:
 
 ```json
 {
@@ -644,42 +639,17 @@ A query that simply has nothing to report returns HTTP `200` with an empty array
 }
 ```
 
-The response is the `fills` array and nothing else — no `query_height`, no `app_hash`, no echoed limits. Each element is the same shape `userFills` returns, field for field, so one decoder handles both. `side`, `fee`, and the null-fee cases all behave as documented under [`userFills`](#userfills).
+Each fill is the same shape [`userFills`](#userfills) returns, so one decoder handles both. Three things differ from it, and each will bite a client that assumes otherwise:
 
-`tid` is `null` on fills recorded before this endpoint existed, because the per-order index it is built from was not stored then and inventing one would collide with a real trade's id. Every other field on those fills, `fee` included, is exact. Treat `tid` as optional and fall back to `tx_hash` plus `taker_oid` when it is absent.
+* No `limit` — the page size is fixed. One sent anyway is ignored, not rejected.
+* Errors are **HTTP 400** with no `fills` key (`InvalidFillsQuery`, `InvalidOwner`), not an in-band `error` object. **HTTP 503** `IndexerUnavailable` means the query could not be answered — never an empty array.
+* The body is only `fills`: no `query_height`, no `app_hash`.
 
-#### Freshness
+Fills come back oldest first. To page, pass the last fill's `time` as the next `start_time_ms`; since the bound is inclusive that fill repeats, so deduplicate on `tid`.
 
-This is the one info type not answered from the node's own state. It reads a separate index that follows the chain, typically **under a second behind** — close enough that it does not matter for history, reporting, or reconciliation.
+`tid` is `null` on fills predating this endpoint — every other field on them, `fee` included, is exact. Fall back to `tx_hash` + `taker_oid`.
 
-What it does not give you is a causal guarantee. Every other info type is read-your-writes against the node: submit an order, query, and you see it. Here there is a brief window in which `/trade` has confirmed a fill and this endpoint does not list it yet. **To confirm a fill you just caused, use the `/trade` response or [`userFills`](#userfills)**; use this one to read history.
-
-#### Paging
-
-Fills come back **oldest first**. To read a window larger than one page, take the `time` of the LAST fill you received and use it as the next `start_time_ms`:
-
-```sh
-# page 1
-curl -sS -X POST "$API_URL/info" -H 'content-type: application/json' \
-  -d '{"type":"userFillsByTime","user":"0x...","start_time_ms":0}'
-
-# page 2 — start_time_ms is the last fill's `time` from page 1
-curl -sS -X POST "$API_URL/info" -H 'content-type: application/json' \
-  -d '{"type":"userFillsByTime","user":"0x...","start_time_ms":1785338171296}'
-```
-
-Because `start_time_ms` is inclusive, the first fill of each page repeats the last fill of the previous one. Deduplicate on `tid` (or on `tx_hash` + `taker_oid` for older fills). Keep paging while a page comes back full; a short page is the last one.
-
-One caveat this scheme inherits: `time` is a **block** timestamp, so every fill in the same block carries the same value. If a single account ever had more fills in one block than a page holds, paging by time could not step past that block. In practice the busiest observed block holds well under a hundred fills for one account, far short of it.
-
-#### Retention
-
-Two independent floors apply, whichever is higher:
-
-* the **most recent 10,000 fills** for that account, and
-* how far back the index still retains blocks.
-
-Asking for a window older than either returns whatever part of it survives, so an early page can be short without meaning the account was idle then.
+This is the one info type not read from the node's own state. It runs under a second behind, but it is not read-your-writes: to confirm a fill you just submitted, use [`userFills`](#userfills) or the `/trade` response.
 
 ### orderStatus
 
