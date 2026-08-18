@@ -592,6 +592,95 @@ Each fill reports only the **querying owner's side** fee (chosen by `role`). `fe
 
 The response shape is unchanged, but the `fee` amount may reflect code-defined per-market and per-account fee overrides (the effective rate is the minimum of the global rate and any matching market/account override). A fully waived market appears as a fee-active fill with `"fee": "0"` (the second null case above).
 
+### userFillsByTime
+
+Fills for one account over a wall-clock window. Where [`userFills`](#userfills) is bounded by the node's recent block window, this one is served from retained history, so it reaches back days rather than minutes.
+
+```json
+{
+  "type": "userFillsByTime",
+  "user": "0x0000000000000000000000000000000000000001",
+  "start_time_ms": 1785338100000,
+  "end_time_ms": 1785338171296
+}
+```
+
+`start_time_ms` is required. `end_time_ms` may be omitted or `null`, meaning "up to the newest indexed block". Both bounds are **inclusive** and both are milliseconds since the epoch.
+
+There is **no `limit`** — the page size is the server's, currently up to 1000 fills. A `limit` sent anyway is ignored rather than rejected, so an older client keeps working.
+
+Unlike `userFills`, every rejection here is an **HTTP 400** with no `fills` key — there is no in-band error object to check:
+
+* `InvalidFillsQuery` — `start_time_ms` is missing or not a number, a timestamp is negative, or `start_time_ms` is greater than `end_time_ms`.
+* `InvalidOwner` — `user` is not a 20-byte hex address.
+
+A query that simply has nothing to report returns HTTP `200` with an empty array. The one other failure to handle is **HTTP 503** `IndexerUnavailable`: this endpoint could not reach its backing store. It is deliberately not reported as an empty result, because "you have no fills" and "we could not tell" must never look the same.
+
+```json
+{
+  "fills": [
+    {
+      "height": 180000,
+      "time": 1785338171296,
+      "tid": 98956046499840256,
+      "tx_index": 1,
+      "tx_hash": "0x...",
+      "market_id": 0,
+      "role": "taker",
+      "side": "B",
+      "maker_oid": 773094113280001,
+      "maker_cloid": "0x11111111111111111111111111111111",
+      "maker_owner": "0x...",
+      "taker_oid": 773094113280002,
+      "taker_cloid": "0x22222222222222222222222222222222",
+      "taker_owner": "0x...",
+      "price": "10",
+      "quantity": "1",
+      "fee_asset_id": 1,
+      "fee": "0.0001",
+      "fee_mode": "credit"
+    }
+  ]
+}
+```
+
+The response is the `fills` array and nothing else — no `query_height`, no `app_hash`, no echoed limits. Each element is the same shape `userFills` returns, field for field, so one decoder handles both. `side`, `fee`, and the null-fee cases all behave as documented under [`userFills`](#userfills).
+
+`tid` is `null` on fills recorded before this endpoint existed, because the per-order index it is built from was not stored then and inventing one would collide with a real trade's id. Every other field on those fills, `fee` included, is exact. Treat `tid` as optional and fall back to `tx_hash` plus `taker_oid` when it is absent.
+
+#### Freshness
+
+This is the one info type not answered from the node's own state. It reads a separate index that follows the chain, typically **under a second behind** — close enough that it does not matter for history, reporting, or reconciliation.
+
+What it does not give you is a causal guarantee. Every other info type is read-your-writes against the node: submit an order, query, and you see it. Here there is a brief window in which `/trade` has confirmed a fill and this endpoint does not list it yet. **To confirm a fill you just caused, use the `/trade` response or [`userFills`](#userfills)**; use this one to read history.
+
+#### Paging
+
+Fills come back **oldest first**. To read a window larger than one page, take the `time` of the LAST fill you received and use it as the next `start_time_ms`:
+
+```sh
+# page 1
+curl -sS -X POST "$API_URL/info" -H 'content-type: application/json' \
+  -d '{"type":"userFillsByTime","user":"0x...","start_time_ms":0}'
+
+# page 2 — start_time_ms is the last fill's `time` from page 1
+curl -sS -X POST "$API_URL/info" -H 'content-type: application/json' \
+  -d '{"type":"userFillsByTime","user":"0x...","start_time_ms":1785338171296}'
+```
+
+Because `start_time_ms` is inclusive, the first fill of each page repeats the last fill of the previous one. Deduplicate on `tid` (or on `tx_hash` + `taker_oid` for older fills). Keep paging while a page comes back full; a short page is the last one.
+
+One caveat this scheme inherits: `time` is a **block** timestamp, so every fill in the same block carries the same value. If a single account ever had more fills in one block than a page holds, paging by time could not step past that block. In practice the busiest observed block holds well under a hundred fills for one account, far short of it.
+
+#### Retention
+
+Two independent floors apply, whichever is higher:
+
+* the **most recent 10,000 fills** for that account, and
+* how far back the index still retains blocks.
+
+Asking for a window older than either returns whatever part of it survives, so an early page can be short without meaning the account was idle then.
+
 ### orderStatus
 
 Query by server order id:
