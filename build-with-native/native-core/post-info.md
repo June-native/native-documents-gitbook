@@ -594,7 +594,7 @@ The response shape is unchanged, but the `fee` amount may reflect code-defined p
 
 ### userFillsByTime
 
-Per-user fills over a wall-clock window, sorted oldest first. Requires `user` and `start_time_ms`; `end_time_ms` is inclusive like `start_time_ms` and defaults to the newest indexed block. At most 1000 fills per response, and only the 10000 most recent fills are available. There is no `limit` — one sent anyway is ignored, not rejected.
+Per-user fills over a wall-clock window, sorted oldest first. Requires `user` and `start_time_ms`; `end_time_ms` is inclusive like `start_time_ms` and defaults to the newest indexed block. At most 1000 fills per response, and only the 10000 most recent fills are available.
 
 ```json
 {
@@ -633,16 +633,7 @@ Per-user fills over a wall-clock window, sorted oldest first. Requires `user` an
 }
 ```
 
-Each fill is the shape [`userFills`](#userfills) returns, field for field, so one decoder handles both — but the envelope and the failures are not the same, and both will bite a parser written against that endpoint:
-
-* The body is only `fills`. No `query_height`, no `app_hash`, no echoed limits.
-* Every rejection is **HTTP 400** with no `fills` key — `InvalidFillsQuery` (missing or non-numeric `start_time_ms`, a negative timestamp, `start_time_ms` past `end_time_ms`) or `InvalidOwner`. There is no in-band `error` object to check. **HTTP 503** `IndexerUnavailable` means the query could not be answered, and is never served as an empty array.
-
 To page, pass the last fill's `time` as the next `start_time_ms`. The bound is inclusive, so that fill repeats — deduplicate on `tid`.
-
-`tid` is `null` on fills recorded before this endpoint existed: the per-order index it packs was not stored then, and a made-up one would collide with a real trade. Every other field on those fills, `fee` included, is exact — fall back to `tx_hash` + `taker_oid`.
-
-This is the one info type not answered from the node's own state, so it is not read-your-writes. It runs under a second behind, but to confirm a fill you just submitted use [`userFills`](#userfills) or the `/trade` response.
 
 ### orderStatus
 
