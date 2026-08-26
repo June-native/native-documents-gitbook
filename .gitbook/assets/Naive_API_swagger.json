@@ -173,6 +173,7 @@
                         "name": "from_address",
                         "required": true,
                         "in": "query",
+                        "example": "0x1111111111111111111111111111111111111111",
                         "description": "Effectively `recipient`. This is the **pay out** address of the final swapped tokens. Funding address will always be the address calls Native Router.",
                         "schema":
                         {
@@ -184,6 +185,7 @@
                         "name": "beneficiary_address",
                         "required": false,
                         "in": "query",
+                        "example": "0x1111111111111111111111111111111111111111",
                         "description": "Address of the end user that initiated the swap request. This is REQUIRED if you are an aggregator/widget/wallet. Optional for solvers.",
                         "schema":
                         {
@@ -195,13 +197,20 @@
                         "name": "src_chain",
                         "required": true,
                         "in": "query",
-                        "description": "Blockchain name, eg: ethereum, arbitrum, ... (refer to network name reference)",
+                        "example": "bsc",
+                        "description": "Blockchain name, eg: ethereum, bsc, ... (refer to network name reference)",
                         "schema":
                         {
                             "enum":
                             [
                                 "ethereum",
-                                "arbitrum"
+                                "bsc",
+                                "arbitrum",
+                                "base",
+                                "monad",
+                                "xlayer",
+                                "robinhood",
+                                "morph"
                             ],
                             "type": "string"
                         }
@@ -210,13 +219,20 @@
                         "name": "dst_chain",
                         "required": true,
                         "in": "query",
-                        "description": "Blockchain name, eg: ethereum, arbitrum, ... (refer to network name reference)",
+                        "example": "bsc",
+                        "description": "Blockchain name, eg: ethereum, bsc, ... (refer to network name reference)",
                         "schema":
                         {
                             "enum":
                             [
                                 "ethereum",
-                                "arbitrum"
+                                "bsc",
+                                "arbitrum",
+                                "base",
+                                "monad",
+                                "xlayer",
+                                "robinhood",
+                                "morph"
                             ],
                             "type": "string"
                         }
@@ -225,6 +241,7 @@
                         "name": "token_in",
                         "required": true,
                         "in": "query",
+                        "example": "0x55d398326f99059ff775485246999027b3197955",
                         "description": "Address of the token to be sold",
                         "schema":
                         {
@@ -236,6 +253,7 @@
                         "name": "token_out",
                         "required": true,
                         "in": "query",
+                        "example": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
                         "description": "Address of the token to be bought",
                         "schema":
                         {
@@ -247,6 +265,7 @@
                         "name": "amount",
                         "required": false,
                         "in": "query",
+                        "example": 100,
                         "description": "Amount of token to be sold, in ether unit. (Skip if already passing `amount_wei`)",
                         "schema":
                         {
@@ -269,10 +288,11 @@
                         "name": "expiry_time",
                         "required": false,
                         "in": "query",
-                        "description": "The expiry time of the quote, in seconds. Recommand 60 for all networks to avoid quoting errors.",
+                        "example": 60,
+                        "description": "The expiry time of the quote, in seconds. Recommend 60 for all networks to avoid quoting errors.",
                         "schema":
                         {
-                            "default": 0,
+                            "default": 60,
                             "type": "number"
                         }
                     },
@@ -280,6 +300,7 @@
                         "name": "slippage",
                         "required": false,
                         "in": "query",
+                        "example": 5,
                         "description": "Number in percent. For example, passing the value 5 means 5%, 0.1 means 0.1% slippage tolerance. Recommend keeping default 0.5",
                         "schema":
                         {
@@ -302,10 +323,11 @@
                         "name": "version",
                         "required": false,
                         "in": "query",
-                        "description": "The swap router version. Suggest using the latest 4",
+                        "example": 6,
+                        "description": "The swap router version. Use 6 (latest).",
                         "schema":
                         {
-                            "default": 3,
+                            "default": 6,
                             "type": "number"
                         }
                     },
@@ -313,7 +335,7 @@
                         "name": "allow_multihop",
                         "required": false,
                         "in": "query",
-                        "description": "Whether to use multihop within all Native supported pairs for quoting. Recommanded true for wallets/widgets.",
+                        "description": "Whether to use multihop within all Native supported pairs for quoting. Recommended true for wallets/widgets.",
                         "schema":
                         {
                             "default": "false",
@@ -1228,6 +1250,12 @@
                     {
                         "type": "string",
                         "readOnly": true
+                    },
+                    "function":
+                    {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Router function to call, e.g. tradeRFQT, externalSwap, multicall. Present when version is 4 or above."
                     }
                 },
                 "required":
@@ -1296,6 +1324,11 @@
                         "type": "string",
                         "readOnly": true
                     },
+                    "amountOutBeforeFee":
+                    {
+                        "type": "string",
+                        "readOnly": true
+                    },
                     "toWrap":
                     {
                         "type": "boolean",
@@ -1332,28 +1365,21 @@
                     },
                     "source":
                     {
-                        "type": "string",
-                        "enum":
-                        [
-                            "p0",
-                            "p1",
-                            "p1.1",
-                            "p1.2",
-                            "p1.3",
-                            "p1.4",
-                            "p1.5",
-                            "p1.6",
-                            "p1.7",
-                            "p1.100",
-                            "p2",
-                            "p3",
-                            "p4",
-                            "p5",
-                            "p6",
-                            "p7",
-                            "p8"
-                        ],
-                        "description": "Quote source name"
+                        "type": "array",
+                        "items":
+                        {
+                            "type": "number"
+                        },
+                        "description": "Quote source identifiers"
+                    },
+                    "quoteSource":
+                    {
+                        "type": "array",
+                        "items":
+                        {
+                            "type": "number"
+                        },
+                        "description": "Quote source identifiers used for this quote"
                     },
                     "errorMessage":
                     {
@@ -1395,24 +1421,20 @@
                 [
                     "success",
                     "orders",
-                    "functionCall",
                     "widgetFee",
                     "widgetFeeSignature",
                     "recipient",
-                    "calldata",
                     "amountIn",
                     "amountOut",
+                    "amountOutBeforeFee",
                     "toWrap",
                     "toUnwrap",
-                    "fallbackSwapDataArray",
                     "tokenTransferFeeOnPercent",
                     "txRequest",
                     "source",
+                    "quoteSource",
                     "errorMessage",
                     "router_version",
-                    "gasCostUsd",
-                    "estimateDuration",
-                    "bridge",
                     "amountInOffset",
                     "amountOutMinimumOffset"
                 ]
