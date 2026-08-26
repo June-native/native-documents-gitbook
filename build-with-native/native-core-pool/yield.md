@@ -1,5 +1,7 @@
 ---
-description: How Native Core Pool distributes yield — the daily snapshot, the pro-rata share, and the fields that report both.
+description: >-
+  How Native Core Pool distributes yield — the daily snapshot, the pro-rata
+  share, and the fields that report both.
 ---
 
 # Yield
@@ -21,11 +23,11 @@ Distributions are triggered rather than scheduled, so the history is a sparse se
 
 Only `earn_balance` is snapshotted. The other two buckets are not:
 
-| Bucket                    | Holds                                                  | Earns |
-| ------------------------- | ------------------------------------------------------ | ----- |
-| `earn_balance`            | Available, earning funds                                | Yes   |
-| `in_queue_balance`        | The gross amount of a pending scheduled withdrawal      | No    |
-| `withdraw_locked_balance` | The gross amount of an instant withdrawal in flight     | No    |
+| Bucket                    | Holds                                               | Earns |
+| ------------------------- | --------------------------------------------------- | ----- |
+| `earn_balance`            | Available, earning funds                            | Yes   |
+| `in_queue_balance`        | The gross amount of a pending scheduled withdrawal  | No    |
+| `withdraw_locked_balance` | The gross amount of an instant withdrawal in flight | No    |
 
 The three are disjoint. Submitting a withdrawal moves the gross amount out of `earn_balance` in the same transaction, so anything withdrawn before a snapshot earns nothing from it. Cancelling a scheduled withdrawal returns the amount to `earn_balance`, where it is eligible again.
 
@@ -35,10 +37,10 @@ Holding time within a day does not matter. Only the balance at `snapshot_time_ut
 
 `config` reports two figures per asset.
 
-| Field                 | Meaning                                                                        |
-| --------------------- | ------------------------------------------------------------------------------ |
+| Field                 | Meaning                                                                                                   |
+| --------------------- | --------------------------------------------------------------------------------------------------------- |
 | `projected_apy`       | The most recent distribution, annualized over the interval since the previous one, divided by current TVL |
-| `realtime_tvl_amount` | The asset's total earning balance, in that asset's atoms                        |
+| `realtime_tvl_amount` | The asset's total earning balance, in that asset's atoms                                                  |
 
 `projected_apy` is a **ratio, not a percentage**: `"0.12"` is 12%.
 
@@ -92,11 +94,11 @@ curl -sS "$POOL_API_URL/api/v3/earn" \
 
 Each entry carries everything needed to render one payout, with no follow-up request:
 
-| Field                | Meaning                                    |
-| -------------------- | ------------------------------------------ |
-| `snapshot_balance`   | The balance the share was computed from     |
-| `yield_amount`       | The amount credited                         |
-| `applied_at_unix_ms` | When it was credited                        |
+| Field                | Meaning                                 |
+| -------------------- | --------------------------------------- |
+| `snapshot_balance`   | The balance the share was computed from |
+| `yield_amount`       | The amount credited                     |
+| `applied_at_unix_ms` | When it was credited                    |
 
 `distribution_id` is an opaque grouping key. It contains no date; use `applied_at_unix_ms` for time.
 
@@ -108,8 +110,8 @@ An account whose pro-rata share rounds down to zero gets no entry for that distr
 
 ## Next steps
 
-{% content-ref url="withdraw.md" %}
-[withdraw.md](withdraw.md)
+{% content-ref url="withdraw/" %}
+[withdraw](withdraw/)
 {% endcontent-ref %}
 
 {% content-ref url="reference.md" %}

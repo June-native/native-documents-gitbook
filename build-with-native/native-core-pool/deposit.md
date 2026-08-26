@@ -1,22 +1,24 @@
 ---
-description: Move funds into a Native Core Pool earning balance, from an EVM chain or from an existing Native Core balance.
+description: >-
+  Move funds into a Native Core Pool earning balance, from an EVM chain or from
+  an existing Native Core balance.
 ---
 
 # Deposit
 
 Two routes lead into the same `earn_balance`. Choose the route by where the funds are now.
 
-|                | From an EVM chain                              | From a Native Core balance             |
-| -------------- | ---------------------------------------------- | -------------------------------------- |
-| You send       | `deposit()` on the vault contract               | A signed `transfer` action             |
-| Signed with    | An EVM transaction                              | EIP-712 typed data                     |
-| Minimum        | Worth at least 10 USD                           | None                                   |
-| Settles in     | Minutes                                         | About one Core block                   |
-| `deposit_type` | `bridge_deposit`                                | `direct_transfer`                      |
+|                | From an EVM chain                 | From a Native Core balance |
+| -------------- | --------------------------------- | -------------------------- |
+| You send       | `deposit()` on the vault contract | A signed `transfer` action |
+| Signed with    | An EVM transaction                | EIP-712 typed data         |
+| Minimum        | Worth at least 10 USD             | None                       |
+| Settles in     | Minutes                           | About one Core block       |
+| `deposit_type` | `bridge_deposit`                  | `direct_transfer`          |
 
 Neither route can be cancelled or reversed once the first transaction lands.
 
-Read [Native Core Pool](README.md) first for the base URL, the response envelope, and discovery.
+Read [Native Core Pool](./) first for the base URL, the response envelope, and discovery.
 
 ## Which assets you can deposit
 
@@ -40,11 +42,11 @@ Break either rule and the funds will not be credited.
 
 `actionFlag` is that argument, and it also decides where the deposit lands and where you confirm it:
 
-|                 | Native Core deposit                 | Native Core Pool deposit           |
-| --------------- | ----------------------------------- | ---------------------------------- |
-| `actionFlag`    | `0`                                 | **`1`**                            |
-| Credited to     | The Native Core trading balance     | `earn_balance`                     |
-| Confirmed with  | `POST /info` `deposits`             | Pool `deposits`, below             |
+|                | Native Core deposit             | Native Core Pool deposit |
+| -------------- | ------------------------------- | ------------------------ |
+| `actionFlag`   | `0`                             | **`1`**                  |
+| Credited to    | The Native Core trading balance | `earn_balance`           |
+| Confirmed with | `POST /info` `deposits`         | Pool `deposits`, below   |
 
 ```solidity
 function deposit(address token, uint256 amount, uint256 actionFlag)
@@ -184,37 +186,37 @@ A direct transfer that cannot be credited leaves **no record at all**. Sending a
 
 One query covers both routes and the full credited history.
 
-| Parameter      | Default | Notes                                                       |
-| -------------- | ------- | ----------------------------------------------------------- |
-| `user_address` | —       | Required                                                     |
-| `asset_id`     | all     | Optional filter                                              |
-| `limit`        | `50`    | **Over `200` the request fails**, it is not clamped          |
-| `before_id`    | —       | Cursor from the previous page's `next_before_id`             |
+| Parameter      | Default | Notes                                               |
+| -------------- | ------- | --------------------------------------------------- |
+| `user_address` | —       | Required                                            |
+| `asset_id`     | all     | Optional filter                                     |
+| `limit`        | `50`    | **Over `200` the request fails**, it is not clamped |
+| `before_id`    | —       | Cursor from the previous page's `next_before_id`    |
 
 `status` only ever reads `credited` or `rejected`. The list is filtered by `user_address`, and ownership is only established at credit time, so nothing in flight is visible.
 
 Three trace fields are **absent as keys** rather than null when they do not apply, so test with `if (row.src_tx_hash)`:
 
-| Field          | Present on                          |
-| -------------- | ----------------------------------- |
-| `src_chain_id` | `bridge_deposit`                    |
-| `src_tx_hash`  | `bridge_deposit`                    |
-| `core_tx_hash` | `bridge_deposit`                    |
+| Field          | Present on       |
+| -------------- | ---------------- |
+| `src_chain_id` | `bridge_deposit` |
+| `src_tx_hash`  | `bridge_deposit` |
+| `core_tx_hash` | `bridge_deposit` |
 
 Paging returns `next_before_id` whenever a page comes back exactly `limit` long, so the last full page still carries a cursor. One extra request returning an empty page is what confirms the end.
 
 ## What can go wrong
 
-| Symptom                                            | Cause                                                             | What to do                                                  |
-| -------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------ |
-| Deposit mined, never appears                        | `actionFlag` was not `1`, so it credited the trading balance instead | Check the balance on Native Core; the funds are not lost      |
+| Symptom                                             | Cause                                                                                                                       | What to do                                                                      |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Deposit mined, never appears                        | `actionFlag` was not `1`, so it credited the trading balance instead                                                        | Check the balance on Native Core; the funds are not lost                        |
 | Deposit mined, never appears, `actionFlag` was `1`  | The amount was below the 10 USD minimum, or the amount or activation fee broke another rule on the Native Core deposit page | See [What can go wrong](../deposit-withdraw/deposit.md#what-can-go-wrong) there |
-| `status: "rejected"`                                | The asset is not listed for the Pool, or has `deposit_enabled: false` | Read `config` before building the transaction                |
-| Transfer returns `missing_cloid` or `invalid_cloid` | `cloid` omitted, or not 16 bytes                                     | Send a 16-byte `cloid` and sign with `cloidPresent: true`     |
-| Transfer rejected for its signing scheme            | The binary scheme was used; `transfer` accepts only `auth_scheme: "eip712"` | Sign the typed data above and post the 65-byte signature |
-| Transfer returns a parse error                      | The action carried a field not listed above                          | Send only `type`, `to`, `asset_id`, `amount` and `cloid`      |
-| Transfer accepted, nothing in `deposits`             | The asset is not deposit-enabled for the Pool                        | Nothing will appear; report it with the Core transaction hash |
-| `code: 131004` `limit exceeds max 200`              | `limit` above the cap                                                | The request failed entirely; resend with `limit` at most 200  |
+| `status: "rejected"`                                | The asset is not listed for the Pool, or has `deposit_enabled: false`                                                       | Read `config` before building the transaction                                   |
+| Transfer returns `missing_cloid` or `invalid_cloid` | `cloid` omitted, or not 16 bytes                                                                                            | Send a 16-byte `cloid` and sign with `cloidPresent: true`                       |
+| Transfer rejected for its signing scheme            | The binary scheme was used; `transfer` accepts only `auth_scheme: "eip712"`                                                 | Sign the typed data above and post the 65-byte signature                        |
+| Transfer returns a parse error                      | The action carried a field not listed above                                                                                 | Send only `type`, `to`, `asset_id`, `amount` and `cloid`                        |
+| Transfer accepted, nothing in `deposits`            | The asset is not deposit-enabled for the Pool                                                                               | Nothing will appear; report it with the Core transaction hash                   |
+| `code: 131004` `limit exceeds max 200`              | `limit` above the cap                                                                                                       | The request failed entirely; resend with `limit` at most 200                    |
 
 ## Next steps
 
@@ -222,6 +224,6 @@ Paging returns `next_before_id` whenever a page comes back exactly `limit` long,
 [yield.md](yield.md)
 {% endcontent-ref %}
 
-{% content-ref url="withdraw.md" %}
-[withdraw.md](withdraw.md)
+{% content-ref url="withdraw/" %}
+[withdraw](withdraw/)
 {% endcontent-ref %}

@@ -1,5 +1,7 @@
 ---
-description: Take funds out of Native Core Pool — the two withdrawal types, the signed create, claim and cancel actions, and the status lifecycle.
+description: >-
+  Take funds out of Native Core Pool — the two withdrawal types, the signed
+  create, claim and cancel actions, and the status lifecycle.
 ---
 
 # Withdraw
@@ -8,17 +10,17 @@ A withdrawal moves funds from `earn_balance` back to the address's Native Core b
 
 Choose a type at creation. The choice is permanent.
 
-|              | `scheduled`                   | `instant`                        |
-| ------------ | ----------------------------- | -------------------------------- |
-| Fee          | None                          | `instant_fee_bps` on the gross   |
-| Wait         | `withdraw_pending_seconds`    | None                             |
-| Claim step   | Required                      | None                             |
-| Cancellable  | During the wait only          | Never                            |
-| Ends at      | `claimed`                     | `completed`                      |
+|             | `scheduled`                | `instant`                      |
+| ----------- | -------------------------- | ------------------------------ |
+| Fee         | None                       | `instant_fee_bps` on the gross |
+| Wait        | `withdraw_pending_seconds` | None                           |
+| Claim step  | Required                   | None                           |
+| Cancellable | During the wait only       | Never                          |
+| Ends at     | `claimed`                  | `completed`                    |
 
-**One address can have one withdrawal in flight per asset.** The next one *for that asset* cannot be created until the current one reaches a terminal state; other assets are unaffected. The `user_nonce` is the one thing that is not per asset — a single counter per address covers all of them.
+**One address can have one withdrawal in flight per asset.** The next one _for that asset_ cannot be created until the current one reaches a terminal state; other assets are unaffected. The `user_nonce` is the one thing that is not per asset — a single counter per address covers all of them.
 
-Read [Native Core Pool](README.md) first for the base URL, the response envelope, and discovery.
+Read [Native Core Pool](../) first for the base URL, the response envelope, and discovery.
 
 ## 1. Check the account
 
@@ -68,7 +70,7 @@ user_amount = gross_amount − fee_amount
 
 A user asking to withdraw 100 receives 99.95 at 5 bps. Deriving `gross` from a target payout is your side of the calculation.
 
-`min_withdraw_amount` and `max_single_withdraw_amount` from [`config`](reference.md#config) are checked against the **gross** amount too. Both use `"0"` to mean no limit, and only positive values are enforced.
+`min_withdraw_amount` and `max_single_withdraw_amount` from [`config`](../reference.md#config) are checked against the **gross** amount too. Both use `"0"` to mean no limit, and only positive values are enforced.
 
 Amounts are 8-decimal atom strings, digits only. A zero-padded or signed value is rejected before it reaches the signature check.
 
@@ -186,17 +188,17 @@ scheduled   queued  → authorizing → authorized → transferring → claimed
 instant     created → authorizing → authorized → transferring → completed
 ```
 
-| Status          | Meaning                                                    |
-| --------------- | ---------------------------------------------------------- |
-| `created`       | An instant withdrawal has been accepted                     |
-| `queued`        | A scheduled withdrawal is waiting for its claim window      |
-| `authorizing`   | Authorization in progress                                   |
-| `authorized`    | Authorized, payout not yet submitted                        |
-| `transferring`  | The payout transfer has been submitted                      |
-| `claimed`       | Terminal. A scheduled withdrawal was claimed and paid       |
-| `completed`     | Terminal. An instant withdrawal was paid                    |
-| `cancelled`     | Terminal. A scheduled withdrawal was cancelled              |
-| `manual_review` | The payout failed and is held for manual intervention       |
+| Status          | Meaning                                                |
+| --------------- | ------------------------------------------------------ |
+| `created`       | An instant withdrawal has been accepted                |
+| `queued`        | A scheduled withdrawal is waiting for its claim window |
+| `authorizing`   | Authorization in progress                              |
+| `authorized`    | Authorized, payout not yet submitted                   |
+| `transferring`  | The payout transfer has been submitted                 |
+| `claimed`       | Terminal. A scheduled withdrawal was claimed and paid  |
+| `completed`     | Terminal. An instant withdrawal was paid               |
+| `cancelled`     | Terminal. A scheduled withdrawal was cancelled         |
+| `manual_review` | The payout failed and is held for manual intervention  |
 
 These nine are also the accepted values for the `status` filter; any other value is rejected.
 
@@ -208,9 +210,9 @@ These nine are also the accepted values for the `status` filter; any other value
 
 Two payout transaction hashes appear once the transfers are submitted, and are **absent as keys** until then:
 
-| Field              | Content                       | Appears on                              |
-| ------------------ | ----------------------------- | --------------------------------------- |
-| `core_tx_hash`     | The transfer to the user      | Every withdrawal                        |
+| Field              | Content                        | Appears on                              |
+| ------------------ | ------------------------------ | --------------------------------------- |
+| `core_tx_hash`     | The transfer to the user       | Every withdrawal                        |
 | `fee_core_tx_hash` | The transfer to the fee wallet | Instant withdrawals with a non-zero fee |
 
 {% hint style="info" %}
@@ -315,27 +317,27 @@ During a pause, an instant withdrawal and any scheduled withdrawal past its canc
 
 ## What can go wrong
 
-| Message                                    | Cause                                                                     | What to do                                              |
-| ------------------------------------------ | ------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `user asset already has an active withdrawal` | One is already in flight for this address **and asset**                 | Check `active_withdraw_operation_id` on that asset's `balances[]` entry before signing |
-| `withdrawal signer does not match user`    | The typed data does not match, so a different address was recovered        | Check the `uint8` type code, the `bytes32` `operationId`, the millisecond `deadline`, and that no `chainId` reached the domain |
-| `invalid signature recovery id`            | The 65-byte signature's `v` byte is not `0`, `1`, `27` or `28`             | Post the wallet's raw `r‖s‖v`; do not reorder or re-encode it |
-| `deadline_unix_ms must be in the future`   | The deadline has passed, including on a delayed claim retry                | For a create, sign a new one; for a claim, poll `withdrawals` first |
-| `withdrawal is not claimable`              | Before `claimable_at_unix_ms`, or the status is no longer `queued`         | Compare against `claimable_at_unix_ms`                   |
-| `withdrawal is not cancelable`             | Past `claimable_at_unix_ms`, or already claimed                            | Cancelling is no longer possible; claim instead          |
-| `insufficient earn balance`                | The gross amount exceeds `earn_balance`                                    | A withdrawal already in flight is not in `earn_balance`   |
-| `withdrawal amount is below minimum`       | Gross below `min_withdraw_amount`                                          | Re-read `config`; `"0"` means no minimum                  |
-| `withdrawal amount exceeds maximum`        | Gross above `max_single_withdraw_amount`                                   | Re-read `config`; `"0"` means no maximum                  |
-| `withdrawals are paused`                   | `withdrawal_paused` is true                                                | Cancelling is still available in its window              |
-| `withdrawal type is disabled for asset`    | The asset has that type turned off                                         | Check `scheduled_withdraw_enabled` and `instant_withdraw_enabled` |
-| `withdrawal not found`                     | No such record, **or** it belongs to another address                       | Both cases return the same response                      |
+| Message                                       | Cause                                                               | What to do                                                                                                                     |
+| --------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `user asset already has an active withdrawal` | One is already in flight for this address **and asset**             | Check `active_withdraw_operation_id` on that asset's `balances[]` entry before signing                                         |
+| `withdrawal signer does not match user`       | The typed data does not match, so a different address was recovered | Check the `uint8` type code, the `bytes32` `operationId`, the millisecond `deadline`, and that no `chainId` reached the domain |
+| `invalid signature recovery id`               | The 65-byte signature's `v` byte is not `0`, `1`, `27` or `28`      | Post the wallet's raw `r‖s‖v`; do not reorder or re-encode it                                                                  |
+| `deadline_unix_ms must be in the future`      | The deadline has passed, including on a delayed claim retry         | For a create, sign a new one; for a claim, poll `withdrawals` first                                                            |
+| `withdrawal is not claimable`                 | Before `claimable_at_unix_ms`, or the status is no longer `queued`  | Compare against `claimable_at_unix_ms`                                                                                         |
+| `withdrawal is not cancelable`                | Past `claimable_at_unix_ms`, or already claimed                     | Cancelling is no longer possible; claim instead                                                                                |
+| `insufficient earn balance`                   | The gross amount exceeds `earn_balance`                             | A withdrawal already in flight is not in `earn_balance`                                                                        |
+| `withdrawal amount is below minimum`          | Gross below `min_withdraw_amount`                                   | Re-read `config`; `"0"` means no minimum                                                                                       |
+| `withdrawal amount exceeds maximum`           | Gross above `max_single_withdraw_amount`                            | Re-read `config`; `"0"` means no maximum                                                                                       |
+| `withdrawals are paused`                      | `withdrawal_paused` is true                                         | Cancelling is still available in its window                                                                                    |
+| `withdrawal type is disabled for asset`       | The asset has that type turned off                                  | Check `scheduled_withdraw_enabled` and `instant_withdraw_enabled`                                                              |
+| `withdrawal not found`                        | No such record, **or** it belongs to another address                | Both cases return the same response                                                                                            |
 
 ## Next steps
 
-{% content-ref url="reference.md" %}
-[reference.md](reference.md)
+{% content-ref url="../reference.md" %}
+[reference.md](../reference.md)
 {% endcontent-ref %}
 
-{% content-ref url="yield.md" %}
-[yield.md](yield.md)
+{% content-ref url="../yield.md" %}
+[yield.md](../yield.md)
 {% endcontent-ref %}

@@ -1,5 +1,7 @@
 ---
-description: Deposit into the Native Core Pool vault, earn distributed yield, and withdraw — the two deposit routes, the signed withdrawal actions, and what to poll.
+description: >-
+  Deposit into the Native Core Pool vault, earn distributed yield, and withdraw
+  — the two deposit routes, the signed withdrawal actions, and what to poll.
 ---
 
 # Native Core Pool
@@ -16,8 +18,8 @@ This section is for teams building their own Pool experience — wallets, custod
 [yield.md](yield.md)
 {% endcontent-ref %}
 
-{% content-ref url="withdraw.md" %}
-[withdraw.md](withdraw.md)
+{% content-ref url="withdraw/" %}
+[withdraw](withdraw/)
 {% endcontent-ref %}
 
 {% content-ref url="reference.md" %}
@@ -28,12 +30,12 @@ This section is for teams building their own Pool experience — wallets, custod
 
 Each direction gives you one request to send and one query to poll.
 
-|             | Deposit                                                   | Withdraw                                       |
-| ----------- | --------------------------------------------------------- | ---------------------------------------------- |
-| You send    | A vault `deposit()` on an EVM chain, or a Core `transfer` | A signed `createWithdrawal` request            |
-| It lands in | `earn_balance`                                             | Your Native Core balance                       |
-| You poll    | `deposits`                                                 | `withdrawals`                                  |
-| Correlate on | `src_tx_hash` on the EVM route, your `cloid` on the Core route | `operation_id`                             |
+|              | Deposit                                                        | Withdraw                            |
+| ------------ | -------------------------------------------------------------- | ----------------------------------- |
+| You send     | A vault `deposit()` on an EVM chain, or a Core `transfer`      | A signed `createWithdrawal` request |
+| It lands in  | `earn_balance`                                                 | Your Native Core balance            |
+| You poll     | `deposits`                                                     | `withdrawals`                       |
+| Correlate on | `src_tx_hash` on the EVM route, your `cloid` on the Core route | `operation_id`                      |
 
 A deposit cannot be cancelled or reversed. A scheduled withdrawal can be cancelled until it becomes claimable. An instant withdrawal cannot be cancelled at any point.
 
@@ -69,11 +71,11 @@ Every response carries a `trace_id` header. Include it when you report a problem
 
 The budgets below apply to `POST /api/v3/earn`. Requests are metered **per `user_address`**, and each `type` holds its own budget.
 
-| Request                                                                  | Budget           |
-| ------------------------------------------------------------------------ | ---------------- |
-| `config`                                                                  | Not metered      |
-| Reads: `account`, `deposits`, `withdrawals`, `withdrawal`, `yieldHistory` | 3 per second     |
-| Writes: `createWithdrawal`, `claimWithdrawal`, `cancelWithdrawal`         | 1 per second     |
+| Request                                                                   | Budget       |
+| ------------------------------------------------------------------------- | ------------ |
+| `config`                                                                  | Not metered  |
+| Reads: `account`, `deposits`, `withdrawals`, `withdrawal`, `yieldHistory` | 3 per second |
+| Writes: `createWithdrawal`, `claimWithdrawal`, `cancelWithdrawal`         | 1 per second |
 
 The window resets every second. A request over the budget returns `code: 201005` and carries no `data`.
 
@@ -87,10 +89,10 @@ The Core-internal deposit route posts to `api.native.org/trade`, which is metere
 
 Amounts are **integer atom strings**, never numbers and never decimals.
 
-| Where                              | Precision                                                              |
-| ---------------------------------- | ---------------------------------------------------------------------- |
-| Pool balances and amounts          | The asset's `balance_decimals` from `config`, currently `8` for every asset |
-| Cross-chain deposit call           | The source ERC20's own `decimals`                                        |
+| Where                     | Precision                                                                   |
+| ------------------------- | --------------------------------------------------------------------------- |
+| Pool balances and amounts | The asset's `balance_decimals` from `config`, currently `8` for every asset |
+| Cross-chain deposit call  | The source ERC20's own `decimals`                                           |
 
 The two precisions differ, so a cross-chain deposit requires a conversion. 1 USDT is `1000000` to the ERC20 on Ethereum (6 decimals) and `100000000` once credited to the Pool (8 decimals).
 
@@ -106,11 +108,11 @@ Read the routing table at runtime. Operations list and delist assets and change 
 Addresses, transaction hashes and signatures in the examples throughout this section are placeholders, shortened to `0x1111…1111` form for readability. Substitute full-length values, and resolve every address at runtime rather than copying one into your code as a constant.
 {% endhint %}
 
-| What you need                                                     | Where it comes from                                            |
-| ----------------------------------------------------------------- | -------------------------------------------------------------- |
-| `asset_id`, `balance_decimals`, fees, withdrawal limits            | [`config`](reference.md#config)                                 |
-| Vault address and the EIP-712 domain                               | [`config`](reference.md#config)                                 |
-| Depositable ERC20s and vault addresses per chain                   | [Deposit & Withdraw](../deposit-withdraw/README.md#discovery)   |
+| What you need                                           | Where it comes from                                  |
+| ------------------------------------------------------- | ---------------------------------------------------- |
+| `asset_id`, `balance_decimals`, fees, withdrawal limits | [`config`](reference.md#config)                      |
+| Vault address and the EIP-712 domain                    | [`config`](reference.md#config)                      |
+| Depositable ERC20s and vault addresses per chain        | [Deposit & Withdraw](../deposit-withdraw/#discovery) |
 
 `config.assets[]` lists every asset the Pool accepts.
 

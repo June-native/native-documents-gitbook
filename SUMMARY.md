@@ -34,8 +34,6 @@
 
 ## Products
 
-***
-
 * [Native Liquidity Provisioning](native-liquidity-provisioning/README.md)
   * [Tokenized Stocks & Equities (RWAs)](native-liquidity-provisioning/tokenized-stocks-and-equities-rwas.md)
   * [Yield-Bearing Assets](native-liquidity-provisioning/native-liquidity-provisioning.md)
@@ -87,7 +85,8 @@
 * [Native Core Pool](build-with-native/native-core-pool/README.md)
   * [Deposit](build-with-native/native-core-pool/deposit.md)
   * [Yield](build-with-native/native-core-pool/yield.md)
-  * [Withdraw](build-with-native/native-core-pool/withdraw.md)
+  * [Withdraw](build-with-native/native-core-pool/withdraw/README.md)
+    * [Withdraw Directly to EVM](build-with-native/native-core-pool/withdraw/withdraw-directly-to-evm.md)
   * [Reference](build-with-native/native-core-pool/reference.md)
 * [Wallets, Aggregators & Solvers](build-with-native/swap-aggregators/README.md)
   * [Guide](build-with-native/swap-aggregators/guide.md)
