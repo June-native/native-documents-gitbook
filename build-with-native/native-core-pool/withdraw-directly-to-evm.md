@@ -1,4 +1,4 @@
-| Same asset as the redemption ---
+---
 description: One request that redeems from Native Core Pool and pays out to an EVM wallet, authorized by two signatures.
 ---
 
