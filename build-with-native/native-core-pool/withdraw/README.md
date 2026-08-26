@@ -8,7 +8,7 @@ description: >-
 
 A withdrawal moves funds from `earn_balance` back to the address's Native Core balance. Every step is a signed request; nothing is submitted on-chain by you.
 
-To land the funds in an EVM wallet instead, see [Withdraw Directly to EVM](withdraw-directly-to-evm.md), which combines this step and the Native Core withdrawal into one request.
+To land the funds in an EVM wallet instead, see [Withdraw Directly to EVM](../withdraw-directly-to-evm.md), which combines this step and the Native Core withdrawal into one request.
 
 Choose a type at creation. The choice is permanent.
 

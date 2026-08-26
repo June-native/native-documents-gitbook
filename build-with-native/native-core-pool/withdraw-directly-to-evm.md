@@ -1,10 +1,10 @@
----
+| Same asset as the redemption ---
 description: One request that redeems from Native Core Pool and pays out to an EVM wallet, authorized by two signatures.
 ---
 
 # Withdraw Directly to EVM
 
-[Withdraw](README.md) ends at the address's Native Core balance. Getting from there to a wallet on an EVM chain is a second, separate step.
+[Withdraw](withdraw/README.md) ends at the address's Native Core balance. Getting from there to a wallet on an EVM chain is a second, separate step.
 
 This endpoint does both in one request. The user signs twice — once for the Pool redemption, once for the Native Core withdrawal — and the two run as a single tracked operation.
 
@@ -15,7 +15,7 @@ This endpoint does both in one request. The user signs twice — once for the Po
 | One in flight per  | Asset                       | **Address**                                      |
 | Types              | `scheduled` and `instant`   | `instant`, or a claim of a ready `scheduled`     |
 
-Read [Withdraw](README.md) and the Native Core [`withdraw` action](../../native-core/post-trade.md#withdraw) first. This page only covers what the combined request adds.
+Read [Withdraw](withdraw/README.md) and the Native Core [`withdraw` action](../native-core/post-trade.md#withdraw) first. This page only covers what the combined request adds.
 
 ## 1. Choose the source
 
@@ -26,7 +26,7 @@ Read [Withdraw](README.md) and the Native Core [`withdraw` action](../../native-
 | `instant`         | Redeems immediately                                                      | `instant_fee_bps`     |
 | `scheduled_claim` | Claims a `scheduled` withdrawal that has reached `claimable_at_unix_ms`  | None                  |
 
-**You cannot create a `scheduled` withdrawal here.** Create it with [`createWithdrawal`](README.md#3-sign-and-submit), wait out its window, then send `scheduled_claim` instead of `claimWithdrawal`.
+**You cannot create a `scheduled` withdrawal here.** Create it with [`createWithdrawal`](withdraw/README.md#3-sign-and-submit), wait out its window, then send `scheduled_claim` instead of `claimWithdrawal`.
 
 ## 2. Size the amount
 
@@ -42,23 +42,23 @@ At 5 bps, a gross of `1000000001` pays a fee of `500001`, not `500000`.
 `scheduled_claim` has no fee, so `net_amount` equals the gross of the withdrawal you are claiming.
 
 {% hint style="warning" %}
-**`core_withdraw.amount` must equal `net_amount` exactly.** It is the amount leaving the Native Core balance, and the Pool half only funds the net. A gross value, or a net computed by rounding the fee down, returns `earn net amount or asset does not match Core withdraw authorization`.
+**`core_withdraw.amount` must equal `net_amount` exactly.** It is the amount leaving the Native Core balance, and the redemption only funds the net. A gross value, or a net computed by rounding the fee down, returns `earn net amount or asset does not match Core withdraw authorization`.
 {% endhint %}
 
-## 3. Sign the Pool half
+## 3. Sign the Pool redemption
 
 Identical to the standalone action, same domain and same typed data:
 
 | `source`          | Sign                                                                              |
 | ----------------- | --------------------------------------------------------------------------------- |
-| `instant`         | [`CreateWithdrawal`](README.md#3-sign-and-submit) with `withdrawType: '2'`         |
-| `scheduled_claim` | [`ClaimWithdrawal`](README.md#5-claim-a-scheduled-withdrawal) over the `operationId` hash |
+| `instant`         | [`CreateWithdrawal`](withdraw/README.md#3-sign-and-submit) with `withdrawType: '2'`         |
+| `scheduled_claim` | [`ClaimWithdrawal`](withdraw/README.md#5-claim-a-scheduled-withdrawal) over the `operationId` hash |
 
 The result goes in `user_signature`.
 
-## 4. Sign the Core half
+## 4. Sign the Core withdrawal
 
-The Native Core `withdraw` action, signed under the [EIP-712 v4 scheme](../../native-core/transaction-signing.md#eip-712-signing-auth_scheme-eip712) — domain `{name:"Native Core", version:"1", verifyingContract:0x0000…0000}`, no `chainId`, `authKind` `1`, `authScope` `0`.
+The Native Core `withdraw` action, signed under the [EIP-712 v4 scheme](../native-core/transaction-signing.md#eip-712-signing-auth_scheme-eip712) — domain `{name:"Native Core", version:"1", verifyingContract:0x0000…0000}`, no `chainId`, `authKind` `1`, `authScope` `0`.
 
 Send it as `core_withdraw`:
 
@@ -66,7 +66,7 @@ Send it as `core_withdraw`:
 | ----------------------- | --------------------------------------------------------------------------- |
 | `nonce`                 | Transaction nonce. Current Unix milliseconds                                 |
 | `expires_after_unix_ms` | When the authorization stops being valid                                     |
-| `asset_id`              | Same asset as the Pool half                                                  |
+| `asset_id`              | Same asset as the redemption                                                 |
 | `amount`                | `net_amount`, in atoms                                                       |
 | `dst_chain_id`          | The EVM chain to pay out on                                                  |
 | `dst_address`           | The receiving address on that chain                                          |
@@ -178,7 +178,7 @@ These eight are also the accepted values for the `status` filter.
 | ------------------------ | ---------------------------------------------------------------------------------------- |
 | `WAIT`                   | Still running                                                                             |
 | `NONE`                   | Finished, or failed with nothing owed                                                     |
-| `RESUBMIT_CORE_WITHDRAW` | The `net_amount` is in their Native Core balance. Retrying here cannot work; withdraw it with a plain Core [`withdraw`](../../native-core/post-trade.md#withdraw) |
+| `RESUBMIT_CORE_WITHDRAW` | The `net_amount` is in their Native Core balance. Retrying here cannot work; withdraw it with a plain Core [`withdraw`](../native-core/post-trade.md#withdraw) |
 | `CONTACT_SUPPORT`        | Held for an operator. This is the one terminal state that keeps the address's slot occupied, so no new wallet withdrawal is accepted until it is resolved |
 {% endhint %}
 
@@ -214,18 +214,18 @@ Metered per `user_address`, like every other Pool request.
 | ---------------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------- |
 | `earn net amount or asset does not match Core withdraw authorization` | `core_withdraw.amount` is not `net_amount`            | Round the fee **up**, then subtract                       |
 | `Core withdraw authorization has less than 10m0s remaining`       | `expires_after_unix_ms` is too close                      | Sign 30 minutes out                                       |
-| `Core withdraw signer does not match Earn user`                   | The Core typed data does not match what you sent          | Check `authKind`/`authScope`, that no `chainId` reached the domain, and that both halves came from one object |
-| `withdrawal signer does not match user`                           | The Pool half's typed data does not match                 | Same checks as [Withdraw](README.md#what-can-go-wrong)    |
+| `Core withdraw signer does not match Earn user`                   | The Core typed data does not match what you sent          | Check `authKind`/`authScope`, that no `chainId` reached the domain, and that both signatures came from one object |
+| `withdrawal signer does not match user`                           | The redemption's typed data does not match                 | Same checks as [Withdraw](withdraw/README.md#what-can-go-wrong)    |
 | `Core withdraw cloid must be 16-byte 0x hex`                      | `cloid` is missing or the wrong length                    | `0x` + 32 hex characters                                  |
 | `user already has active wallet withdrawal <id>`                  | One is already in flight for this address                 | Poll it to a terminal state first; the limit is per address, not per asset |
 | `wallet withdrawal not found`                                     | No such record, **or** it belongs to another address      | Both cases return the same response                       |
 
 ## Next steps
 
-{% content-ref url="README.md" %}
-[README.md](README.md)
+{% content-ref url="withdraw/README.md" %}
+[withdraw/README.md](withdraw/README.md)
 {% endcontent-ref %}
 
-{% content-ref url="../reference.md" %}
-[reference.md](../reference.md)
+{% content-ref url="reference.md" %}
+[reference.md](reference.md)
 {% endcontent-ref %}
