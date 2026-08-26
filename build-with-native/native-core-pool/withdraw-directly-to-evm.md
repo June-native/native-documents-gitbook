@@ -30,19 +30,34 @@ Read [Withdraw](withdraw/README.md) and the Native Core [`withdraw` action](../n
 
 ## 2. Size the amount
 
-`instant` charges the Pool fee on the gross, **rounded up**:
+Two fees apply, at different stages.
+
+**The Pool fee**, charged by `instant` on the gross and rounded up:
 
 ```
 earn_fee_amount = ⌈ gross_amount × instant_fee_bps ÷ 10000 ⌉
 net_amount      = gross_amount − earn_fee_amount
 ```
 
-At 5 bps, a gross of `1000000001` pays a fee of `500001`, not `500000`.
+At 5 bps, a gross of `1000000001` pays a fee of `500001`, not `500000`. `scheduled_claim` has no Pool fee, so `net_amount` equals the gross of the withdrawal you are claiming.
 
-`scheduled_claim` has no fee, so `net_amount` equals the gross of the withdrawal you are claiming.
+**The withdrawal fee**, a flat per-asset amount taken when the payout is released on the destination chain. It applies to both sources. Read it from `POST /api/v3/info {"type":"meta"}`, on the `assets[]` entry for your asset:
+
+```json
+{ "asset_id": 2, "symbol": "USDT", "balance_decimals": 8,
+  "withdraw_fee": "1", "withdraw_fee_atoms": "100000000" }
+```
+
+USDC and USDT are 1 unit each. It is charged in atoms of the asset, so quote it to the user from `withdraw_fee`.
+
+```
+received = net_amount − withdraw_fee_atoms
+```
+
+A gross of `1000000000` USDT at 5 bps: the Pool takes `500000`, leaving a `net_amount` of `999500000`, and the payout takes `100000000`, so `899500000` — 8.995 USDT — arrives in the wallet.
 
 {% hint style="warning" %}
-**`core_withdraw.amount` must equal `net_amount` exactly.** It is the amount leaving the Native Core balance, and the redemption only funds the net. A gross value, or a net computed by rounding the fee down, returns `earn net amount or asset does not match Core withdraw authorization`.
+**`core_withdraw.amount` must equal `net_amount` exactly — do not subtract the withdrawal fee from it.** That fee is taken downstream, when the payout is released; the authorization you are signing covers the full `net_amount` leaving the Native Core balance. Subtracting it, sending the gross, or rounding the Pool fee down all return `earn net amount or asset does not match Core withdraw authorization`.
 {% endhint %}
 
 ## 3. Sign the Pool redemption
@@ -188,7 +203,7 @@ These eight are also the accepted values for the `status` filter.
 | ---------------------------------- | ------------------------------------------------------------------------- |
 | `wallet_withdrawal_id`             | The handle for both reads                                                  |
 | `source`                           | `instant` or `scheduled_claim`, as created                                 |
-| `gross_amount` / `net_amount`      | Before and after the Pool fee                                              |
+| `gross_amount` / `net_amount`      | Before and after the Pool fee. `net_amount` is what leaves the Native Core balance, **not** what arrives on the destination chain — the withdrawal fee comes off after it |
 | `earn_fee_bps_snapshot`            | The rate at creation, so a later config change does not restate history    |
 | `earn_withdraw_operation_id`       | The Pool withdrawal backing this one                                       |
 | `core_tx_hash`                     | The Native Core withdrawal transaction                                     |
