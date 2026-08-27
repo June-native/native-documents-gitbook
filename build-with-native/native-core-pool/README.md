@@ -74,8 +74,8 @@ The budgets below apply to `POST /api/v3/earn`. Requests are metered **per `user
 | Request                                                                   | Budget       |
 | ------------------------------------------------------------------------- | ------------ |
 | `config`                                                                  | Not metered  |
-| Reads: `account`, `deposits`, `withdrawals`, `withdrawal`, `yieldHistory` | 3 per second |
-| Writes: `createWithdrawal`, `claimWithdrawal`, `cancelWithdrawal`         | 1 per second |
+| Reads: `account`, `deposits`, `withdrawals`, `withdrawal`, `yieldHistory`, `walletWithdrawal`, `walletWithdrawals` | 3 per second |
+| Writes: `createWithdrawal`, `claimWithdrawal`, `cancelWithdrawal`, `createWalletWithdrawal` | 1 per second |
 
 The window resets every second. A request over the budget returns `code: 201005` and carries no `data`.
 
