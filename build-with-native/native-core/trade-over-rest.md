@@ -44,7 +44,7 @@ Use the `epoch` of the slot whose `agent` matches your API-wallet address. Omit 
 
 `signature` signs a canonical **binary** payload built from `action` + `nonce` + `agent_epoch` — not the JSON text. Two ways to produce it:
 
-* **[Python SDK](python-sdk/README.md)** — signs, manages nonces, and reconciles for you. Recommended.
+* **[Python SDK](python-sdk/README.md)** — signs, manages nonces, and turns each outcome into one decision to branch on. Recommended.
 * **By hand** — the full byte layout and a TypeScript signer are in [Transaction Signing](transaction-signing.md).
 
 The assembled request:

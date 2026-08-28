@@ -78,6 +78,8 @@ Assume the connection will drop. On reconnect, resubscribe and take the first sn
 
 Only `trades` and `orderUpdates` can leave a hole, because they are pure increments. Fill it from `POST /info`: [`userFills`](post-info.md#userfills) takes a `from_height` / `to_height` range within the recent query window, and [`orderStatus`](post-info.md#orderstatus) settles the fate of any single order by `oid` or `cloid`.
 
+A disconnect is not the only way to lose frames. When the server's broadcast falls behind, event frames — `trades`, `userFills` and `orderUpdates` — are dropped outright while the snapshot channels are re-pushed. The connection stays up, so nothing tells you, and `userFills` does not replay. If your accounting depends on seeing every fill, poll [`userFills`](post-info.md#userfills) on a timer and reconcile by `tid` rather than trusting the feed alone.
+
 {% hint style="info" %}
 Deduplicate fills on `tid`. The snapshot, the live frame, and `POST /info` all report one value for a trade. Parse it as a `BigInt`, not a JS `Number`.
 {% endhint %}
@@ -111,7 +113,11 @@ You do not need a second transport to write. `post` carries [`POST /info`](post-
 }
 ```
 
-The reply echoes your `id` and carries the same response `POST /trade` would have returned, `submission_status` and all. Signing is unchanged — see [Transaction Signing](transaction-signing.md). One request at a time, and the same per-IP rate budget as HTTP applies.
+The reply echoes your `id`. A write that **settles** — accepted, or rejected by the chain — carries the same response `POST /trade` would have returned, `submission_status` and `response` envelope and all. Signing is unchanged — see [Transaction Signing](transaction-signing.md). One request at a time, and the same per-IP rate budget as HTTP applies.
+
+{% hint style="warning" %}
+Anything else is flattened to a plain status string with no `submission_status` and no `tx_hash`: a rate limit (429), a suspension (503), and **every** routing timeout (`Handoff*` at 503, `node_unreachable` at 504). Treat a 4xx string as never-executed, and a 5xx string as indeterminate — reconcile by `cloid` and do not resubmit under a fresh nonce. Submit over `POST /trade` when you need the full outcome.
+{% endhint %}
 
 ## Next steps
 

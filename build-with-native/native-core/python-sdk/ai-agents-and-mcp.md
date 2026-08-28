@@ -12,28 +12,31 @@ The API and the SDK are shaped so an autonomous model can trade without ever hol
 
 - **Scoped, revocable keys.** An agent trades with an **API wallet** — a protocol-level agent key scoped only to placing and cancelling orders. It can never deposit, withdraw, or move funds off Native. Create it in the web app, and revoke or rotate it there any time. A leaked API wallet key can trade the balance but cannot drain it. See [getting-started.md](getting-started.md) for how to create one.
 - **Reads on, writes gated.** Market data, balances, and order status are always available. The order-placing and cancelling surface is turned on only by an explicit switch, so a read-only agent physically cannot place an order.
-- **Outcomes are structured, not prose.** Every trade response is decision-ready: the agent branches on a field (`submission_status`, `next_action`, `state`, `filled_qty`) instead of reading a sentence. A business rejection is **data** in the response body, not an exception.
-- **Deterministic reconcile-by-cloid.** Every order carries a client order id (`cloid`) you can look up. That single primitive is what stops an agent from double-filling after a timeout — the core of the safety contract below.
+- **Outcomes are structured, not prose.** Every trade response is decision-ready: the agent branches on a field (`submission_status`, `next_action`, `order_error`, `state`, `filled_qty`) instead of reading a sentence. A business rejection is **data** in the response body, not an exception.
+- **Deterministic reconcile-by-cloid.** An order whose outcome is *uncertain* carries a client order id (`cloid`) you can look up, which is what stops an agent from double-filling after a timeout. It does not extend to an order the response already settled as failed — that order was never written anywhere, so there is nothing to look up. See the contract below.
 
 ## The safety contract for agents
 
 An agent that places money-moving orders must hold to a few rules. The SDK returns each outcome as structured fields so the agent branches on a field instead of remembering the rule.
 
-- **Accepted is not filled.** A raw `order()` / `market_order()` returning `submission_status: "accepted"` means the transaction **landed and executed** — not that the order rested or filled (it also covers a benign IOC/FOK cancel). Read the order's status by `cloid` — `wait_for_open` for a resting order, or `info.reconcile_by_cloid(user, market, cloid)` — for the `oid` and fill.
-- **Never resubmit an uncertain write.** A wire timeout raises `SubmissionUncertain` (carrying `.cloid` and `.nonce`) or returns `submission_status: "timeout"`. The order **may still be live**. Reconcile by `cloid` and act on the result; resubmitting under a fresh nonce risks a double-fill. Only a `RateLimited` rejection is safe to resend — it was never admitted.
-- **Survive a restart.** Generate the `cloid` yourself with `Exchange.random_cloid()`, persist `{intent, cloid}` durably **before** calling `order(..., cloid=cloid)`, and on restart reconcile every persisted cloid before placing anything new. This is the idempotency-key pattern: an agent that crashes after sending but before recording an SDK-generated cloid cannot reconcile and may double-fill.
+- **Accepted is not placed.** `submission_status: "accepted"` means the **transaction** landed and executed. The order inside it may still have failed — `tick`, `lotsize`, `badalopx`, `insufficientspotbalance`, `mintradespotntl`, `missingorder` all arrive that way, on a leaf of the `response` envelope. `is_accepted` alone will book a failed order as a success. Check `is_order_failed(resp)`, or just take `next_action(resp)`. The `oid` and the fill are on the response too (`order_oid`, `fill`), so the ordinary path costs no read.
+- **A failed order cannot be reconciled.** It never entered the book, so it appears in neither `orderStatus` nor `orderUpdates`. Polling it returns `unknown` and reconciling it returns `undetermined`, forever — which, paired with the never-resubmit rule, freezes the agent. Read the leaf, record the failure, and treat the corrected order as a **new** order with a new `cloid`.
+- **Never resubmit an uncertain write.** `SubmissionUncertain` (carrying `.cloids` and `.nonce`) or `submission_status: "timeout"` means the order **may still be live**. Reconcile by `cloid` and act on the result; resubmitting risks a double-fill. Two things *are* safe to resend: a `RateLimited` rejection, which was never admitted, and a timeout where `is_safe_to_resend(resp)` is true (the `Handoff*` family, which never reached a node).
+- **Survive a restart.** Generate the `cloid` yourself with `Exchange.random_cloid()`, persist `{intent, cloid}` durably **before** calling `order(..., cloid=cloid)`, and on restart resolve every persisted cloid before placing anything new — `info.batch_order_status([...])` settles up to 20 in one read. This is the idempotency-key pattern: an agent that crashes after sending but before recording an SDK-generated cloid cannot reconcile and may double-fill.
 - **Numbers are strings.** Pass `sz` and `limit_px` as `str` or `Decimal`, never `float`. Size with `info.min_order_size(market, price)` and dry-run with `build_order(...)` (which signs and sends nothing) to avoid a precision or minimum-notional rejection. See [decimals-units.md](../decimals-units.md).
 
-`next_action(response)` collapses any trade response into one verdict to branch on (it returns `None` for a non-trade response):
+`next_action(response)` collapses any trade response into one verdict to branch on (it returns `None` for a non-trade response). There are six, and against the API running today the first two are what an agent sees most:
 
 | `next_action` | Situation | What the agent does |
 | --- | --- | --- |
-| `READ_ORDER_STATUS` | accepted — landed & executed | Read the order's status once (`wait_for_open` / `wait_for_order`) for the `oid` and fill — the outcome is already settled |
-| `RECONCILE_BY_CLOID` | timeout — indeterminate | `reconcile_by_cloid`; **never** resubmit |
-| `BACKOFF_AND_RETRY` | `RateLimited` — never admitted | Sleep `retry_after_ms`, then resend the same order |
-| `FIX_AND_RESUBMIT` | other rejection | Fix the input or account state, then submit fresh |
+| `USE_RESPONSE_OUTCOME` | accepted, the order worked | Nothing more. Take the `oid` and fill off the response |
+| `ORDER_CLOSED_UNFILLED` | accepted, benign cancel | Nothing more. The order is over and nothing filled |
+| `FIX_AND_RESUBMIT` | accepted but the order failed, or a rejection other than `RateLimited` | Read the leaf code, fix the input or account state, send a **fresh** order. Nothing to reconcile |
+| `BACKOFF_AND_RETRY` | `RateLimited`, or a `Handoff*` timeout — never reached a node | Sleep `retry_after_ms`, then resend the **same** `cloid` |
+| `RECONCILE_BY_CLOID` | a timeout that is not safe to resend | `reconcile_by_cloid`; **never** resubmit |
+| `READ_ORDER_STATUS` | accepted with no `response` envelope | Read `order_status` once. Only an API older than the release that reports outcomes inline answers this way |
 
-`as_problem_details(failure)` is the one-envelope normalizer: it renders any failure — an exception, or a rejected / timeout body — into a single flat `{type, title, retryable, next_action, cloids, …}` shape, so an agent has one place to read regardless of how the outcome arrived.
+`as_problem_details(failure)` is the one-envelope normalizer: it renders any failure — an exception, a rejected or timeout body, or an accepted write whose order failed — into a single flat `{type, title, retryable, next_action, cloids, …}` shape, so an agent has one place to read regardless of how the outcome arrived. A success or a benign cancel returns `None`.
 
 The wire-level fields these helpers read (`submission_status`, `error.code`, `orderStatus`) are documented in [post-trade.md](../post-trade.md) and [post-info.md](../post-info.md).
 
@@ -115,7 +118,13 @@ Drop `NATIVE_CORE_ENABLE_TRADING` (or leave it unset) for a read-only assistant 
 | `cancel_order` | Cancel one order by `oid` or `cloid` |
 | `cancel_all_orders` | Cancel every open order in one market |
 
-Every result is normalized with the SDK's own helpers, so the assistant sees a decision-ready shape (`state`, `filled_qty`, `next_action`) rather than raw API JSON. The never-resubmit contract is enforced by shape: a timed-out or uncertain write comes back with `next_action = RECONCILE_BY_CLOID` and the `cloid`, and the model is pointed at `reconcile_order` — never told to resend. These tools are thin wrappers over the same SDK calls (`get_order` ≈ `reconcile_by_cloid`, `get_min_order_size` ≈ `min_order_size`, `preview_order` ≈ `build_order`).
+Every **write** result is normalized with the SDK's own helpers, so the assistant sees a decision-ready shape rather than raw API JSON: `ok`, `cloid`, `submission_status`, `state`, `filled_qty`, `next_action`, `tx_hash`, `error`, plus `oid` and — when a leaf failed — `order_error` (the lowercase per-action code) and `order_failed`. Reads are handed back as the API returned them.
+
+`ok` is decided by the order's own outcome, not by the transaction: when the `response` envelope is present, any error leaf means the placement did not work. A cancel result is narrower, `{ok, submission_status, error}` only.
+
+The never-resubmit contract is enforced by shape: a write whose outcome the transport could not determine comes back with `next_action = RECONCILE_BY_CLOID` and the `cloid`, and the model is pointed at `reconcile_order` — never told to resend. A gateway `timeout` body is the exception and is split by `is_safe_to_resend`: the three `Handoff*` codes report `BACKOFF_AND_RETRY`, every other timeout reports `RECONCILE_BY_CLOID`.
+
+These tools are thin wrappers over the same SDK calls (`get_order` ≈ `reconcile_by_cloid`, `get_min_order_size` ≈ `min_order_size`, `preview_order` ≈ `build_order`).
 
 {% hint style="info" %}
 Use a dedicated, limited API wallet here, never your main wallet. The MCP tools are convenience, not a security boundary: the real protection is that the API wallet is scoped and revocable in the app.
@@ -123,32 +132,44 @@ Use a dedicated, limited API wallet here, never your main wallet. The MCP tools 
 
 ## Option B — drive the SDK from your agent code
 
-If your agent does its own tool-calling (not MCP), call the SDK directly and hand the model the same decision-ready fields. The pattern is **place, then reconcile by `cloid`** — and branch on the verdict, never resubmit on an uncertain one:
+If your agent does its own tool-calling (not MCP), call the SDK directly and hand the model the same decision-ready fields. The pattern is **read the response first, reconcile only what it left unresolved**:
 
 ```python
-from native_core import Exchange
+from native_core import Exchange, is_order_failed, leaf_error_code, next_action, RECONCILE_BY_CLOID
 
 exchange = Exchange.from_bundle(BUNDLE)   # your connection bundle
 order = exchange.place(MARKET, is_buy=True, sz=sz, limit_px=px, tif="gtc")
+submission = order["submission"]
 
-# Resolve the real outcome by cloid — never resubmit on an uncertain one.
-verdict = exchange.info.reconcile_by_cloid(
-    exchange.effective_account, MARKET, order["cloid"]
-)
-if verdict["undetermined"]:
-    ...   # not confirmed yet: keep reconciling by cloid, do NOT re-place
-elif verdict["is_filled"]:
-    ...   # fully filled
-elif verdict["filled_qty"] != "0":
-    ...   # partially filled and still resting — filled_qty is how much
+if is_order_failed(submission):
+    ...   # settled: the order failed. Nothing to reconcile — fix and send a NEW cloid.
+    raise SystemExit(leaf_error_code(submission))
+
+if next_action(submission) != RECONCILE_BY_CLOID:
+    oid = order["oid"]                    # already settled — the response carries the outcome
 else:
-    ...   # resting, unfilled (verdict["state"], e.g. "open")
+    # Only here is the outcome genuinely unknown.
+    verdict = exchange.info.reconcile_by_cloid(
+        exchange.effective_account, MARKET, order["cloid"]
+    )
+    if verdict["undetermined"]:
+        ...   # not confirmed yet: keep reconciling by cloid, do NOT re-place
+    elif verdict["is_filled"]:
+        ...   # fully filled
+    elif verdict["filled_qty"] != "0":
+        ...   # partially filled and still resting — filled_qty is how much
+    else:
+        ...   # resting, unfilled (verdict["state"], e.g. "open")
 ```
 
 For an agent branching on raw responses, use `next_action` as the single switch, and generate the `cloid` up front so a crash between send and record is recoverable:
 
 ```python
-from native_core import Exchange, next_action, SubmissionUncertain
+from native_core import (
+    Exchange, SubmissionUncertain, next_action, order_oid, leaf_error_code,
+    USE_RESPONSE_OUTCOME, ORDER_CLOSED_UNFILLED, FIX_AND_RESUBMIT,
+    BACKOFF_AND_RETRY, RECONCILE_BY_CLOID, READ_ORDER_STATUS,
+)
 
 exchange = Exchange.from_bundle(BUNDLE)
 cloid = Exchange.random_cloid()
@@ -157,21 +178,28 @@ store.put(intent, cloid)                  # persist {intent, cloid} BEFORE sendi
 
 try:
     resp = exchange.order(MARKET, is_buy=True, sz=sz, limit_px=px, tif="gtc", cloid=cloid)
-except SubmissionUncertain as e:          # signed + sent, then timed out
-    reconcile(MARKET, e.cloid)            # look up e.cloid; never resubmit
+except SubmissionUncertain as e:          # signed + sent, outcome unreadable
+    for handle in e.cloids:               # a batch has one per leg
+        reconcile(MARKET, handle)         # never resubmit
 else:
     verdict = next_action(resp)
-    if verdict == "READ_ORDER_STATUS":
+    if verdict == USE_RESPONSE_OUTCOME:
+        oid = order_oid(resp)             # done: the response carries the outcome
+    elif verdict == ORDER_CLOSED_UNFILLED:
+        ...                               # benign cancel: over, nothing filled, nothing wrong
+    elif verdict == FIX_AND_RESUBMIT:
+        ...                               # leaf_error_code(resp): fix input, send a NEW cloid
+    elif verdict == BACKOFF_AND_RETRY:
+        ...                               # RateLimited or Handoff*: sleep, resend the SAME cloid
+    elif verdict == RECONCILE_BY_CLOID:
+        reconcile(MARKET, cloid)          # indeterminate timeout — never resubmit
+    elif verdict == READ_ORDER_STATUS:
         exchange.info.wait_for_open(exchange.effective_account, MARKET, cloid)
-    elif verdict == "RECONCILE_BY_CLOID":
-        reconcile(MARKET, cloid)          # timeout body — never resubmit
-    elif verdict == "BACKOFF_AND_RETRY":
-        ...                               # RateLimited: sleep retry_after_ms, resend same order
-    elif verdict == "FIX_AND_RESUBMIT":
-        ...                               # other rejection: fix input, submit fresh
 ```
 
-On restart, reconcile every persisted `cloid` with `reconcile_by_cloid` before placing anything new. Share one `Exchange` per API wallet across threads — the nonce is a per-instance, lock-guarded, monotonic counter, and two instances on the same key collide nonces. Deposits, withdrawals, and `approveAgent` stay in the web app, signed by the main wallet ([transaction-signing.md](../transaction-signing.md)).
+On restart, resolve every persisted `cloid` before placing anything new — `info.batch_order_status([...])` settles up to 20 in one read, and `reconcile_by_cloid` handles the stragglers. Share one `Exchange` per API wallet across threads — the nonce is a per-instance, lock-guarded, monotonic counter, and two instances on the same key collide nonces. Deposits, withdrawals, and `approveAgent` stay in the web app, signed by the main wallet ([transaction-signing.md](../transaction-signing.md)).
+
+An agent that watches orders continuously should take `orderUpdates` and the book off the [WebSocket](streaming.md) rather than polling: `/info` allows about one read per second per client IP, and a pushed feed costs nothing against that budget.
 
 ## The docs are agent-readable too
 
