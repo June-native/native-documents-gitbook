@@ -178,8 +178,8 @@ On restart, reconcile every persisted `cloid` with `reconcile_by_cloid` before p
 This documentation site is itself consumable by an agent — distinct from the trading MCP server above (that one places orders; this one answers questions about the docs).
 
 - **Every page is Markdown.** Append `.md` to any docs URL to fetch the raw Markdown of that page.
-- **`llms.txt` index.** A machine-readable index of the site an agent can crawl for the full page list.
-- **A read-only docs MCP endpoint** at `https://docs.native.org/native-dev/~gitbook/mcp`, exposing `searchDocumentation` and `getPage` — connect an agent to it for Q&A over these docs.
+- **Two crawlable indexes.** [`llms.txt`](https://docs.native.org/native-dev/llms.txt) is the machine-readable page list; [`llms-full.txt`](https://docs.native.org/native-dev/llms-full.txt) is every page's Markdown concatenated into one file, for an agent that would rather read the whole site once than crawl it.
+- **A read-only docs MCP endpoint** at `https://docs.native.org/native-dev/~gitbook/mcp`, exposing `searchDocumentation`, `getPage`, and `sendFeedback` (report a page that reads wrong or out of date, so the team can fix it) — connect an agent to it for Q&A over these docs.
 
 ```jsonc
 {
@@ -191,4 +191,4 @@ This documentation site is itself consumable by an agent — distinct from the t
 }
 ```
 
-This endpoint only reads documentation; it holds no key and cannot trade. Use it for retrieval and grounding, and the `native-core` server above for trading.
+The endpoint takes MCP over `POST`, not a browser `GET`. It only reads documentation: it holds no key and cannot trade. Use it for retrieval and grounding, and the `native-core` server above for trading.
