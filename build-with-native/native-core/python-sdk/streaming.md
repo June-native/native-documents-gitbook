@@ -24,15 +24,17 @@ For a node you run yourself, pass the WebSocket URL directly (`WsClient("ws://lo
 
 ## 2. Subscribe
 
-Nine feeds, four by market and five by address:
+Nine feeds: three by market, one global, five by address.
 
 | By market | By address |
 | --- | --- |
 | `subscribe_trades(market)` | `subscribe_user_fills(address)` |
 | `subscribe_l2_book(market)` | `subscribe_order_updates(address)` |
 | `subscribe_bbo(market)` | `subscribe_open_orders(address)` |
-| `subscribe_all_mids()` | `subscribe_spot_state(address)` |
+| | `subscribe_spot_state(address)` |
 | | `subscribe_spot_credit_state(address)` |
+
+Plus one global feed with no topic argument: `subscribe_all_mids()`.
 
 Each returns a `Subscription` you can pass to `unsubscribe(...)`. Both calls block until the server answers and raise `SubscriptionError` if it refuses — a silent stream is almost always a refused subscription, so the SDK makes that loud rather than letting it hide.
 
@@ -70,7 +72,8 @@ React on `bbo`, not on `l2Book`: the book is a throttled snapshot at 500 ms, whi
 
 | Feed | Behaviour |
 | --- | --- |
-| `l2Book`, `bbo`, `allMids`, `openOrders`, `spotState`, `spotCreditState` | Complete state every frame, so the next frame repairs any gap. Nothing to backfill |
+| `l2Book`, `allMids`, `openOrders`, `spotState`, `spotCreditState` | Complete state every frame, so the next frame repairs any gap. Nothing to backfill |
+| `bbo` | Complete state, but only pushed when the top of book *changes*. On a quiet market a resubscribe yields nothing at all, so read `Info.l2_book` once if you need top of book immediately |
 | `userFills` | The first frame after subscribing replays your most recent 100 fills, so an ordinary resubscribe backfills itself |
 | `trades`, `orderUpdates` | No replay. A gap is a gap |
 

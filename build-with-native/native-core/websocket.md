@@ -472,7 +472,7 @@ A throttled channel pushes when its market or account was **touched** in a block
 * `id` is echoed on every reply. Use a distinct one per request to match replies to requests.
 * A success reply carries exactly what the HTTP endpoint would have returned. A failure reply flattens the HTTP error into a plain string — the status followed by the same `error.code` or message — so decode it against [Error responses](error-responses.md).
 
-An `action` reply is the full trade response **when the write settled at HTTP 200** — accepted, or rejected by the chain. Then a business rejection arrives as a successful `action` whose `submission_status` says what happened, exactly as over HTTP:
+An `action` reply is the full trade response **whenever `/trade` answered HTTP 200** — which is any outcome the gateway or the chain settled on, including a `rejected` body and the wait-budget `timeout`. Then a business rejection arrives as a successful `action` whose `submission_status` says what happened, exactly as over HTTP:
 
 ```json
 {
@@ -500,9 +500,9 @@ An `action` reply is the full trade response **when the write settled at HTTP 20
 ```
 
 {% hint style="danger" %}
-**Every non-2xx outcome is flattened into the `error` envelope, and the trade response is discarded.** There is no `submission_status`, no `tx_hash`, no `retry_after_ms` and no `response` envelope left to read — only a status string. That sweeps in outcomes HTTP reports as ordinary bodies: `RateLimited` (429), `PlaceOrderSuspended` and `TooManyPending` (503), and **both timeout families**, `Handoff*` (503) and `node_unreachable` (504). A socket write therefore never reports a `timeout` as a timeout.
+**Every non-2xx outcome is flattened into the `error` envelope, and the trade response is discarded.** There is no `submission_status`, no `tx_hash`, no `retry_after_ms` and no `response` envelope left to read — only a status string. That sweeps in outcomes HTTP reports as ordinary bodies: `RateLimited` (429), `PlaceOrderSuspended` and `TooManyPending` (503), and the **routing** timeouts `Handoff*` (503) and `node_unreachable` (504). It does not sweep in the other timeout: when the wait budget elapses after the node already admitted the transaction, `/trade` answers HTTP 200, so that one arrives intact as `submission_status: "timeout"` with a `tx_hash`.
 
-Branch accordingly. A **4xx** string means the write never executed — fix it and send again. A **5xx** string is indeterminate: the order may still land, so reconcile by `cloid` and **do not** resubmit under a fresh nonce. Submit over `POST /trade` when you need the full outcome; see [Handle outcomes & timeouts](handle-timeouts.md).
+Branch accordingly, and do not treat 5xx as one bucket. A **4xx** string never executed — fix it and send again. `PlaceOrderSuspended` and `TooManyPending` (both 503) never executed either; each carries a `retry_after_ms` worth honouring. Only the routing timeouts, `Handoff*` (503) and `node_unreachable` (504), are indeterminate: the order may still land, so reconcile by `cloid` and **do not** resubmit under a fresh nonce. Submit over `POST /trade` when you need the full outcome; see [Handle outcomes & timeouts](handle-timeouts.md).
 {% endhint %}
 
 Three things to plan for:

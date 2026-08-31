@@ -6,7 +6,7 @@ description: >-
 
 # API Reference
 
-The complete surface of `native-core-python-sdk` (import `native_core`), as of **2.0.0**: the `Info`, `Exchange` and `WsClient` classes, the response and problem helpers, the exception hierarchy, the transport controls, and the constants. Every method lists the underlying API call it makes so you can cross-reference the wire behaviour.
+The public surface of `native-core-python-sdk` (import `native_core`), as of **2.0.0**: the `Info`, `Exchange` and `WsClient` classes, the response and problem helpers, the exception hierarchy, the transport controls, and the constants. Every method lists the underlying API call it makes so you can cross-reference the wire behaviour.
 
 {% hint style="info" %}
 This page is a symbol reference. For the field-level semantics of any returned JSON, follow the linked wire reference: reads resolve to [`POST /info`](../post-info.md), writes to [`POST /trade`](../post-trade.md). See also [Decimal units](../decimals-units.md) for raw/display conversion and [Transaction signing](../transaction-signing.md) for the signature the SDK builds for you.
@@ -94,7 +94,7 @@ Each write returns the raw API response with the client handle echoed in: `submi
 {% hint style="danger" %}
 **`accepted` is a verdict on the transaction, not on your order.** Only six envelope-level problems and the API's admission refusals come back `rejected`. A per-action failure — `tick`, `lotsize`, `badalopx`, `insufficientspotbalance`, `mintradespotntl`, `missingorder` — arrives as `accepted`, with the reason on a leaf of the `response` envelope. Check `is_order_failed(resp)` (or branch on `next_action`) before treating the order as live.
 
-A failed order is **never written to `/info`**, so there is nothing to poll for and nothing to reconcile — the leaf is the only trace it existed. Take the `oid` and the fill from `order_oid(resp)` / `fill(resp)` at no read cost.
+An order rejected **before** matching — `tick`, `lotsize`, `insufficientspotbalance`, `mintradespotntl`, `missingorder` — is never written to `/info`, so there is nothing to poll for and nothing to reconcile; the leaf is the only trace it existed. One that dies **at** matching (`badalopx`, `insufficientspotcredit`, and the benign cancels) does get an order-status row and an `orderUpdates` frame. Either way, take the `oid` and the fill from `order_oid(resp)` / `fill(resp)` at no read cost.
 
 On a wire timeout the SDK raises `SubmissionUncertain` (or returns `submission_status: "timeout"`): reconcile by `cloid` and **never resubmit**, unless `is_safe_to_resend(resp)` is true. See [Core concepts](core-concepts.md#accepted-is-not-placed).
 {% endhint %}
@@ -113,8 +113,11 @@ MARKET = "ETH/USDT"
 # Price a resting bid, size it to the market minimum, submit, and wait for it to rest.
 book = info.l2_book(MARKET, depth=1)
 if not book.get("found"):
-    raise SystemExit("no book published for this market yet")
-px = info.snap_price(MARKET, Decimal((book.get("asks") or book["bids"])[0]["price"]) / 2)
+    raise SystemExit("unknown market")           # found=false means the id is unknown
+levels = book.get("asks") or book.get("bids") or []
+if not levels:
+    raise SystemExit("no resting orders on this market yet")
+px = info.snap_price(MARKET, Decimal(levels[0]["price"]) / 2)
 sz = info.min_order_size(MARKET, px)
 order = exchange.place(MARKET, is_buy=True, sz=sz, limit_px=px, tif="gtc")
 if is_order_failed(order["submission"]):
@@ -142,7 +145,7 @@ Every `subscribe_*` takes an optional `callback`. Pass one and frames go to it; 
 | `subscribe_bbo(market, callback=None)` | best bid / best offer, pushed only when either changes | one market |
 | `subscribe_all_mids(callback=None)` | mid price for every two-sided market, as one table | all markets |
 | `subscribe_user_fills(address, callback=None)` | fills from the account's own point of view. The first message replays the most recent 100 | one address |
-| `subscribe_order_updates(address, callback=None)` | order lifecycle: resting, filled, cancelled | one address |
+| `subscribe_order_updates(address, callback=None)` | order lifecycle, as status words: `open`, `filled`, `canceled`, `selfTradeCanceled`, and the `<reason>Rejected` family (`badAloPxRejected`, `iocCancelRejected`, `fokCancelRejected`, `marketOrderNoLiquidityRejected`) | one address |
 | `subscribe_open_orders(address, callback=None)` | every resting order, as a complete replacement | one address |
 | `subscribe_spot_state(address, callback=None)` | spot balances, as a complete replacement | one address |
 | `subscribe_spot_credit_state(address, callback=None)` | credit positions and credit line | one address |
@@ -196,7 +199,7 @@ Read the top level of a `/trade` response. None of these can tell you whether yo
 
 ### The order, inside the `response` envelope
 
-Present on an accepted write. This is the **only** place a per-action failure is reported.
+Present on an accepted write. This is the only place a per-action failure is reported **on the write response**, and for most codes the only place it is reported at all.
 
 | Helper | Returns |
 | --- | --- |

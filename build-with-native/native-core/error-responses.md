@@ -20,7 +20,7 @@ There are exactly three values.
 
 | `submission_status` | When | Do next |
 | --- | --- | --- |
-| `accepted` | The **transaction** landed and executed. For an order that covers rested, filled, a benign IOC/FOK/self-trade/no-liquidity cancel, **and a genuine per-action failure whose code sits in a `response` leaf**; for a non-order action it committed. No top-level `error` in any of those cases. | Not done — read `response.status` before you trust it. The leaf says what happened to the order, and carries the `oid`, `total_sz` and `avg_px`, so no `/info` read is needed. |
+| `accepted` | The **transaction** landed and executed. For an order that covers rested, filled, a benign IOC/FOK/self-trade/no-liquidity cancel, **and a genuine per-action failure whose code sits in a `response` leaf**; for a non-order action it committed. No top-level `error` in any of those cases. | Not done — read `response.status` before you trust it. The leaf says what happened to the order: `filled` carries `total_sz`, `avg_px` and the `oid`; `open` and `cancelled` carry the `oid` and `cloid`; an `{"error": …}` leaf carries only the code. |
 | `rejected` | The write was refused — request-shaping, gateway (rate limit / suspension / expiry), node admission — **or** it failed at execution. `error.code` says why; `tx_hash` is present once canonical bytes exist. | If `RateLimited`, back off `error.retry_after_ms` and resend the same signed action. Otherwise fix the cause and submit a **fresh** action. |
 | `timeout` | The outcome wasn't observed within the 3-second budget, or the submission couldn't be routed to a node. | Depends on `error.code` — the `Handoff*` family (503) never reached a node, so resubmit rather than lose the write; everything else may still land, so reconcile by `cloid` and **never** resubmit under a new nonce. |
 
@@ -85,14 +85,14 @@ An admitted action still runs against the book and **can fail at execution**. Be
 {% hint style="warning" %}
 `error.code` at the top level is never a lowercase execution code for an order. If you are matching on `error.code == "tick"`, you will never hit it — look in the `response` leaf instead.
 
-That leaf is also the **only** record of the failure. An order that fails at execution never enters the book, so it is never written to [`orderStatus`](post-info.md#orderstatus) and never appears on `orderUpdates`. Reconciling its `cloid` finds nothing and simply times out. Read the leaf on the response, then send a corrected order under a **new** `cloid`.
+For most codes that leaf is the **only** record. An order rejected before it reaches matching — `tick`, `lotsize`, `insufficientspotbalance`, `mintradespotntl`, `missingorder` — never enters the book, so it is never written to [`orderStatus`](post-info.md#orderstatus) and never appears on `orderUpdates`; reconciling its `cloid` finds nothing and simply times out. An order that reaches matching and dies there — `badalopx`, `insufficientspotcredit`, and the IOC/FOK/no-liquidity cancels — does get an `orderStatus` row under its own lowercase status and an `orderUpdates` frame (`badAloPxRejected` and friends). Either way, read the leaf on the response, then send a corrected order under a **new** `cloid`.
 {% endhint %}
 
 | Code | Where it appears | What it means | Fix |
 | --- | --- | --- | --- |
 | `tick` | the `response` leaf, with `submission_status: "accepted"` | A non-integer `price` exceeded the market's `max_price_sig_figs`. The transaction landed; the order never entered the book. | Snap the price to the market's `price_decimals` / `max_price_sig_figs` before signing. The [Python SDK](python-sdk/README.md) checks this locally (`LocalValidationError`) and never sends it; see [Decimals & units](decimals-units.md#valid-invalid-examples). |
 | `insufficientspotbalance` / `mintradespotntl` / `lotsize` / `badalopx` / `missingorder` | the `response` leaf, with `submission_status: "accepted"` | The order failed at execution for the stated reason. | Same handling as the CamelCase admission form of the condition — the difference is only which layer caught it. |
-| `BadNonce` / `BadSignature` / `ExpiredTx` / `MalformedTx` / `InvalidBatchLength` / `FeatureDisabled` | top-level `error.code`, with `submission_status: "rejected"` | The transaction envelope itself was invalid, so nothing executed. `InvalidBatchLength` fires when a `batch` exceeds the 10-item cap. | Re-sign correctly and submit a fresh action. |
+| `BadNonce` / `BadSignature` / `ExpiredTx` / `MalformedTx` / `InvalidBatchLength` / `FeatureDisabled` | top-level `error.code`, with `submission_status: "rejected"` | The transaction envelope itself was invalid, so nothing executed. `InvalidBatchLength` is the execution-layer guard on an empty or over-long `batch`; over `POST /trade` you will not normally see it, because an oversized batch fails at canonicalization first and returns HTTP 400 with `error.code: "encode_error: LengthOverflow"` and no `tx_hash`. | Re-sign correctly and submit a fresh action. |
 
 ## Full /trade error-code reference
 

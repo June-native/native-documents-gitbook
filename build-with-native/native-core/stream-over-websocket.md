@@ -113,10 +113,10 @@ You do not need a second transport to write. `post` carries [`POST /info`](post-
 }
 ```
 
-The reply echoes your `id`. A write that **settles** — accepted, or rejected by the chain — carries the same response `POST /trade` would have returned, `submission_status` and `response` envelope and all. Signing is unchanged — see [Transaction Signing](transaction-signing.md). One request at a time, and the same per-IP rate budget as HTTP applies.
+The reply echoes your `id`. Any outcome `/trade` answers with HTTP 200 — accepted, rejected, and the wait-budget `timeout` — carries the same response `POST /trade` would have returned, `submission_status` and `response` envelope and all. Signing is unchanged — see [Transaction Signing](transaction-signing.md). One request at a time, and the same per-IP rate budget as HTTP applies.
 
 {% hint style="warning" %}
-Anything else is flattened to a plain status string with no `submission_status` and no `tx_hash`: a rate limit (429), a suspension (503), and **every** routing timeout (`Handoff*` at 503, `node_unreachable` at 504). Treat a 4xx string as never-executed, and a 5xx string as indeterminate — reconcile by `cloid` and do not resubmit under a fresh nonce. Submit over `POST /trade` when you need the full outcome.
+Anything else is flattened to a plain status string with no `submission_status` and no `tx_hash`: a rate limit (429), a suspension or backpressure reject (`PlaceOrderSuspended` / `TooManyPending`, 503), and the routing timeouts (`Handoff*` at 503, `node_unreachable` at 504). A 4xx string never executed, and so did neither 503 reject — each of those carries a `retry_after_ms`. Only the routing timeouts are indeterminate: reconcile by `cloid` and do not resubmit under a fresh nonce. Submit over `POST /trade` when you need the full outcome.
 {% endhint %}
 
 ## Next steps

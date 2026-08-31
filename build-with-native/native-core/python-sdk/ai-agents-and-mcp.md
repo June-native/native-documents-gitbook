@@ -13,14 +13,14 @@ The API and the SDK are shaped so an autonomous model can trade without ever hol
 - **Scoped, revocable keys.** An agent trades with an **API wallet** — a protocol-level agent key scoped only to placing and cancelling orders. It can never deposit, withdraw, or move funds off Native. Create it in the web app, and revoke or rotate it there any time. A leaked API wallet key can trade the balance but cannot drain it. See [Getting Started](getting-started.md) for how to create one.
 - **Reads on, writes gated.** Market data, balances, and order status are always available. The order-placing and cancelling surface is turned on only by an explicit switch, so a read-only agent physically cannot place an order.
 - **Outcomes are structured, not prose.** Every trade response is decision-ready: the agent branches on a field (`submission_status`, `next_action`, `order_error`, `state`, `filled_qty`) instead of reading a sentence. A business rejection is **data** in the response body, not an exception.
-- **Deterministic reconcile-by-cloid.** An order whose outcome is *uncertain* carries a client order id (`cloid`) you can look up, which is what stops an agent from double-filling after a timeout. It does not extend to an order the response already settled as failed — that order was never written anywhere, so there is nothing to look up. See the contract below.
+- **Deterministic reconcile-by-cloid.** An order whose outcome is *uncertain* carries a client order id (`cloid`) you can look up, which is what stops an agent from double-filling after a timeout. It does not extend to an order the response already settled as failed with `tick`, `lotsize`, `insufficientspotbalance`, `mintradespotntl` or `missingorder` — those are never written anywhere, so there is nothing to look up. (`badalopx` and `insufficientspotcredit` are written, and look up normally.) See the contract below.
 
 ## The safety contract for agents
 
 An agent that places money-moving orders must hold to a few rules. The SDK returns each outcome as structured fields so the agent branches on a field instead of remembering the rule.
 
 - **Accepted is not placed.** `submission_status: "accepted"` means the **transaction** landed and executed. The order inside it may still have failed — `tick`, `lotsize`, `badalopx`, `insufficientspotbalance`, `mintradespotntl`, `missingorder` all arrive that way, on a leaf of the `response` envelope. `is_accepted` alone will book a failed order as a success. Check `is_order_failed(resp)`, or just take `next_action(resp)`. The `oid` and the fill are on the response too (`order_oid`, `fill`), so the ordinary path costs no read.
-- **A failed order cannot be reconciled.** It never entered the book, so it appears in neither `orderStatus` nor `orderUpdates`. Polling it returns `unknown` and reconciling it returns `undetermined`, forever — which, paired with the never-resubmit rule, freezes the agent. Read the leaf, record the failure, and treat the corrected order as a **new** order with a new `cloid`.
+- **Most failed orders cannot be reconciled.** An order rejected before matching — `tick`, `lotsize`, `insufficientspotbalance`, `mintradespotntl`, `missingorder` — never entered the book, so it appears in neither `orderStatus` nor `orderUpdates`. Polling it returns `unknown` and reconciling it returns `undetermined`, forever — which, paired with the never-resubmit rule, freezes the agent. (`badalopx` and `insufficientspotcredit` die at matching and do get a row, so they resolve immediately.) Read the leaf either way, record the failure, and treat the corrected order as a **new** order with a new `cloid`.
 - **Never resubmit an uncertain write.** `SubmissionUncertain` (carrying `.cloids` and `.nonce`) or `submission_status: "timeout"` means the order **may still be live**. Reconcile by `cloid` and act on the result; resubmitting risks a double-fill. Two things *are* safe to resend: a `RateLimited` rejection, which was never admitted, and a timeout where `is_safe_to_resend(resp)` is true (the `Handoff*` family, which never reached a node).
 - **Survive a restart.** Generate the `cloid` yourself with `Exchange.random_cloid()`, persist `{intent, cloid}` durably **before** calling `order(..., cloid=cloid)`, and on restart resolve every persisted cloid before placing anything new — `info.batch_order_status([...])` settles up to 20 in one read. This is the idempotency-key pattern: an agent that crashes after sending but before recording an SDK-generated cloid cannot reconcile and may double-fill.
 - **Numbers are strings.** Pass `sz` and `limit_px` as `str` or `Decimal`, never `float`. Size with `info.min_order_size(market, price)` and dry-run with `build_order(...)` (which signs and sends nothing) to avoid a precision or minimum-notional rejection. See [Decimals & Units](../decimals-units.md).
@@ -118,7 +118,7 @@ Drop `NATIVE_CORE_ENABLE_TRADING` (or leave it unset) for a read-only assistant 
 | `cancel_order` | Cancel one order by `oid` or `cloid` |
 | `cancel_all_orders` | Cancel every open order in one market |
 
-Every **write** result is normalized with the SDK's own helpers, so the assistant sees a decision-ready shape rather than raw API JSON: `ok`, `cloid`, `submission_status`, `state`, `filled_qty`, `next_action`, `tx_hash`, `error`, plus `oid` and — when a leaf failed — `order_error` (the lowercase per-action code) and `order_failed`. Reads are handed back as the API returned them.
+Every **write** result is normalized with the SDK's own helpers, so the assistant sees a decision-ready shape rather than raw API JSON: `ok`, `cloid`, `submission_status`, `state`, `filled_qty`, `next_action`, `tx_hash`, `error`, plus `oid` and — when a leaf failed — `order_error` (the lowercase per-action code) and `order_failed`. Of the reads, only `get_balances` and `list_open_orders` pass the API's JSON straight through; the rest are reshaped.
 
 `ok` is decided by the order's own outcome, not by the transaction: when the `response` envelope is present, any error leaf means the placement did not work. A cancel result is narrower, `{ok, submission_status, error}` only.
 
@@ -135,7 +135,10 @@ Use a dedicated, limited API wallet here, never your main wallet. The MCP tools 
 If your agent does its own tool-calling (not MCP), call the SDK directly and hand the model the same decision-ready fields. The pattern is **read the response first, reconcile only what it left unresolved**:
 
 ```python
-from native_core import Exchange, is_order_failed, leaf_error_code, next_action, RECONCILE_BY_CLOID
+from native_core import (
+    Exchange, is_order_failed, leaf_error_code, next_action,
+    RECONCILE_BY_CLOID, USE_RESPONSE_OUTCOME,
+)
 
 exchange = Exchange.from_bundle(BUNDLE)   # your connection bundle
 order = exchange.place(MARKET, is_buy=True, sz=sz, limit_px=px, tif="gtc")
@@ -145,8 +148,11 @@ if is_order_failed(submission):
     ...   # settled: the order failed. Nothing to reconcile — fix and send a NEW cloid.
     raise SystemExit(leaf_error_code(submission))
 
-if next_action(submission) != RECONCILE_BY_CLOID:
-    oid = order["oid"]                    # already settled — the response carries the outcome
+verdict = next_action(submission)
+if verdict == USE_RESPONSE_OUTCOME:
+    oid = order["oid"]                    # the response carries the outcome
+elif verdict != RECONCILE_BY_CLOID:
+    ...   # ORDER_CLOSED_UNFILLED / FIX_AND_RESUBMIT / BACKOFF_AND_RETRY: no live order
 else:
     # Only here is the outcome genuinely unknown.
     verdict = exchange.info.reconcile_by_cloid(

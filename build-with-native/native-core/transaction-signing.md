@@ -476,7 +476,7 @@ Order outcome (the transaction landed; read `response.status` for what happened 
 }
 ```
 
-`response.status` is `open` (rested), `filled` (carrying `total_sz` and `avg_px`), `cancelled`, or `{"error": "<code>"}` when the order failed at execution. **A failed order still reports `accepted`**, so branching on `submission_status` alone reads it as a success — and a failed order is never written to [`orderStatus`](post-info.md#orderstatus), so the leaf is the only trace it existed. The oid and the fill are here too, so there is no need to spend an `/info` read on them.
+`response.status` is `open` (rested), `filled` (carrying `total_sz` and `avg_px`), `cancelled`, or `{"error": "<code>"}` when the order failed at execution. **A failed order still reports `accepted`**, so branching on `submission_status` alone reads it as a success. An order rejected before matching (`tick`, `lotsize`, `insufficientspotbalance`, `mintradespotntl`, `missingorder`) is never written to [`orderStatus`](post-info.md#orderstatus), so the leaf is the only trace it existed; one that dies at matching (`badalopx`, and the IOC/FOK/no-liquidity cancels) does get a row there. The oid and the fill are here too, so there is no need to spend an `/info` read on them.
 
 Rejected response (node-admission code, returned verbatim):
 

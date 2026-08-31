@@ -68,7 +68,7 @@ Copy that check, not a bare `is_accepted` — see [Accepted is not placed](core-
 | --- | --- |
 | `basic_order.py` | A resting `gtc` limit order end to end: place with a `cloid`, take the oid straight off the `/trade` response with `order_oid`, read `order_status` once to see it rest (`open`), `cancel_by_cloid`, then `wait_for_order` for the terminal `cancelled` state. |
 | `basic_market_order.py` | A protected `market_order` with an explicit `protection_px` (the worst price you accept — this example passes it directly rather than deriving it from `slippage_bps`). Buys a minimum-notional clip 2% through the best ask, then market-sells the fill to flatten. |
-| `basic_batch.py` | A mixed `batch` under one nonce: two resting bids in one call, then a second batch that `modify`s the first order and `cancel`s the second — atomically. Every per-leg outcome is read off the batch response with `batch_legs`, so the script spends **no** `/info` reads. |
+| `basic_batch.py` | A mixed `batch` under one nonce: two resting bids in one call, then a second batch that `modify`s the first order and `cancel`s the second — atomically. Every per-leg outcome is read off the batch response with `batch_legs`, so the script spends no `/info` reads to attribute the legs. |
 | `ws_feeds.py` | Streams the book, top of book, trades and mids over the [WebSocket](streaming.md). Needs no key; takes an optional endpoint URL. |
 | `info/query_markets_info.py` | Read-only: list the tradable markets and their precision (`markets()`). |
 | `info/query_orderbook_info.py` | Read-only: the L2 order book for one market (`l2_book`). |
@@ -106,7 +106,7 @@ for m in info.markets()["markets"]:
 # bids/asks entirely, so check it before indexing.
 book = info.l2_book(MARKET, depth=5)
 if not book.get("found"):
-    raise SystemExit("no book published for this market yet")
+    raise SystemExit("unknown market")            # found=false means the id is unknown
 for level in reversed(book.get("asks") or []):
     print(f"ask  {level['price']:>12}  {level['quantity']}")
 for level in book.get("bids") or []:
@@ -130,11 +130,11 @@ info = exchange.info
 
 # Price a bid well below the market so it rests instead of filling.
 book = info.l2_book(MARKET, depth=1)
-if not book.get("found"):                                    # found=false omits bids/asks
-    raise SystemExit("no book published for this market yet")
+if not book.get("found"):                                    # found=false = unknown market id
+    raise SystemExit("unknown market")
 reference = book.get("asks") or book.get("bids")             # whichever side has liquidity
 if not reference:
-    raise SystemExit("book is empty on both sides")
+    raise SystemExit("no resting orders on this market yet")
 px = info.snap_price(MARKET, Decimal(reference[0]["price"]) / 2)
 sz = info.min_order_size(MARKET, px)
 
@@ -220,7 +220,7 @@ try:
         book = info.l2_book(MARKET, depth=1)
         ref = (book.get("asks") or book.get("bids")) if book.get("found") else None
         if not ref:
-            time.sleep(REFRESH)                                      # no book yet — wait it out
+            time.sleep(REFRESH)                                      # nothing resting — wait it out
             continue
         px = info.snap_price(MARKET, Decimal(ref[0]["price"]) / 2)   # rests well below the market
         sz = info.min_order_size(MARKET, px)
