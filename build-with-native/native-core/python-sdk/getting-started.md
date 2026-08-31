@@ -109,7 +109,7 @@ print(order_state(final))                 # cancelled
 Use **one** `Exchange` per API wallet and share it across threads; two instances on the same key collide nonces.
 {% endhint %}
 
-The wire fields behind `POST /trade` and `POST /info`, transaction signing, and decimal/unit rules are documented in the API reference: [../post-trade.md](../post-trade.md), [../post-info.md](../post-info.md), [../transaction-signing.md](../transaction-signing.md), and [../decimals-units.md](../decimals-units.md).
+The wire fields behind `POST /trade` and `POST /info`, transaction signing, and decimal/unit rules are documented in the API reference: [POST /trade](../post-trade.md), [POST /info](../post-info.md), [Transaction Signing](../transaction-signing.md), and [Decimals & Units](../decimals-units.md).
 
 ## Next steps
 

@@ -68,5 +68,5 @@ ws = info.ws().connect()                         # streaming, on the same endpoi
 
 ## See also
 
-* [../api-access.md](../api-access.md) — calling the raw API directly, without the SDK.
-* [../post-trade.md](../post-trade.md) and [../post-info.md](../post-info.md) — the wire reference for the two endpoints the SDK wraps.
+* [API Access](../api-access.md) — calling the raw API directly, without the SDK.
+* [POST /trade](../post-trade.md) and [POST /info](../post-info.md) — the wire reference for the two endpoints the SDK wraps.

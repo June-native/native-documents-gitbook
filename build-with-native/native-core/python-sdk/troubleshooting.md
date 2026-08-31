@@ -116,7 +116,7 @@ This does not apply to a write sent over `WsClient.post_action`. There a rate li
 
 ## See also
 
-* [../transaction-signing.md](../transaction-signing.md) — the full `POST /trade` error-code tables and signing rules behind these rejections.
-* [../decimals-units.md](../decimals-units.md) — market precision (decimal places, significant figures, minimum notional) behind the `LocalValidationError` precision rows.
-* [core-concepts.md](core-concepts.md) — the safety contract (accepted vs. filled, reconcile by cloid, one Exchange per wallet) in full.
-* [api-reference.md](api-reference.md) — the response helpers (`error_code`, `next_action`, `is_retryable`, …) and the exception hierarchy.
+* [Transaction Signing](../transaction-signing.md) — the full `POST /trade` error-code tables and signing rules behind these rejections.
+* [Decimals & Units](../decimals-units.md) — market precision (decimal places, significant figures, minimum notional) behind the `LocalValidationError` precision rows.
+* [Core Concepts](core-concepts.md) — the safety contract (accepted vs. placed, reconcile by cloid, one Exchange per wallet) in full.
+* [API Reference](api-reference.md) — the response helpers (`error_code`, `next_action`, `is_retryable`, …) and the exception hierarchy.

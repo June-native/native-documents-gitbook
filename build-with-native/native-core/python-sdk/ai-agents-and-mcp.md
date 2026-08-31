@@ -10,7 +10,7 @@ The Native Core Python SDK is built to be driven by an AI agent, not just a pers
 
 The API and the SDK are shaped so an autonomous model can trade without ever holding a fund-moving key or parsing prose to know what happened.
 
-- **Scoped, revocable keys.** An agent trades with an **API wallet** — a protocol-level agent key scoped only to placing and cancelling orders. It can never deposit, withdraw, or move funds off Native. Create it in the web app, and revoke or rotate it there any time. A leaked API wallet key can trade the balance but cannot drain it. See [getting-started.md](getting-started.md) for how to create one.
+- **Scoped, revocable keys.** An agent trades with an **API wallet** — a protocol-level agent key scoped only to placing and cancelling orders. It can never deposit, withdraw, or move funds off Native. Create it in the web app, and revoke or rotate it there any time. A leaked API wallet key can trade the balance but cannot drain it. See [Getting Started](getting-started.md) for how to create one.
 - **Reads on, writes gated.** Market data, balances, and order status are always available. The order-placing and cancelling surface is turned on only by an explicit switch, so a read-only agent physically cannot place an order.
 - **Outcomes are structured, not prose.** Every trade response is decision-ready: the agent branches on a field (`submission_status`, `next_action`, `order_error`, `state`, `filled_qty`) instead of reading a sentence. A business rejection is **data** in the response body, not an exception.
 - **Deterministic reconcile-by-cloid.** An order whose outcome is *uncertain* carries a client order id (`cloid`) you can look up, which is what stops an agent from double-filling after a timeout. It does not extend to an order the response already settled as failed — that order was never written anywhere, so there is nothing to look up. See the contract below.
@@ -23,7 +23,7 @@ An agent that places money-moving orders must hold to a few rules. The SDK retur
 - **A failed order cannot be reconciled.** It never entered the book, so it appears in neither `orderStatus` nor `orderUpdates`. Polling it returns `unknown` and reconciling it returns `undetermined`, forever — which, paired with the never-resubmit rule, freezes the agent. Read the leaf, record the failure, and treat the corrected order as a **new** order with a new `cloid`.
 - **Never resubmit an uncertain write.** `SubmissionUncertain` (carrying `.cloids` and `.nonce`) or `submission_status: "timeout"` means the order **may still be live**. Reconcile by `cloid` and act on the result; resubmitting risks a double-fill. Two things *are* safe to resend: a `RateLimited` rejection, which was never admitted, and a timeout where `is_safe_to_resend(resp)` is true (the `Handoff*` family, which never reached a node).
 - **Survive a restart.** Generate the `cloid` yourself with `Exchange.random_cloid()`, persist `{intent, cloid}` durably **before** calling `order(..., cloid=cloid)`, and on restart resolve every persisted cloid before placing anything new — `info.batch_order_status([...])` settles up to 20 in one read. This is the idempotency-key pattern: an agent that crashes after sending but before recording an SDK-generated cloid cannot reconcile and may double-fill.
-- **Numbers are strings.** Pass `sz` and `limit_px` as `str` or `Decimal`, never `float`. Size with `info.min_order_size(market, price)` and dry-run with `build_order(...)` (which signs and sends nothing) to avoid a precision or minimum-notional rejection. See [decimals-units.md](../decimals-units.md).
+- **Numbers are strings.** Pass `sz` and `limit_px` as `str` or `Decimal`, never `float`. Size with `info.min_order_size(market, price)` and dry-run with `build_order(...)` (which signs and sends nothing) to avoid a precision or minimum-notional rejection. See [Decimals & Units](../decimals-units.md).
 
 `next_action(response)` collapses any trade response into one verdict to branch on (it returns `None` for a non-trade response). There are six, and against the API running today the first two are what an agent sees most:
 
@@ -38,7 +38,7 @@ An agent that places money-moving orders must hold to a few rules. The SDK retur
 
 `as_problem_details(failure)` is the one-envelope normalizer: it renders any failure — an exception, a rejected or timeout body, or an accepted write whose order failed — into a single flat `{type, title, retryable, next_action, cloids, …}` shape, so an agent has one place to read regardless of how the outcome arrived. A success or a benign cancel returns `None`.
 
-The wire-level fields these helpers read (`submission_status`, `error.code`, `orderStatus`) are documented in [post-trade.md](../post-trade.md) and [post-info.md](../post-info.md).
+The wire-level fields these helpers read (`submission_status`, `error.code`, `orderStatus`) are documented in [POST /trade](../post-trade.md) and [POST /info](../post-info.md).
 
 ## Option A — the MCP server (no glue code)
 
@@ -197,7 +197,7 @@ else:
         exchange.info.wait_for_open(exchange.effective_account, MARKET, cloid)
 ```
 
-On restart, resolve every persisted `cloid` before placing anything new — `info.batch_order_status([...])` settles up to 20 in one read, and `reconcile_by_cloid` handles the stragglers. Share one `Exchange` per API wallet across threads — the nonce is a per-instance, lock-guarded, monotonic counter, and two instances on the same key collide nonces. Deposits, withdrawals, and `approveAgent` stay in the web app, signed by the main wallet ([transaction-signing.md](../transaction-signing.md)).
+On restart, resolve every persisted `cloid` before placing anything new — `info.batch_order_status([...])` settles up to 20 in one read, and `reconcile_by_cloid` handles the stragglers. Share one `Exchange` per API wallet across threads — the nonce is a per-instance, lock-guarded, monotonic counter, and two instances on the same key collide nonces. Deposits, withdrawals, and `approveAgent` stay in the web app, signed by the main wallet ([Transaction Signing](../transaction-signing.md)).
 
 An agent that watches orders continuously should take `orderUpdates` and the book off the [WebSocket](streaming.md) rather than polling: `/info` allows about one read per second per client IP, and a pushed feed costs nothing against that budget.
 

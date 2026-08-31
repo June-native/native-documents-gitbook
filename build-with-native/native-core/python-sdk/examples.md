@@ -10,7 +10,7 @@ The SDK ships a folder of runnable scripts under `examples/` in the source distr
 { "secret_key": "0x<agentPrivateKey>", "account_address": "0x<accountAddress>" }
 ```
 
-`secret_key` is the `agentPrivateKey` from your connection bundle; `account_address` is your main wallet (leave it blank to derive it from the key and trade in direct-owner mode). For how to create the API wallet and set this up, see [getting-started.md](getting-started.md).
+`secret_key` is the `agentPrivateKey` from your connection bundle; `account_address` is your main wallet (leave it blank to derive it from the key and trade in direct-owner mode). For how to create the API wallet and set this up, see [Getting Started](getting-started.md).
 
 ```bash
 cp examples/config.json.example examples/config.json   # then paste your key
@@ -243,7 +243,7 @@ A loop like this one re-reads the book every pass, and `/info` allows about **on
 
 ## See also
 
-* [getting-started.md](getting-started.md) — create an API wallet, save the bundle, and run your first trade.
-* [streaming.md](streaming.md) — take feeds off the WebSocket instead of polling.
+* [Getting Started](getting-started.md) — create an API wallet, save the bundle, and run your first trade.
+* [Streaming](streaming.md) — take feeds off the WebSocket instead of polling.
 * [PyPI project](https://pypi.org/project/native-core-python-sdk/) — `pip install native-core-python-sdk==2.0.0`.
 * Wire references: [`POST /trade`](../post-trade.md), [`POST /info`](../post-info.md), [Transaction signing](../transaction-signing.md), [Decimals & Units](../decimals-units.md).
