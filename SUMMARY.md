@@ -74,6 +74,7 @@
   * [Python SDK](build-with-native/native-core/python-sdk/README.md)
     * [Getting Started](build-with-native/native-core/python-sdk/getting-started.md)
     * [Core Concepts](build-with-native/native-core/python-sdk/core-concepts.md)
+    * [Streaming](build-with-native/native-core/python-sdk/streaming.md)
     * [API Reference](build-with-native/native-core/python-sdk/api-reference.md)
     * [AI Agents & MCP](build-with-native/native-core/python-sdk/ai-agents-and-mcp.md)
     * [Examples](build-with-native/native-core/python-sdk/examples.md)

@@ -14,8 +14,8 @@ This page is the front door for anyone integrating **directly** with Native Core
 
 There are two ways to integrate:
 
-* **Call the API directly** — the endpoints documented on this page, plus the [WebSocket](websocket.md) surface when you need push instead of polling. Full control, any language.
-* **Use the [Native Core Python SDK](python-sdk/README.md)** — a thin, typed client that wraps both endpoints and handles `/trade` signing, nonces, and the synchronous outcome (reconciling a `timeout` by `cloid`) for you.
+* **Call the API directly** — the endpoints documented on this page, plus the [WebSocket](websocket.md) surface for push instead of polling. Full control, any language.
+* **Use the [Native Core Python SDK](python-sdk/README.md)** — a thin, typed client over both REST endpoints **and** the WebSocket. It handles `/trade` signing and nonces, folds every outcome into one decision (`next_action`) — including which timeouts are safe to resend and which must be reconciled by `cloid` — and streams nine feeds on one connection with automatic reconnect and resubscribe.
 
 Signing `/trade` by hand means building a canonical binary payload with recoverable secp256k1 signatures and per-signer monotonic nonces — fully specified below for building your own client. The Python SDK implements it for you.
 
@@ -191,7 +191,7 @@ The `/trade` error model keys on the **response body, not the HTTP status** — 
 
 ## Next step
 
-The Python SDK wraps both endpoints, signs `/trade` for you, and turns each of the outcomes above into a decision-ready field.
+The Python SDK wraps both REST endpoints and the WebSocket, signs `/trade` for you, and turns each of the outcomes above into a decision-ready field.
 
 {% content-ref url="python-sdk/README.md" %}
 [README.md](python-sdk/README.md)

@@ -472,7 +472,7 @@ A throttled channel pushes when its market or account was **touched** in a block
 * `id` is echoed on every reply. Use a distinct one per request to match replies to requests.
 * A success reply carries exactly what the HTTP endpoint would have returned. A failure reply flattens the HTTP error into a plain string — the status followed by the same `error.code` or message — so decode it against [Error responses](error-responses.md).
 
-An `action` reply is the full trade response, so a business rejection arrives as a **successful** `action` whose `submission_status` says what happened — the same contract as over HTTP:
+An `action` reply is the full trade response **whenever `/trade` answered HTTP 200** — which is any outcome the gateway or the chain settled on, including a `rejected` body and the wait-budget `timeout`. Then a business rejection arrives as a successful `action` whose `submission_status` says what happened, exactly as over HTTP:
 
 ```json
 {
@@ -499,7 +499,17 @@ An `action` reply is the full trade response, so a business rejection arrives as
 }
 ```
 
-Only a transport-level failure uses the `error` envelope. Branch on `submission_status`, never on the envelope — see [Handle outcomes & timeouts](handle-timeouts.md).
+{% hint style="danger" %}
+**Every non-2xx outcome is flattened into the `error` envelope, and the trade response is discarded.** There is no `submission_status`, no `tx_hash`, no `retry_after_ms` and no `response` envelope left to read — only a status string. That sweeps in outcomes HTTP reports as ordinary bodies: `RateLimited` (429), `PlaceOrderSuspended` and `TooManyPending` (503), and the **routing** timeouts `Handoff*` (503) and `node_unreachable` (504). It does not sweep in the other timeout: when the wait budget elapses after the node already admitted the transaction, `/trade` answers HTTP 200, so that one arrives intact as `submission_status: "timeout"` with a `tx_hash`.
+
+Branch accordingly, and do not treat 5xx as one bucket:
+
+| String | Executed? | Do |
+| --- | --- | --- |
+| any **4xx** | Never | Fix it and send again |
+| `PlaceOrderSuspended`, `TooManyPending` (503) | Never | Honour the `retry_after_ms` and resend |
+| `Handoff*` (503), `node_unreachable` (504) | **Unknown** | Reconcile by `cloid`. Do **not** resubmit under a fresh nonce | Submit over `POST /trade` when you need the full outcome; see [Handle outcomes & timeouts](handle-timeouts.md).
+{% endhint %}
 
 Three things to plan for:
 
@@ -559,6 +569,7 @@ The two kinds of channel recover differently.
 * **Snapshot channels self-heal.** `l2Book`, `bbo`, `allMids`, `openOrders`, `spotState`, and `spotCreditState` always carry complete state, so a dropped frame is corrected by the next one and a reconnect needs no backfill. They are also **conflated per topic**: only the newest frame for a given book or account is held for you, so falling behind costs you resolution, never correctness — and never the connection.
 * **`userFills` backfills itself.** Its first packet after subscribing is your 100 most recent fills, so a short disconnect costs you nothing. For a longer gap, [`userFills`](post-info.md#userfills) over `POST /info` accepts `from_height` / `to_height` within the recent query window — 10000 blocks, roughly 8 minutes.
 * **`trades` and `orderUpdates` can gap.** They are pure increments and are not replayed. Reconstruct from `POST /info` — [`userFills`](post-info.md#userfills) for your own activity, [`orderStatus`](post-info.md#orderstatus) for one order.
+* **Event frames can also be dropped without a disconnect.** When the server's broadcast falls behind, the missed blocks' event frames — `trades`, `userFills` and `orderUpdates` alike — are dropped outright and only the snapshot channels are re-pushed. The connection stays up, so nothing signals it and `userFills` does **not** replay the way it does on a resubscribe. Anything that needs complete fills must poll [`userFills`](post-info.md#userfills) periodically and reconcile by `tid`.
 
 There is no resume cursor: subscriptions take no height or sequence argument. Reconnect, resubscribe, and treat the first snapshot packet as your new baseline. Frames for a given market or address always arrive in chain order.
 

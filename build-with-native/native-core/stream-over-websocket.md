@@ -78,6 +78,10 @@ Assume the connection will drop. On reconnect, resubscribe and take the first sn
 
 Only `trades` and `orderUpdates` can leave a hole, because they are pure increments. Fill it from `POST /info`: [`userFills`](post-info.md#userfills) takes a `from_height` / `to_height` range within the recent query window, and [`orderStatus`](post-info.md#orderstatus) settles the fate of any single order by `oid` or `cloid`.
 
+A disconnect is not the only way to lose frames. When the server's broadcast falls behind it drops the event frames outright — `trades`, `userFills`, `orderUpdates` — and re-pushes only the snapshot channels.
+
+The connection stays up, so nothing tells you, and `userFills` does not replay. If your accounting needs every fill, poll [`userFills`](post-info.md#userfills) on a timer and reconcile by `tid`.
+
 {% hint style="info" %}
 Deduplicate fills on `tid`. The snapshot, the live frame, and `POST /info` all report one value for a trade. Parse it as a `BigInt`, not a JS `Number`.
 {% endhint %}
@@ -111,7 +115,11 @@ You do not need a second transport to write. `post` carries [`POST /info`](post-
 }
 ```
 
-The reply echoes your `id` and carries the same response `POST /trade` would have returned, `submission_status` and all. Signing is unchanged — see [Transaction Signing](transaction-signing.md). One request at a time, and the same per-IP rate budget as HTTP applies.
+The reply echoes your `id`. Any outcome `/trade` answers with HTTP 200 — accepted, rejected, and the wait-budget `timeout` — carries the same response `POST /trade` would have returned, `submission_status` and `response` envelope and all. Signing is unchanged — see [Transaction Signing](transaction-signing.md). One request at a time, and the same per-IP rate budget as HTTP applies.
+
+{% hint style="warning" %}
+Anything else is flattened to a plain status string with no `submission_status` and no `tx_hash`: a rate limit (429), a suspension or backpressure reject (`PlaceOrderSuspended` / `TooManyPending`, 503), and the routing timeouts (`Handoff*` at 503, `node_unreachable` at 504). A 4xx string never executed, and so did neither 503 reject — each of those carries a `retry_after_ms`. Only the routing timeouts are indeterminate: reconcile by `cloid` and do not resubmit under a fresh nonce. Submit over `POST /trade` when you need the full outcome.
+{% endhint %}
 
 ## Next steps
 

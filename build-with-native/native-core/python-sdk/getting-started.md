@@ -4,15 +4,17 @@ description: Install the Native Core Python SDK, create an API wallet, and place
 
 # Getting Started
 
-The Native Core Python SDK (`native-core-python-sdk`, import `native_core`) is a thin, typed, synchronous client over Native Core's two REST endpoints: `POST /info` for reads and `POST /trade` for writes. This page takes you from `pip install` to a resting order you place and cancel yourself.
+The Native Core Python SDK (`native-core-python-sdk`, import `native_core`) is a thin, typed, synchronous client over Native Core's two REST endpoints — `POST /info` for reads, `POST /trade` for writes — plus the [WebSocket](../websocket.md) for live data. This page takes you from `pip install` to a resting order you place and cancel yourself.
 
 ## Install
 
-Requires **Python 3.10+**. The runtime dependencies are `requests`, `eth-account`, and `eth-utils` (no `web3`, no `pydantic`).
+Requires **Python 3.10+**. The runtime dependencies are `requests`, `eth-account`, `eth-utils`, and `websocket-client` (no `web3`, no `pydantic`).
 
 ```bash
-pip install native-core-python-sdk
+pip install native-core-python-sdk==2.0.0
 ```
+
+This page documents **2.0.0**. If you are upgrading from 1.x, read [Accepted is not placed](core-concepts.md#accepted-is-not-placed) first: `submission_status: "accepted"` no longer means your order succeeded.
 
 ## Get an API wallet
 
@@ -51,7 +53,7 @@ Load the bundle, confirm the API wallet is approved, place a resting GTC bid wel
 ```python
 from decimal import Decimal
 
-from native_core import Exchange, is_accepted, order_state
+from native_core import Exchange, is_accepted, is_order_failed, leaf_error_code, order_state
 
 BUNDLE = "bundle.json"   # a file path, or the dict / JSON string itself
 MARKET = "ETH/USDT"
@@ -65,34 +67,49 @@ print(exchange.agent_info())              # {'approved': True, 'slot_id': 0, 'ep
 # Price a bid at half the reference so it rests instead of matching. Pass
 # str/Decimal for price and size — NEVER float; the SDK never silently rounds.
 book = info.l2_book(MARKET, depth=1)
-reference = book["asks"] or book["bids"]  # whichever side has liquidity (books can be one-sided)
+if not book.get("found"):                 # found=false omits bids/asks entirely
+    raise SystemExit("no book published for this market yet")
+reference = book.get("asks") or book.get("bids")   # whichever side has liquidity
 px = info.snap_price(MARKET, Decimal(reference[0]["price"]) / 2)  # -> str, snapped to the tick
 sz = info.min_order_size(MARKET, px)                             # -> str, smallest valid size at px
 
-# place() submits the order, then reads info.order_status (via wait_for_open) for
-# its resting state. "accepted" means the tx landed & executed — not that it rested
-# or filled; place() reads the real state for you and returns it.
+# place() submits, takes the oid off the write itself, and reads order_status
+# (via wait_for_open for gtc/alo) only when the response has not already settled
+# the order. Returns {cloid, submission, status, state, oid}.
 order = exchange.place(MARKET, is_buy=True, sz=sz, limit_px=px, tif="gtc")
-assert is_accepted(order["submission"])
-print(order["cloid"], order["state"])     # 0x…  open
 
-# The same read place() did for you, by hand: order_status by (user, market, cloid).
+# "accepted" is a verdict on the TRANSACTION, not on your order. A tick, lotsize
+# or balance failure comes back accepted with the reason on a leaf — check it.
+assert is_accepted(order["submission"])
+if is_order_failed(order["submission"]):
+    raise SystemExit(f"order failed: {leaf_error_code(order['submission'])}")
+
+print(order["cloid"], order["oid"], order["state"])   # 0x…  1234  open
+
+# Read the resting state by hand: order_status by (user, market, cloid).
 snapshot = info.order_status(user=exchange.effective_account, market=MARKET, cloid=order["cloid"])
 print(order_state(snapshot))              # open
 
-# Cancel by cloid, then confirm it left the book. A cancel gives the order a
-# terminal state, so wait_for_order is safe here (a resting order has none).
+# Cancel by cloid. A cancel whose target is already gone is ALSO accepted, with a
+# "missingorder" leaf, so check the order and not just the submission status.
 cancel = exchange.cancel_by_cloid(MARKET, order["cloid"])
-assert is_accepted(cancel)
+assert is_accepted(cancel) and not is_order_failed(cancel)
+
+# Confirm it left the book. A cancel gives the order a terminal state, so
+# wait_for_order is right here (a resting order has none).
 final = info.wait_for_order(exchange.effective_account, MARKET, order["cloid"])
 print(order_state(final))                 # cancelled
 ```
 
 {% hint style="warning" %}
-**Accepted is not filled, and an uncertain write is never resubmitted.** A raw `submission_status` of `accepted` means the transaction **landed and executed** — not that the order rested or filled; read the real state by `cloid`. If a write times out on the wire the SDK raises `SubmissionUncertain` (carrying `.cloid` and `.nonce`) or returns `submission_status: "timeout"`; **reconcile by cloid — never resubmit under a fresh nonce**, or the order may land twice. Only a `RateLimited` rejection is safe to resend. Use **one** `Exchange` per API wallet and share it across threads; two instances on the same key collide nonces.
+**Accepted is not placed.** `submission_status: "accepted"` means the **transaction** landed and executed. Your order can still have failed inside it — `tick`, `lotsize`, `badalopx`, `insufficientspotbalance`, `mintradespotntl`, `missingorder` all arrive that way, on a leaf of the `response` envelope. Read `is_order_failed` / `leaf_error_code`, or branch on `next_action`. Most failures leave no `/info` record at all, so polling their `cloid` can only time out — see [what a failed order leaves behind](core-concepts.md#what-a-failed-order-leaves-behind).
+
+**An uncertain write is not resubmitted.** If a write times out the SDK raises `SubmissionUncertain` (carrying `.cloid` and `.nonce`) or returns `submission_status: "timeout"`: reconcile by `cloid` and never resubmit, or the order may land twice. The one exception is a timeout where `is_safe_to_resend(resp)` is true — the `Handoff*` family never reached a node, so back off by `retry_after_ms` and send the same `cloid` again. A `RateLimited` rejection is likewise safe to resend.
+
+Use **one** `Exchange` per API wallet and share it across threads; two instances on the same key collide nonces.
 {% endhint %}
 
-The wire fields behind `POST /trade` and `POST /info`, transaction signing, and decimal/unit rules are documented in the API reference: [../post-trade.md](../post-trade.md), [../post-info.md](../post-info.md), [../transaction-signing.md](../transaction-signing.md), and [../decimals-units.md](../decimals-units.md).
+The wire fields behind `POST /trade` and `POST /info`, transaction signing, and decimal/unit rules are documented in the API reference: [POST /trade](../post-trade.md), [POST /info](../post-info.md), [Transaction Signing](../transaction-signing.md), and [Decimals & Units](../decimals-units.md).
 
 ## Next steps
 

@@ -1,7 +1,7 @@
 # Transaction Signing
 
 {% hint style="info" %}
-This page specifies the byte-level methodology behind `/trade` signing, for building your own client in any language. If you use the [Python SDK](python-sdk/README.md), it signs every action for you — you do not need anything on this page.
+This page specifies the byte-level methodology behind `/trade` signing, for building your own client in any language. The [Python SDK](python-sdk/README.md) signs the **trading** actions for you — `order`, `cancel`, `cancelAll`, `modify`, `batch` — so you need nothing from the legacy-payload sections below. It does not sign the owner-signed actions (`approveAgent`, `revokeAgent`, `withdraw`, `settle`, `repay`); for those, see [EIP-712 signing](#eip-712-signing-auth_scheme-eip712).
 {% endhint %}
 
 `signature` is not a signature over the JSON text. The write path reconstructs the canonical unsigned transaction payload from `action`, `nonce`, `agent_epoch`, and `expires_after_ms`, then verifies the recoverable secp256k1 signature over that exact binary payload. For order and modify actions, public JSON `price` and `quantity` are display decimals; the signed binary action contains the raw atoms obtained from market `price_decimals` and `base_quantity_decimals`. The JSON action and signed binary action must describe the same action.
@@ -459,16 +459,26 @@ await fetch(`${API_URL}/trade`, {
 
 `agent_epoch` is mandatory for these API-wallet–signed trading actions: an API wallet is always an active agent, so a `/trade` write that omits `agent_epoch` is treated as direct-owner mode and rejected with `DirectSignerIsActiveAgent`. Read the current epoch from [`userAgents`](post-info.md#useragents).
 
-`/trade` is synchronous, so the response carries the outcome. `submission_status` is `accepted` (the transaction landed and executed), `rejected` (refused, or failed at execution), or `timeout`. `/trade` reports that the order landed, not its fill state — read [`orderStatus`](post-info.md#orderstatus) to see whether it rested or filled. See [POST /trade](post-trade.md) and [error responses](error-responses.md) for the full model.
+`/trade` is synchronous, so the response carries the outcome. `submission_status` is `accepted` (the transaction landed and executed), `rejected` (refused, or failed at execution), or `timeout`. **`accepted` is a verdict on the transaction, not on your order** — the order's own outcome is in the `response` envelope. See [POST /trade](post-trade.md) and [error responses](error-responses.md) for the full model.
 
-Order outcome (the order landed):
+Order outcome (the transaction landed; read `response.status` for what happened to the order):
 
 ```json
 {
   "submission_status": "accepted",
-  "tx_hash": "0x..."
+  "tx_hash": "0x...",
+  "response": {
+    "type": "order",
+    "status": {
+      "open": { "oid": 1964626153570560, "cloid": "0x1111…" }
+    }
+  }
 }
 ```
+
+`response.status` is one of `open` (rested), `filled` (with `total_sz` and `avg_px`), `cancelled`, or `{"error": "<code>"}`.
+
+**A failed order still reports `accepted`**, so branching on `submission_status` alone reads it as a success. Most failures are never written to [`orderStatus`](post-info.md#orderstatus) either, which makes the leaf the only trace — see [what a failed order leaves behind](error-responses.md#execution-level-failures). The oid and the fill are here too, so there is no need to spend an `/info` read on them.
 
 Rejected response (node-admission code, returned verbatim):
 

@@ -39,7 +39,7 @@ New to Native Core? The guides take you from zero to a working integration — s
 [guides.md](guides.md)
 {% endcontent-ref %}
 
-Prefer a client library? The official Python SDK wraps both endpoints, signs `/trade` for you, and ships an MCP server for AI agents:
+Prefer a client library? The official Python SDK wraps both REST endpoints and the WebSocket, signs `/trade` for you, and ships an MCP server for AI agents:
 
 {% content-ref url="python-sdk/" %}
 [python-sdk](python-sdk/)

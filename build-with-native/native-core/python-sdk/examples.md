@@ -4,31 +4,32 @@ description: Runnable scripts that ship with the Native Core Python SDK, plus tw
 
 # Examples
 
-The SDK ships a folder of runnable scripts under `examples/` in the source distribution (the `.tar.gz` on PyPI). They all read `examples/config.json` — a two-field file you copy from the template and fill in with your API wallet key:
+The SDK ships a folder of runnable scripts under `examples/` in the source distribution (the `.tar.gz` on PyPI). All of them except `ws_feeds.py` read `examples/config.json` — a two-field file you copy from the template and fill in with your API wallet key:
 
 ```json
 { "secret_key": "0x<agentPrivateKey>", "account_address": "0x<accountAddress>" }
 ```
 
-`secret_key` is the `agentPrivateKey` from your connection bundle; `account_address` is your main wallet (leave it blank to derive it from the key and trade in direct-owner mode). For how to create the API wallet and set this up, see [getting-started.md](getting-started.md).
+`secret_key` is the `agentPrivateKey` from your connection bundle; `account_address` is your main wallet (leave it blank to derive it from the key and trade in direct-owner mode). For how to create the API wallet and set this up, see [Getting Started](getting-started.md).
 
 ```bash
 cp examples/config.json.example examples/config.json   # then paste your key
 ```
 
 {% hint style="info" %}
-The read-only scripts under `examples/info/` place no orders, but they still read `secret_key` from `config.json` (the account address is derived from the key when `account_address` is blank), so a valid key must be present.
+The read-only scripts under `examples/info/` place no orders, but they still read `secret_key` from `config.json` (the account address is derived from the key when `account_address` is blank), so a valid key must be present. `ws_feeds.py` is the exception: it needs no key and takes an optional endpoint URL as its argument instead.
 {% endhint %}
 
 ## Get the examples
 
-The runnable scripts live in `examples/`. `pip install native-core-python-sdk==1.0.0` ships most of them inside the source distribution, but the complete folder — including `market_maker_bot.py` — lives only in the repo, which is excluded from the published PyPI package. Clone it from the [Native GitHub org](https://github.com/Native-org) to get everything, set up the config as above, and run any script from the repo root:
+`pip install` resolves the wheel, which contains only the `native_core` package — no `examples/`. The scripts ship in the **source distribution**, so take the `.tar.gz`:
 
 ```bash
-git clone https://github.com/Native-org/native-core-python-sdk.git
-cd native-core-python-sdk
+pip download --no-binary :all: native-core-python-sdk==2.0.0
+tar xzf native_core_python_sdk-2.0.0.tar.gz
+cd native_core_python_sdk-2.0.0
 cp examples/config.json.example examples/config.json   # paste your key (see above)
-python examples/basic_order.py                          # runs from the repo root
+python examples/basic_order.py                          # run from the package root
 ```
 
 ## Preflight: `setup()`
@@ -41,41 +42,48 @@ from example_utils import setup
 address, info, exchange = setup()   # reads examples/config.json
 ```
 
-`setup()` reads `examples/config.json`, builds the API wallet from `secret_key`, resolves agent-vs-owner (a blank `account_address` derives the address from the key and trades in **direct-owner** mode; a filled one signs as an **agent** on that owner), prints the effective account and endpoint, then — before returning — reads `user_balances` for the **owner** and **hard-fails** if the account holds nothing:
+`setup()` reads `examples/config.json`, builds the API wallet from `secret_key`, resolves agent-vs-owner (a blank `account_address` derives the address from the key and trades in **direct-owner** mode; a filled one signs as an **agent** on that owner), prints the effective account and gateway, then — before returning — reads `user_balances` for the **owner** and **hard-fails** if the account holds nothing:
 
 ```
 connected
   account (owner) : 0x1234…
   api wallet      : 0xabcd…  (agent mode)
-  endpoint        : https://api-test.native.org
+  gateway         : https://api-test.native.org
 ```
 
-It turns the two misconfigs that would otherwise surface as empty query results or opaque rejections — a **wrong owner** address, or an **unfunded account** — into one clear up-front error (`RuntimeError: account 0x… has no balances … fund it before running`). Read-only scripts call `read_only()` instead: same config, but no balance gate and no signing wallet, so it runs even when the key is not yet an approved agent.
+It turns the two misconfigs that would otherwise surface as empty query results or opaque rejections — a **wrong owner** address, or an **unfunded account** — into one clear up-front error (`RuntimeError: account 0x… has no balances … fund it before running`). Pass `require_balance=False` to skip that gate. Read-only scripts call `read_only()` instead: same config, but no balance gate and no signing wallet, so it runs even when the key is not yet an approved agent.
+
+`example_utils` also exports **`write_succeeded(result)`**, which is what every trading script gates on:
+
+```python
+if not example_utils.write_succeeded(result):   # is_accepted AND not is_order_failed
+    raise SystemExit(...)
+```
+
+Copy that check, not a bare `is_accepted` — see [Accepted is not placed](core-concepts.md#accepted-is-not-placed).
 
 ## Shipped scripts
 
 | File | What it shows |
 | --- | --- |
-| `basic_order.py` | A resting `gtc` limit order end to end: place with a `cloid`, poll `order_status` until it rests (`open`), `cancel_by_cloid`, then `wait_for_order` to confirm the terminal `cancelled` state. |
+| `basic_order.py` | A resting `gtc` limit order end to end: place with a `cloid`, take the oid straight off the `/trade` response with `order_oid`, read `order_status` once to see it rest (`open`), `cancel_by_cloid`, then `wait_for_order` for the terminal `cancelled` state. |
 | `basic_market_order.py` | A protected `market_order` with an explicit `protection_px` (the worst price you accept — this example passes it directly rather than deriving it from `slippage_bps`). Buys a minimum-notional clip 2% through the best ask, then market-sells the fill to flatten. |
-| `basic_batch.py` | A mixed `batch` under one nonce: two resting bids in one call, then a second batch that `modify`s the first order and `cancel`s the second — atomically. Per-leg outcomes are reconciled with one `order_status` lookup per leg. |
+| `basic_batch.py` | A mixed `batch` under one nonce: two resting bids in one call, then a second batch that `modify`s the first order and `cancel`s the second — atomically. Every per-leg outcome is read off the batch response with `batch_legs`, so the script spends no `/info` reads to attribute the legs. |
+| `ws_feeds.py` | Streams the book, top of book, trades and mids over the [WebSocket](streaming.md). Needs no key; takes an optional endpoint URL. |
 | `info/query_markets_info.py` | Read-only: list the tradable markets and their precision (`markets()`). |
 | `info/query_orderbook_info.py` | Read-only: the L2 order book for one market (`l2_book`). |
 | `info/query_balances_info.py` | Read-only: your spot balances, available and locked per asset (`user_balances`). |
 | `info/query_open_order_info.py` | Read-only: your resting orders in one market (`open_orders`). |
 
-The trading scripts default to testnet (the base-url default in `example_utils.setup()`) and to `ETH/USDT`. Pass `setup(base_url=constants.MAINNET_API_URL)` to run on mainnet, or edit the `MARKET` constant for another market. Run them from the repo root:
+The trading scripts default to testnet (the base-url default in `example_utils.setup()`) and to `ETH/USDT`. Pass `setup(base_url=constants.MAINNET_API_URL)` to run on mainnet, or edit the `MARKET` constant for another market. Run them from the package root:
 
 ```bash
 python examples/info/query_markets_info.py     # read-only tour, no orders
+python examples/ws_feeds.py                    # streaming tour, no key needed
 python examples/basic_order.py                 # places a real testnet order
 python examples/basic_market_order.py
 python examples/basic_batch.py
 ```
-
-{% hint style="info" %}
-`examples/market_maker_bot.py` is an illustrative cancel-and-replace market-making loop — it re-quotes both sides as post-only (`alo`) orders every few seconds and caps inventory. It is **excluded from the published PyPI package**, so `pip install` does not ship it; clone the repo from the [Native GitHub org](https://github.com/Native-org) to run it.
-{% endhint %}
 
 ## Read markets and the order book
 
@@ -94,11 +102,14 @@ for m in info.markets()["markets"]:
     symbol = f"{m['base_symbol']}/{m['quote_symbol']}"
     print(f"{m['market_id']:>4}  {symbol:<12}  price {m['price_decimals']}dp  size {m['base_quantity_decimals']}dp")
 
-# Top of the L2 book for one market (up to 100 levels).
+# Top of the L2 book for one market (up to 100 levels). found=false omits
+# bids/asks entirely, so check it before indexing.
 book = info.l2_book(MARKET, depth=5)
-for level in reversed(book["asks"]):
+if not book.get("found"):
+    raise SystemExit("unknown market")            # found=false means the id is unknown
+for level in reversed(book.get("asks") or []):
     print(f"ask  {level['price']:>12}  {level['quantity']}")
-for level in book["bids"]:
+for level in book.get("bids") or []:
     print(f"bid  {level['price']:>12}  {level['quantity']}")
 ```
 
@@ -109,7 +120,7 @@ Self-contained write script. `Exchange` wraps [`POST /trade`](../post-trade.md) 
 ```python
 from decimal import Decimal
 
-from native_core import Exchange, is_accepted, order_state
+from native_core import Exchange, is_accepted, is_order_failed, leaf_error_code, order_state
 
 BUNDLE = "bundle.json"
 MARKET = "ETH/USDT"
@@ -119,23 +130,33 @@ info = exchange.info
 
 # Price a bid well below the market so it rests instead of filling.
 book = info.l2_book(MARKET, depth=1)
-reference = book["asks"] or book["bids"]                     # whichever side has liquidity
+if not book.get("found"):                                    # found=false = unknown market id
+    raise SystemExit("unknown market")
+reference = book.get("asks") or book.get("bids")             # whichever side has liquidity
+if not reference:
+    raise SystemExit("no resting orders on this market yet")
 px = info.snap_price(MARKET, Decimal(reference[0]["price"]) / 2)
 sz = info.min_order_size(MARKET, px)
 
-# place() submits the order and waits for it to rest; it returns the handle and state.
+# place() submits and waits for the order to rest, unless the response already
+# settled it. Returns {cloid, submission, status, state, oid}.
 order = exchange.place(MARKET, is_buy=True, sz=sz, limit_px=px, tif="gtc")
-print(order["cloid"], order["state"])                        # 0x…  open
+if is_order_failed(order["submission"]):                     # accepted != placed
+    raise SystemExit(f"order failed: {leaf_error_code(order['submission'])}")
+print(order["cloid"], order["oid"], order["state"])          # 0x…  1234  open
 
-# Cancel by cloid, then confirm it left the book.
+# Cancel by cloid, then confirm it left the book. A cancel against an order that is
+# already gone is accepted too, with a "missingorder" leaf.
 cancel = exchange.cancel_by_cloid(MARKET, order["cloid"])
-assert is_accepted(cancel)
+assert is_accepted(cancel) and not is_order_failed(cancel)
 final = info.wait_for_order(exchange.effective_account, MARKET, order["cloid"])
 print(order_state(final))                                    # cancelled
 ```
 
 {% hint style="warning" %}
-`accepted` is not `filled`. A raw `order()` / `market_order()` returning `submission_status: "accepted"` means the transaction **landed and executed** — not that the order rested or filled; read the real state by `cloid` (`wait_for_open` for a resting order, `wait_for_order` for a terminal one, or `info.reconcile_by_cloid(...)`). If a write times out on the wire the SDK raises `SubmissionUncertain` (carrying `.cloid` and `.nonce`); reconcile by `cloid` and **never** resubmit under a fresh nonce — that risks a double-fill. `place()` runs the submit and the matching wait for you.
+`accepted` is not `placed`. `submission_status: "accepted"` is a verdict on the **transaction**; your order can still have failed inside it, on a leaf of the `response` envelope. Check `is_order_failed(resp)` and read `leaf_error_code(resp)`, and take the `oid` and fill from `order_oid` / `fill` rather than an `/info` read. A failed order is never written to `/info`, so reconciling its `cloid` can only time out.
+
+If a write times out on the wire the SDK raises `SubmissionUncertain` (carrying `.cloids` and `.nonce`): reconcile by `cloid` and **never** resubmit — that risks a double-fill. A returned `submission_status: "timeout"` follows the same rule, except when `is_safe_to_resend(resp)` is `True` (the `Handoff*` family, which never reached a node), where you back off by `retry_after_ms` and resend the same `cloid`.
 {% endhint %}
 
 ## Rounding & precision
@@ -197,7 +218,10 @@ try:
     while True:
         started = time.monotonic()
         book = info.l2_book(MARKET, depth=1)
-        ref = book["asks"] or book["bids"]
+        ref = (book.get("asks") or book.get("bids")) if book.get("found") else None
+        if not ref:
+            time.sleep(REFRESH)                                      # nothing resting — wait it out
+            continue
         px = info.snap_price(MARKET, Decimal(ref[0]["price"]) / 2)   # rests well below the market
         sz = info.min_order_size(MARKET, px)
 
@@ -213,11 +237,13 @@ finally:
     flatten()   # runs on every exit path — crash, signal, or clean stop
 ```
 
-`market_maker_bot.py` ships this pattern in full: it re-quotes as post-only (`alo`) orders and, in its `finally`, calls `cancel_all` and reconciles per handle so nothing is left resting after the process exits.
+{% hint style="info" %}
+A loop like this one re-reads the book every pass, and `/info` allows about **one read per second per client IP**. A bot that runs continuously should take the book and its order updates from the [WebSocket](streaming.md) instead — `info.ws()` gives you `l2Book`, `bbo` and `orderUpdates` pushed for free against the read budget — and keep HTTP reads for reconciliation. `examples/ws_feeds.py` is the runnable tour.
+{% endhint %}
 
 ## See also
 
-* [getting-started.md](getting-started.md) — create an API wallet, save the bundle, and run your first trade.
-* [PyPI project](https://pypi.org/project/native-core-python-sdk/) — `pip install native-core-python-sdk==1.0.0`.
-* [Native GitHub org](https://github.com/Native-org) — clone the SDK repo for the full `examples/` folder, including `market_maker_bot.py`.
+* [Getting Started](getting-started.md) — create an API wallet, save the bundle, and run your first trade.
+* [Streaming](streaming.md) — take feeds off the WebSocket instead of polling.
+* [PyPI project](https://pypi.org/project/native-core-python-sdk/) — `pip install native-core-python-sdk==2.0.0`.
 * Wire references: [`POST /trade`](../post-trade.md), [`POST /info`](../post-info.md), [Transaction signing](../transaction-signing.md), [Decimals & Units](../decimals-units.md).
