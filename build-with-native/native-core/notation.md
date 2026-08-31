@@ -42,7 +42,7 @@ Ids are assigned by the protocol, not chosen by the client. In the Python SDK, `
 
 | Term        | Meaning                                                                                                                          |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `nonce`     | Decimal `u64` Unix-millisecond timestamp, authority-scoped. See [nonces-and-api-wallets.md](nonces-and-api-wallets.md).          |
+| `nonce`     | Decimal `u64` Unix-millisecond timestamp, authority-scoped. See [Nonces & API Wallets](nonces-and-api-wallets.md).          |
 | `authority` | The address recovered from a `/trade` signature. Nonce validation and rate limits are keyed on it — one API wallet is one authority. |
 
 {% hint style="info" %}
