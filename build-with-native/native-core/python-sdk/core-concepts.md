@@ -4,7 +4,15 @@ description: The core ideas the Native Core Python SDK is built on — read this
 
 # Core Concepts
 
-The SDK is a thin, typed, synchronous client over Native Core. `Info` wraps [`POST /info`](../post-info.md) (market data, balances, order status); `Exchange` wraps [`POST /trade`](../post-trade.md) (one signed action per call) and owns an internal `Info` as `exchange.info`; `WsClient` streams the same data live over the [WebSocket](../websocket.md). All three return the API's raw JSON as plain dicts. This page expands the core ideas every integration leans on. It does not re-document the wire fields — for those, see the [`POST /trade`](../post-trade.md) and [`POST /info`](../post-info.md) references.
+A thin, typed, synchronous client over Native Core. Three classes, all returning the API's raw JSON as plain dicts:
+
+| Class | Wraps |
+| --- | --- |
+| `Info` | [`POST /info`](../post-info.md) — market data, balances, order status |
+| `Exchange` | [`POST /trade`](../post-trade.md) — one signed action per call. Owns an `Info` as `exchange.info` |
+| `WsClient` | The [WebSocket](../websocket.md) — the same data, pushed |
+
+This page is the ideas every integration leans on, not the wire fields. Those are in the [`POST /trade`](../post-trade.md) and [`POST /info`](../post-info.md) references.
 
 ## Accepted is not placed
 
@@ -18,13 +26,17 @@ The SDK is a thin, typed, synchronous client over Native Core. `Info` wraps [`PO
 
 Only six envelope-level problems (bad nonce, bad signature, expired tx, malformed tx, bad batch length, feature disabled) and the API's admission refusals come back `rejected`. Every other way an order can go wrong arrives **inside an accepted response**, on the failing action's leaf.
 
-{% hint style="danger" %}
-**Most failed orders leave no record.** An order rejected *before* it reaches matching — `tick`, `lotsize`, `insufficientspotbalance`, `mintradespotntl`, `missingorder` — never enters the book, so it appears in neither [`orderStatus`](../post-info.md#orderstatus) nor the `orderUpdates` feed. There is nothing to poll for and nothing to reconcile; the leaf on the `/trade` response is the only trace it ever existed.
+### What a failed order leaves behind
 
-An order that dies *at* matching is the exception: `badalopx` (a post-only order that would have crossed) and `insufficientspotcredit` do get an `orderStatus` row under that lowercase status, and an `orderUpdates` frame — `badAloPxRejected` and so on. So does every benign cancel.
+Whether you can look the order up afterwards depends on how far it got.
+
+| Leaf code | What it leaves behind |
+| --- | --- |
+| `tick` `lotsize` `insufficientspotbalance` `mintradespotntl` `missingorder` | **Nothing.** The leaf is the only trace. Don't poll, don't reconcile |
+| `badalopx` `insufficientspotcredit` | An [`orderStatus`](../post-info.md#orderstatus) row and an `orderUpdates` frame |
+| `ioccancel` `fokcancel` `marketordernoliquidity` | The same, and benign: the order simply didn't fill |
 
 Either way, `is_accepted` alone books a failed order as a successful write.
-{% endhint %}
 
 ```python
 from native_core import Exchange, is_accepted, is_order_failed, leaf_error_code, order_oid, fill
@@ -50,16 +62,30 @@ You still need a read to follow an order's later life, such as a resting bid tha
 | `info.wait_for_open(user, market, cloid)` | a resting order (`gtc` / `alo`) | the order is `open` (or terminal) |
 | `info.wait_for_order(user, market, cloid)` | an order that finishes (`ioc` / `fok` / `market`, or after a cancel) | a terminal state such as `filled` or `cancelled` |
 
-`exchange.place(...)` runs the submit and the matching wait in one call, returning `{cloid, submission, status, state, oid}`, so you rarely call either wait directly. It skips the wait whenever the response already settled the order — a rejection, a timeout, a failed order, or a benign cancel — and then `status` and `state` are `None`, so branch on `submission` (or on `next_action`) rather than assuming `state` is populated. Do not call `wait_for_order` on a resting order — a resting order has no terminal state, so the call just times out; that is what `wait_for_open` is for.
+`exchange.place(...)` submits and runs the matching wait in one call, returning `{cloid, submission, status, state, oid}`. You rarely need either wait directly.
+
+It skips the wait when the response already settled the order: a rejection, a timeout, a failed order, or a benign cancel. `status` and `state` are then `None`, so branch on `submission` or on `next_action` instead.
+
+Never call `wait_for_order` on a resting order. A resting order has no terminal state, so the call only times out. `wait_for_open` is the one for that.
 
 ## Reconcile by cloid, but only what is unresolved
 
 Every order carries a client order id (`cloid`). `order()` and `market_order()` return the `cloid` and the `nonce` they used; `batch()` returns `cloids` (one per order leg) plus the shared `nonce`. Pass your own `cloid` or let the SDK generate one — either way the response echoes it, so an order is never handle-less.
 
-Reconciling is for one situation only: **the response never told you what happened.** If a write is signed and sent but its outcome cannot be read, the SDK raises `SubmissionUncertain` — the single most important exception. That happens on a transport failure over HTTP, and on a **5xx** answer to a write sent over the WebSocket, or a connection that dies before the answer arrives. (A 4xx over the WebSocket — a bad signature or nonce, or a rate limit — raises `ClientError` instead: it cannot have executed.) The order **may still be live**. The exception carries `.cloids` (with `.cloid` for the single-order case) and `.nonce`; reconcile the outcome, and **never resubmit under a fresh nonce** (that risks a double-fill).
+Reconcile in one situation only: **the response never told you what happened.** The SDK raises `SubmissionUncertain` there, carrying `.cloids` and `.nonce`. The order may still be live, so reconcile it and **never resubmit under a fresh nonce** — that risks a double-fill.
+
+Three things raise it:
+
+* a transport failure over HTTP
+* a **5xx** answer to a write sent over the WebSocket
+* a connection that dies before the answer arrives
+
+A 4xx over the WebSocket raises `ClientError` instead. It cannot have executed.
 
 {% hint style="warning" %}
-Do **not** reconcile an order the response already settled. For the failures that leave no record — `tick`, `lotsize`, `insufficientspotbalance`, `mintradespotntl`, `missingorder` — `reconcile_by_cloid` polls until its deadline and then reports `undetermined` for an order you already know is dead. Combined with the never-resubmit rule, that leaves the order stuck forever. (`badalopx` does return, on the first poll, with its own terminal state — so there the cost is a wasted read rather than a hang.) Read `is_order_failed` first either way; a failed order is finished, and the corrected order you send next is a **fresh** order with a fresh `cloid`.
+Do **not** reconcile an order the response already settled. For a failure that [leaves no record](#what-a-failed-order-leaves-behind), `reconcile_by_cloid` polls to its deadline and reports `undetermined` — and the never-resubmit rule then freezes that order forever.
+
+Read `is_order_failed` first. A failed order is finished; the corrected one you send next is a **fresh** order with a fresh `cloid`.
 {% endhint %}
 
 ```python
@@ -130,13 +156,24 @@ sz = info.min_order_size("ETH/USDT", px)                         # smallest size
 exchange.order("ETH/USDT", is_buy=True, sz=sz, limit_px=px, tif="gtc")
 ```
 
-Check `found` before indexing a book. When it is false the response omits `bids` and `asks` **entirely** — the keys are absent, not empty — so `book["asks"]` raises a bare `KeyError` that no `except Error` catches. `found: false` means one thing: the market id is unknown. A market that exists but has no book yet, including right after a restart, answers `found: true` with both sides as empty lists — so guard the levels too, not just `found`.
+Guard the book in two steps, not one.
+
+`found: false` means the market id is unknown, and the response omits `bids` and `asks` **entirely** — the keys are absent, not empty, so `book["asks"]` raises a bare `KeyError` that no `except Error` catches.
+
+`found: true` with both sides empty is the other case: a real market with nothing resting, which is every market for a few seconds after a restart.
 
 `info.snap_price(market, price)` and `info.min_order_size(market, price)` round a value to what the market accepts and return a string. Native executes on integer atoms under the hood — see [Decimals & Units](../decimals-units.md) for the raw/display conversion model that makes floats unsafe.
 
 ## Errors live in the response body
 
-Error handling keys on the **response body, not the HTTP status**. The API returns the same trade-response shape for HTTP 200/400/429/503/504, with `submission_status` in `{accepted, rejected, timeout}`. A business rejection — `{"submission_status": "rejected", "error": {"code": …}}` — is **data, not an exception**. Two families of helper read it. `is_accepted`, `is_rejected`, `is_timeout`, `error_code`, `retry_after_ms`, `is_retryable` and `is_safe_to_resend` classify the **transaction**. `is_order_failed`, `leaf_error_code`, `leaf_errors`, `is_benign_cancel`, `order_oid`, `fill`, `batch_legs`, `trade_envelope` and `trade_outcomes` classify the **order** inside it. You need both: the first family cannot see a failed order, and the second only exists on an accepted write.
+Error handling keys on the **response body, not the HTTP status**. The API returns the same trade-response shape for HTTP 200/400/429/503/504, with `submission_status` in `{accepted, rejected, timeout}`. A business rejection — `{"submission_status": "rejected", "error": {"code": …}}` — is **data, not an exception**. Two families of helper read it, and you need both:
+
+| Reads | Helpers |
+| --- | --- |
+| The **transaction** | `is_accepted` `is_rejected` `is_timeout` `error_code` `retry_after_ms` `is_retryable` `is_safe_to_resend` |
+| The **order** inside it | `is_order_failed` `leaf_error_code` `leaf_errors` `is_benign_cancel` `order_oid` `fill` `batch_legs` `trade_envelope` `trade_outcomes` |
+
+The first family cannot see a failed order. The second exists only on an accepted write.
 
 `next_action(response)` folds both families into one verdict to branch on (and returns `None` for a non-trade response):
 
@@ -171,7 +208,15 @@ elif verdict == RECONCILE_BY_CLOID:
     exchange.info.reconcile_by_cloid(exchange.effective_account, "ETH/USDT", resp["cloid"])
 ```
 
-Order-side helpers read an order-status snapshot: `order_state`, `is_terminal`, `is_undetermined`, `is_filled`, `filled_quantity`. `as_problem_details(failure)` renders any failing trade body — rejected, timed out, or accepted with a failed order — into one flat envelope; a benign cancel returns `None`. `retry_on_rate_limit(action)` wraps a write to resend only on `RateLimited`. The SDK raises for a transport failure (`NetworkError`), an uncertain write (`SubmissionUncertain`), a refused subscription (`SubscriptionError`), a body that is not a trade response (`ClientError` / `ServerError`), and a problem caught before signing (`LocalValidationError`). For the full response shapes and the rejection `error.code` catalog, see [Transaction signing](../transaction-signing.md).
+Three more helpers worth knowing:
+
+* `order_state` / `is_terminal` / `is_undetermined` / `is_filled` / `filled_quantity` read an order-status snapshot.
+* `as_problem_details(failure)` flattens any failing trade body into one envelope. A benign cancel returns `None`.
+* `retry_on_rate_limit(action)` wraps a write to resend only on `RateLimited`.
+
+The SDK raises for five things: a transport failure (`NetworkError`), an uncertain write (`SubmissionUncertain`), a refused subscription (`SubscriptionError`), a non-trade body (`ClientError` / `ServerError`), and a problem caught locally (`LocalValidationError`).
+
+Full response shapes and the `error.code` catalog: [Transaction Signing](../transaction-signing.md).
 
 ## Markets by symbol or id
 

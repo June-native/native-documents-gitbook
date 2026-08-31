@@ -85,7 +85,15 @@ An admitted action still runs against the book and **can fail at execution**. Be
 {% hint style="warning" %}
 `error.code` at the top level is never a lowercase execution code for an order. If you are matching on `error.code == "tick"`, you will never hit it — look in the `response` leaf instead.
 
-For most codes that leaf is the **only** record. An order rejected before it reaches matching — `tick`, `lotsize`, `insufficientspotbalance`, `mintradespotntl`, `missingorder` — never enters the book, so it is never written to [`orderStatus`](post-info.md#orderstatus) and never appears on `orderUpdates`; reconciling its `cloid` finds nothing and simply times out. An order that reaches matching and dies there — `badalopx`, `insufficientspotcredit`, and the IOC/FOK/no-liquidity cancels — does get an `orderStatus` row under its own lowercase status and an `orderUpdates` frame (`badAloPxRejected` and friends). Either way, read the leaf on the response, then send a corrected order under a **new** `cloid`.
+Whether you can look the order up afterwards depends on how far it got:
+
+| Leaf code | What it leaves behind |
+| --- | --- |
+| `tick` `lotsize` `insufficientspotbalance` `mintradespotntl` `missingorder` | **Nothing.** The leaf is the only record. Reconciling the `cloid` finds nothing and times out |
+| `badalopx` `insufficientspotcredit` | An [`orderStatus`](post-info.md#orderstatus) row under that lowercase status, and an `orderUpdates` frame (`badAloPxRejected`) |
+| `ioccancel` `fokcancel` `marketordernoliquidity` | The same, and benign: the order simply did not fill |
+
+Either way, read the leaf on the response, then send a corrected order under a **new** `cloid`.
 {% endhint %}
 
 | Code | Where it appears | What it means | Fix |

@@ -102,7 +102,7 @@ print(order_state(final))                 # cancelled
 ```
 
 {% hint style="warning" %}
-**Accepted is not placed.** `submission_status: "accepted"` means the **transaction** landed and executed. Your order can still have failed inside it — `tick`, `lotsize`, `badalopx`, `insufficientspotbalance`, `mintradespotntl`, `missingorder` all arrive that way, on a leaf of the `response` envelope. Read `is_order_failed` / `leaf_error_code`, or branch on `next_action`. Most of those are never written to `/info` at all, so polling or reconciling the `cloid` can only time out. `badalopx` is the exception: it does get an order-status row, under that status.
+**Accepted is not placed.** `submission_status: "accepted"` means the **transaction** landed and executed. Your order can still have failed inside it — `tick`, `lotsize`, `badalopx`, `insufficientspotbalance`, `mintradespotntl`, `missingorder` all arrive that way, on a leaf of the `response` envelope. Read `is_order_failed` / `leaf_error_code`, or branch on `next_action`. Most failures leave no `/info` record at all, so polling their `cloid` can only time out — see [what a failed order leaves behind](core-concepts.md#what-a-failed-order-leaves-behind).
 
 **An uncertain write is not resubmitted.** If a write times out the SDK raises `SubmissionUncertain` (carrying `.cloid` and `.nonce`) or returns `submission_status: "timeout"`: reconcile by `cloid` and never resubmit, or the order may land twice. The one exception is a timeout where `is_safe_to_resend(resp)` is true — the `Handoff*` family never reached a node, so back off by `retry_after_ms` and send the same `cloid` again. A `RateLimited` rejection is likewise safe to resend.
 

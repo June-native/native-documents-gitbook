@@ -78,7 +78,9 @@ Assume the connection will drop. On reconnect, resubscribe and take the first sn
 
 Only `trades` and `orderUpdates` can leave a hole, because they are pure increments. Fill it from `POST /info`: [`userFills`](post-info.md#userfills) takes a `from_height` / `to_height` range within the recent query window, and [`orderStatus`](post-info.md#orderstatus) settles the fate of any single order by `oid` or `cloid`.
 
-A disconnect is not the only way to lose frames. When the server's broadcast falls behind, event frames — `trades`, `userFills` and `orderUpdates` — are dropped outright while the snapshot channels are re-pushed. The connection stays up, so nothing tells you, and `userFills` does not replay. If your accounting depends on seeing every fill, poll [`userFills`](post-info.md#userfills) on a timer and reconcile by `tid` rather than trusting the feed alone.
+A disconnect is not the only way to lose frames. When the server's broadcast falls behind it drops the event frames outright — `trades`, `userFills`, `orderUpdates` — and re-pushes only the snapshot channels.
+
+The connection stays up, so nothing tells you, and `userFills` does not replay. If your accounting needs every fill, poll [`userFills`](post-info.md#userfills) on a timer and reconcile by `tid`.
 
 {% hint style="info" %}
 Deduplicate fills on `tid`. The snapshot, the live frame, and `POST /info` all report one value for a trade. Parse it as a `BigInt`, not a JS `Number`.

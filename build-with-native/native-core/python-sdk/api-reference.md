@@ -94,7 +94,9 @@ Each write returns the raw API response with the client handle echoed in: `submi
 {% hint style="danger" %}
 **`accepted` is a verdict on the transaction, not on your order.** Only six envelope-level problems and the API's admission refusals come back `rejected`. A per-action failure — `tick`, `lotsize`, `badalopx`, `insufficientspotbalance`, `mintradespotntl`, `missingorder` — arrives as `accepted`, with the reason on a leaf of the `response` envelope. Check `is_order_failed(resp)` (or branch on `next_action`) before treating the order as live.
 
-An order rejected **before** matching — `tick`, `lotsize`, `insufficientspotbalance`, `mintradespotntl`, `missingorder` — is never written to `/info`, so there is nothing to poll for and nothing to reconcile; the leaf is the only trace it existed. One that dies **at** matching (`badalopx`, `insufficientspotcredit`, and the benign cancels) does get an order-status row and an `orderUpdates` frame. Either way, take the `oid` and the fill from `order_oid(resp)` / `fill(resp)` at no read cost.
+Most failures leave no `/info` record, so the leaf is the only trace — see [what a failed order leaves behind](core-concepts.md#what-a-failed-order-leaves-behind).
+
+Take the `oid` and the fill from `order_oid(resp)` / `fill(resp)` at no read cost.
 
 On a wire timeout the SDK raises `SubmissionUncertain` (or returns `submission_status: "timeout"`): reconcile by `cloid` and **never resubmit**, unless `is_safe_to_resend(resp)` is true. See [Core concepts](core-concepts.md#accepted-is-not-placed).
 {% endhint %}
@@ -164,7 +166,16 @@ Each returns a `Subscription`; pass it back to `unsubscribe(subscription)`. Both
 | `post_info(payload)` | Runs an `/info` read over this connection. Same answer and same exceptions as HTTP |
 | `post_action(signed_body)` | Submits an already-signed `/trade` body. Build it with `Exchange.build_order` then `Exchange.sign_action` |
 
-Useful constructor arguments: `max_subscriptions` (default 10) and `max_inflight_posts` (default 1) are **local** refusal thresholds mirroring what the server allows — raising them buys no extra allowance. `ping_interval` (20 s) keeps the connection alive against the server's 60-second idle close. `reconnect` (on) restores subscriptions by itself, and `on_reconnect` fires once they are back, which is where to re-read anything that gapped. `on_error` receives server errors that belong to no call of yours.
+Constructor arguments worth setting:
+
+| Argument | Default | Meaning |
+| --- | --- | --- |
+| `max_subscriptions` | `10` | **Local** refusal threshold mirroring the server's. Raising it buys no extra allowance |
+| `max_inflight_posts` | `1` | As above |
+| `ping_interval` | `20` s | Keeps the connection alive against the server's 60-second idle close |
+| `reconnect` | on | Restores subscriptions by itself |
+| `on_reconnect` | `None` | Fires once they are back. Re-read anything that gapped here |
+| `on_error` | `None` | Server errors belonging to no call of yours |
 
 {% hint style="warning" %}
 **A write over the socket reports less than the same write over HTTP.** When the API answers with anything other than 2xx it discards the trade response, so there is no `submission_status`, no `tx_hash` and no envelope left to read. `post_action` raises instead: `ClientError` for a refusal that cannot have executed (bad signature or nonce, or a 429), and `SubmissionUncertain` for anything that might still land. Prefer `Exchange.order` for submitting. A write here is never retried automatically, not even on a rate limit.
@@ -256,7 +267,14 @@ Everything subclasses `native_core.Error`. Business rejections are **not** excep
 `SubmissionUncertain` is the one place not to reach for `wait_for_order`: an order that rests has no terminal state, so that wait can only time out. Use `reconcile_by_cloid`, which waits for either.
 {% endhint %}
 
-`ErrorCode` is a convenience enum of known rejection codes: `RateLimited`, `ExpiredTx`, `WrongChainId`, `DirectSignerIsActiveAgent`, `AgentEpochMismatch`, `InsufficientSpotBalance`. It covers only the **CamelCase** codes on a rejected body's `error.code`. Two families are deliberately not members: execution-stage failures, which are lowercase, live on the `response` envelope's leaf and are read with `leaf_error_code`; and the `Handoff*` timeout codes, which are matched by `is_safe_to_resend` rather than by equality. Checking `error_code(resp) == ErrorCode.INSUFFICIENT_SPOT_BALANCE` therefore misses the lowercase `insufficientspotbalance` the same condition produces at execution.
+`ErrorCode` is a convenience enum of known rejection codes: `RateLimited`, `ExpiredTx`, `WrongChainId`, `DirectSignerIsActiveAgent`, `AgentEpochMismatch`, `InsufficientSpotBalance`.
+
+It covers only the **CamelCase** codes on a rejected body's `error.code`. Two families are deliberately not members:
+
+* execution-stage failures, which are lowercase and live on the `response` leaf — read them with `leaf_error_code`
+* the `Handoff*` timeout codes, matched by `is_safe_to_resend` rather than by equality
+
+So `error_code(resp) == ErrorCode.INSUFFICIENT_SPOT_BALANCE` misses the lowercase `insufficientspotbalance` the same condition produces at execution.
 
 ## Transport controls
 

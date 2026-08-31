@@ -502,7 +502,13 @@ An `action` reply is the full trade response **whenever `/trade` answered HTTP 2
 {% hint style="danger" %}
 **Every non-2xx outcome is flattened into the `error` envelope, and the trade response is discarded.** There is no `submission_status`, no `tx_hash`, no `retry_after_ms` and no `response` envelope left to read — only a status string. That sweeps in outcomes HTTP reports as ordinary bodies: `RateLimited` (429), `PlaceOrderSuspended` and `TooManyPending` (503), and the **routing** timeouts `Handoff*` (503) and `node_unreachable` (504). It does not sweep in the other timeout: when the wait budget elapses after the node already admitted the transaction, `/trade` answers HTTP 200, so that one arrives intact as `submission_status: "timeout"` with a `tx_hash`.
 
-Branch accordingly, and do not treat 5xx as one bucket. A **4xx** string never executed — fix it and send again. `PlaceOrderSuspended` and `TooManyPending` (both 503) never executed either; each carries a `retry_after_ms` worth honouring. Only the routing timeouts, `Handoff*` (503) and `node_unreachable` (504), are indeterminate: the order may still land, so reconcile by `cloid` and **do not** resubmit under a fresh nonce. Submit over `POST /trade` when you need the full outcome; see [Handle outcomes & timeouts](handle-timeouts.md).
+Branch accordingly, and do not treat 5xx as one bucket:
+
+| String | Executed? | Do |
+| --- | --- | --- |
+| any **4xx** | Never | Fix it and send again |
+| `PlaceOrderSuspended`, `TooManyPending` (503) | Never | Honour the `retry_after_ms` and resend |
+| `Handoff*` (503), `node_unreachable` (504) | **Unknown** | Reconcile by `cloid`. Do **not** resubmit under a fresh nonce | Submit over `POST /trade` when you need the full outcome; see [Handle outcomes & timeouts](handle-timeouts.md).
 {% endhint %}
 
 Three things to plan for:

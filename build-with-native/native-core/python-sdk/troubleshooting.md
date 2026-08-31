@@ -4,7 +4,19 @@ description: Common Native Core Python SDK errors — the surfaced string, what 
 
 # Troubleshooting
 
-A business rejection is **data on the response body**, not an exception (read it with `error_code`, `is_rejected`, `next_action`). The SDK raises for problems it catches locally (`LocalValidationError` — before signing a write, and also on a read whose inputs or the API's own state make the call unanswerable), a transport failure (`NetworkError`), a signed write whose outcome cannot be read (`SubmissionUncertain`), a refused WebSocket subscription (`SubscriptionError`), and a body that is not a trade response (`ClientError` / `ServerError` — usually a 4xx/5xx, but `ClientError` also covers a refused `/info` read that arrives with **HTTP 200**). This page maps the symptom you actually see — a raised exception or a surfaced `error.code` — to its cause and fix.
+A business rejection is **data on the response body**, not an exception. Read it with `error_code`, `is_rejected`, `next_action`.
+
+The SDK raises for five things:
+
+| Exception | When |
+| --- | --- |
+| `LocalValidationError` | Caught locally, before signing a write — or on a read the SDK can answer is unanswerable |
+| `NetworkError` | A transport failure |
+| `SubmissionUncertain` | A signed write whose outcome cannot be read |
+| `SubscriptionError` | A refused WebSocket subscription |
+| `ClientError` / `ServerError` | A body that is not a trade response. Usually a 4xx/5xx, but `ClientError` also covers a refused `/info` read arriving with **HTTP 200** |
+
+This page maps the symptom you actually see to its cause and fix.
 
 ## Common errors
 
