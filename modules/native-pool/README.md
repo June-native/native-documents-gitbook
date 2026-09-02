@@ -24,6 +24,14 @@ Assets in a pending scheduled withdrawal no longer earn yield. You can review th
 
 ### Learn more
 
-{% content-ref url="../native-earn/" %}
-[native-earn](../native-earn/)
+{% content-ref url="deposit-withdrawal-earn-migrate-for-native-pool.md" %}
+[deposit-withdrawal-earn-migrate-for-native-pool.md](deposit-withdrawal-earn-migrate-for-native-pool.md)
+{% endcontent-ref %}
+
+{% content-ref url="native-earn.md" %}
+[native-earn.md](native-earn.md)
+{% endcontent-ref %}
+
+{% content-ref url="native-earn-faq.md" %}
+[native-earn-faq.md](native-earn-faq.md)
 {% endcontent-ref %}

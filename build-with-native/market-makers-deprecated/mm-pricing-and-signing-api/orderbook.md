@@ -8,7 +8,7 @@ description: Price levels endpoint for Native APIs and aggregators
 This doc is deprecated, for market makers integrations, please refer to:
 
 * [native-core](../../native-core/ "mention")
-* [native-core.md](../../../modules/native-core.md "mention")
+* [native-core](../../../modules/native-core/ "mention")
 {% endhint %}
 
 To indicate current pricing for Native APIs and aggregators, you must provide a price level endpoint that returns the price levels of all supported pairs on a specified chain.

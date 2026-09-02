@@ -31,5 +31,5 @@ To prevent dusting attacks, the system limits total addresses, tokens, and marke
 
 ### Related
 
-* [Native Pool](../modules/native-pool.md)
+* [Native Pool](../modules/native-pool/)
 * [Unified Balance](unified-balance.md)

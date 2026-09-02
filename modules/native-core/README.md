@@ -18,3 +18,9 @@ It is built for traders who want ultra high performance with full on-chain verif
 
 * 50ms block finality time
 * Max 1M TPS
+
+#### Learn more
+
+{% content-ref url="deposit-and-withdrawal-on-native-core.md" %}
+[deposit-and-withdrawal-on-native-core.md](deposit-and-withdrawal-on-native-core.md)
+{% endcontent-ref %}

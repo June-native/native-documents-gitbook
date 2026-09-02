@@ -7,7 +7,7 @@ noIndex: true
 
 Native pricing is **Market-Responsive**: market makers price each token accurately and promptly based on market risk, conditions, and inventory exposure. Because of this, quotes reflect liquidity sourced from on-chain DEXs, institutional venues, and/or direct redemption channels — ultimately responding to the real market rather than a static curve.
 
-On [Native Core](../modules/native-core.md), this pricing is expressed directly as maker orders on the [CLOB](central-limit-orderbook.md), where professional market makers connect through [Native Pro](../modules/native-pro.md) to post real-time bid/ask. Integrators reach the same liquidity through [Native Relay](../modules/native-relay.md):
+On [Native Core](../modules/native-core/), this pricing is expressed directly as maker orders on the [CLOB](central-limit-orderbook.md), where professional market makers connect through [Native Pro](../modules/native-pro.md) to post real-time bid/ask. Integrators reach the same liquidity through [Native Relay](../modules/native-relay.md):
 
 #### On-chain order book
 

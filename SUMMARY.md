@@ -8,8 +8,12 @@
 
 ## MODULES
 
-* [Native Core](modules/native-core.md)
-* [Native Pool](modules/native-pool.md)
+* [Native Core](modules/native-core/README.md)
+  * [Deposit / Withdrawal on Native Core](modules/native-core/deposit-and-withdrawal-on-native-core.md)
+* [Native Pool](modules/native-pool/README.md)
+  * [Deposit / Withdrawal / Earn / Migrate for Native Pool](modules/native-pool/deposit-withdrawal-earn-migrate-for-native-pool.md)
+  * [Native Pool Yield](modules/native-pool/native-earn.md)
+  * [Native Pool FAQ](modules/native-pool/native-earn-faq.md)
 * [Native Pro](modules/native-pro.md)
 * [Native Relay](modules/native-relay.md)
 
@@ -37,10 +41,7 @@
 * [Native Liquidity Provisioning](native-liquidity-provisioning/README.md)
   * [Tokenized Stocks & Equities (RWAs)](native-liquidity-provisioning/tokenized-stocks-and-equities-rwas.md)
   * [Yield-Bearing Assets](native-liquidity-provisioning/native-liquidity-provisioning.md)
-* [Native Pool Yield](native-earn/README.md)
-  * [Native Pool FAQ](native-earn/native-earn-faq.md)
-* [User Guides for Products](user-guides-for-products/README.md)
-  * [Deposit & Withdrawal on Native Core](user-guides-for-products/deposit-and-withdrawal-on-native-core.md)
+* [User Guides for Products](products/user-guides-for-products.md)
 
 ## USER GUIDE
 

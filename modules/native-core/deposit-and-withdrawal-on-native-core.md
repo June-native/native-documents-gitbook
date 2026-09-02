@@ -1,4 +1,4 @@
-# Deposit & Withdrawal on Native Core
+# Deposit / Withdrawal on Native Core
 
 {% hint style="info" %}
 #### Special Note
@@ -20,7 +20,7 @@ Follow the steps below to connect your wallet, deposit funds, activate your Nati
 3. Select the wallet you want to connect.
 4. Confirm the connection request in your wallet.
 
-<figure><img src="../.gitbook/assets/image (87).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (87).png" alt=""><figcaption></figcaption></figure>
 
 ### Step 2: Deposit Funds and Activate Your Account
 
@@ -30,7 +30,7 @@ Once your wallet is connected, click **Deposit** in the upper-right corner.
 Make sure your wallet has enough of the network’s native gas token to cover the initial account activation and subsequent on-chain transactions.
 {% endhint %}
 
-<figure><img src="../.gitbook/assets/image (88).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (88).png" alt=""><figcaption></figcaption></figure>
 
 To make a deposit:
 
@@ -48,9 +48,7 @@ A one-time account activation fee applies when you make your first deposit to Na
 
 Once the deposit is complete, click **Done**. You can also select **View Transaction** to review the deposit on the relevant blockchain explorer.
 
-<figure><img src="../.gitbook/assets/image (89).png" alt=""><figcaption></figcaption></figure>
-
-
+<figure><img src="../../.gitbook/assets/image (89).png" alt=""><figcaption></figcaption></figure>
 
 ### Step 3: Establish a Trading Connection
 
@@ -58,8 +56,6 @@ After completing your deposit:
 
 1. Click **Establish Connection** in the website pop-up.
 2. Approve the signature request in your wallet.
-
-
 
 ### Step 4: Start Trading
 
@@ -69,7 +65,7 @@ Once the connection is established:
 2. Choose either a **Market Order** or **Limit Order**.
 3. Enter the order details and confirm your order to begin trading.
 
-<figure><img src="../.gitbook/assets/image (90).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (90).png" alt=""><figcaption></figcaption></figure>
 
 {% hint style="info" %}
 The minimum trade size is USD 10 in notional value. The required asset amount varies based on its current price. Please refer to the trading interface for the applicable minimum.
@@ -84,7 +80,7 @@ Follow the steps below to withdraw assets from your Native Core account.
 1. Click the **address tab** in the upper-right corner.
 2. Click the **Withdraw** icon to open the withdrawal page.
 
-<figure><img src="../.gitbook/assets/image (92).png" alt=""><figcaption></figcaption></figure>
+<figure><img src="../../.gitbook/assets/image (92).png" alt=""><figcaption></figcaption></figure>
 
 ### Step 2: Enter the Withdrawal Details and Submit
 
@@ -103,6 +99,3 @@ Please note:
 ### Step 3: Wait for Processing
 
 At this stage, withdrawal requests may be processed instantly or within **T+1**, depending on the withdrawal amount and available liquidity. You can track the status of your request in the **Account History** tab below.
-
-
-

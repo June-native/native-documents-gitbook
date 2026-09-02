@@ -1,6 +1,6 @@
 # CLOB
 
-The **Central Limit Order Book (CLOB)** is the matching mechanism at the heart of [Native Core](../modules/native-core.md). Unlike an AMM, which prices trades along a bonding curve, a CLOB matches discrete buy and sell orders by **price-time priority**.
+The **Central Limit Order Book (CLOB)** is the matching mechanism at the heart of [Native Core](../modules/native-core/). Unlike an AMM, which prices trades along a bonding curve, a CLOB matches discrete buy and sell orders by **price-time priority**.
 
 ### How It Works on Native Core
 

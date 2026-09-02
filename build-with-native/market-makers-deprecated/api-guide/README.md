@@ -8,7 +8,7 @@ hidden: true
 This doc is deprecated, for market makers integrations, please refer to:
 
 * [native-core](../../native-core/ "mention")
-* [native-core.md](../../../modules/native-core.md "mention")
+* [native-core](../../../modules/native-core/ "mention")
 {% endhint %}
 
 ## 1. Authentication
