@@ -10,11 +10,48 @@ Read [Deposit & Withdraw](README.md) first for the shared endpoints, discovery q
 
 ## 1. Validate the amount
 
-Three rules govern the amount. The first two come from `/info` and are enforced at admission. The third is enforced nowhere: break it and Native Core accepts the action, debits the balance, and the release is never constructed.
+Three rules govern the amount, and a fourth number caps it. The first two come from `/info` and are enforced at admission. The third is enforced nowhere: break it and Native Core accepts the action, debits the balance, and the release is never constructed.
 
 * **Minimum** — `min_withdraw_atoms` from the [`accountingWithdrawTokens`](../native-core/post-info.md#accountingwithdrawtokens) entry whose `chain_id` and `asset_id` match your destination chain and asset.
 * **Fee** — `withdraw_fee_atoms` for the asset from [`assets`](../native-core/post-info.md#assets). It is recorded, not deducted: you sign the **gross** amount, Native debits the gross, and the destination chain releases `amount − fee`. `amount` must be strictly greater than the fee.
 * **Decimal cap** — cap the amount at 6 decimal places. Native balances are 8-decimal and the release rescales into the destination token's decimals. USDT and USDC are 6-decimal on Ethereum, Arbitrum and Base, so a 6-decimal cap divides evenly into every destination token currently listed.
+
+### The withdrawable ceiling
+
+Each destination chain releases from its own vault. `availableWithdraw` reports what those vaults can pay out right now, per chain.
+
+```bash
+curl -sS https://api-ui.native.org/api/v3/accounting \
+  -H 'content-type: application/json' \
+  -d '{"type":"availableWithdraw","asset_id":2}'
+```
+
+```json
+{
+  "code": 0,
+  "data": {
+    "asset_id": 2,
+    "balance_decimals": 8,
+    "available_atoms": "66411043359575",
+    "available": "664110.43359575",
+    "items": [
+      { "chain_id": 1,     "token_address": "0xdac17f958d2ee523a2206206994597c13d831ec7", "available_atoms": "349374163000",   "available": "3493.74163" },
+      { "chain_id": 56,    "token_address": "0x55d398326f99059ff775485246999027b3197955", "available_atoms": "65872669196575", "available": "658726.69196575" },
+      { "chain_id": 8453,  "token_address": "0xfde4c96c8593536e31f229ea8f37b2ada2699bb2", "available_atoms": "100000000",      "available": "1" },
+      { "chain_id": 42161, "token_address": "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9", "available_atoms": "188900000000",   "available": "1889" }
+    ]
+  },
+  "message": "success"
+}
+```
+
+{% hint style="warning" %}
+**Check the `items` entry for your destination chain, never the top-level total.** The total is the sum of every route, and a withdrawal executes on one. Above, 664,110 USDT of headline capacity includes exactly 1 USDT on Base.
+{% endhint %}
+
+`available_atoms` is in the same 8-decimal atoms as the `amount` you sign; `available` is display only. `"0"` is a real answer. The reading is live, so take it before you sign.
+
+`asset_id` is a JSON **number** here, unlike every other id on this page. Sending `"2"` fails with `131004`, as does any asset Native does not pay out.
 
 ## 2. Sign and submit
 
