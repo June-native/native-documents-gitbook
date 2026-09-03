@@ -10,7 +10,7 @@ Read [Deposit & Withdraw](README.md) first for the shared endpoints, discovery q
 
 ## 1. Validate the amount
 
-Three rules govern the amount, and a fourth number caps it. The first two come from `/info` and are enforced at admission. The third is enforced nowhere: break it and Native Core accepts the action, debits the balance, and the release is never constructed. The fourth is not served by `/info` at all; it has its own section below.
+Three rules govern the amount, and a fourth number caps it. The first two come from `/info` and are enforced at admission. The third is enforced nowhere: break it and Native Core accepts the action, debits the balance, and the release is never constructed.
 
 * **Minimum** — `min_withdraw_atoms` from the [`accountingWithdrawTokens`](../native-core/post-info.md#accountingwithdrawtokens) entry whose `chain_id` and `asset_id` match your destination chain and asset.
 * **Fee** — `withdraw_fee_atoms` for the asset from [`assets`](../native-core/post-info.md#assets). It is recorded, not deducted: you sign the **gross** amount, Native debits the gross, and the destination chain releases `amount − fee`. `amount` must be strictly greater than the fee.
@@ -18,9 +18,7 @@ Three rules govern the amount, and a fourth number caps it. The first two come f
 
 ### The withdrawable ceiling
 
-The three rules above are about your amount. This one is about Native's. Each destination chain has its own vault, a withdrawal is released from the vault on the chain you chose, and that vault holds a finite amount of the token.
-
-`availableWithdraw` reports what the payout side can release right now, broken down per chain. It is served by the accounting service on `$ACCOUNTING_URL`, not by `/info`.
+Each destination chain releases from its own vault. `availableWithdraw` reports what those vaults can pay out right now, per chain.
 
 ```bash
 curl -sS "$ACCOUNTING_URL/api/v3/accounting" \
@@ -48,20 +46,12 @@ curl -sS "$ACCOUNTING_URL/api/v3/accounting" \
 ```
 
 {% hint style="warning" %}
-**Compare your gross amount against the `items` entry for your destination chain, never against the top-level total.** The total is the sum of every entry, and a withdrawal executes on one chain. In the response above, 664,110 USDT of headline capacity includes exactly 1 USDT on Base.
+**Check the `items` entry for your destination chain, never the top-level total.** The total is the sum of every route, and a withdrawal executes on one. Above, 664,110 USDT of headline capacity includes exactly 1 USDT on Base.
 {% endhint %}
 
-Entries are keyed by `(chain_id, token_address)`, not by chain alone. Every listed asset currently has one token per chain, so one entry is one route today. Sum a chain's entries rather than assuming a single row.
+`available_atoms` is in the same 8-decimal atoms as the `amount` you sign; `available` is display only. `"0"` is a real answer. The reading is live, so take it before you sign.
 
-`available_atoms` is an 8-decimal atom string, the same units as the `amount` you sign. Parse it with `BigInt`; the sibling `available` is a display string, not a value to compute with. `"0"` is a real answer and means that route can release nothing right now.
-
-The number is a live read of on-chain balances, served from a short cache. Read it before you sign and do not carry it across sessions. An asset that Native does not pay out has no entry at all and the call fails instead of returning zero.
-
-The accounting service answers with its own envelope: the HTTP status is always `200` and the outcome is the body's `code`, where `0` is success and anything else carries a `message` and no `data`. A malformed or unlisted `asset_id` returns `131004` and a rate-limited call returns `201005`.
-
-{% hint style="info" %}
-`asset_id` is a JSON **number** here. Every other id on this page is a string, and sending `"2"` to this endpoint fails with `131004`.
-{% endhint %}
+`asset_id` is a JSON **number** here, unlike every other id on this page. Sending `"2"` fails with `131004`, as does any asset Native does not pay out.
 
 ## 2. Sign and submit
 
