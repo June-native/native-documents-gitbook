@@ -343,6 +343,18 @@
                         }
                     },
                     {
+                        "name": "show_blacklist_status",
+                        "required": false,
+                        "in": "query",
+                        "example": true,
+                        "description": "When true, the response includes `is_black_address` indicating whether `from_address` or `beneficiary_address` is blacklisted. Omit or pass false to keep the default response (field not included).",
+                        "schema":
+                        {
+                            "default": false,
+                            "type": "boolean"
+                        }
+                    },
+                    {
                         "name": "apiKey",
                         "in": "header",
                         "description": "The API key that was assigned to you by Native",
@@ -1415,6 +1427,12 @@
                     {
                         "type": "number",
                         "readOnly": true
+                    },
+                    "is_black_address":
+                    {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "Present only when `show_blacklist_status=true`. True if `from_address` or `beneficiary_address` is blacklisted."
                     }
                 },
                 "required":
