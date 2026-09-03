@@ -21,7 +21,7 @@ Three rules govern the amount, and a fourth number caps it. The first two come f
 Each destination chain releases from its own vault. `availableWithdraw` reports what those vaults can pay out right now, per chain.
 
 ```bash
-curl -sS "$ACCOUNTING_URL/api/v3/accounting" \
+curl -sS https://api-ui.native.org/api/v3/accounting \
   -H 'content-type: application/json' \
   -d '{"type":"availableWithdraw","asset_id":2}'
 ```
