@@ -6,7 +6,7 @@ description: Build your own funding flow into and out of Native Core — the vau
 
 Funding spans two chains. A deposit starts on an EVM chain and finishes on Native Core; a withdrawal starts on Native Core and finishes on an EVM chain. Each direction gives you exactly one transaction to send and one thing to poll.
 
-This section is for teams building their own deposit and withdrawal experience — wallets, aggregators, custodians, and trading front-ends that cannot route users through the Native web app. You need an EVM RPC endpoint and Native Core's two REST endpoints. No other Native-hosted service is involved.
+This section is for teams building their own deposit and withdrawal experience — wallets, aggregators, custodians, and trading front-ends that cannot route users through the Native web app. You need an EVM RPC endpoint and Native Core's two REST endpoints. Withdrawals add one read-only call to the accounting service on a separate host; nothing you sign or submit goes there.
 
 {% content-ref url="deposit.md" %}
 [deposit.md](deposit.md)
@@ -39,7 +39,10 @@ Native Core exposes two REST endpoints, and funding uses a handful of queries on
 
 ```bash
 API_URL=https://api.native.org
+ACCOUNTING_URL=https://api-ui.native.org
 ```
+
+`ACCOUNTING_URL` serves one query used in this section, [the withdrawable ceiling](withdraw.md#the-withdrawable-ceiling). It is keyless like the two above and mainnet only, and it answers with its own envelope: the HTTP status is always `200` and the outcome is the body's `code` field. It is rate limited too, and an over-budget call comes back as `code: 201005`.
 
 {% hint style="info" %}
 `/info` is rate limited to **1 request per second per IP**. Every polling loop in this section needs an interval at or above that, and a shared budget if you run several at once.
@@ -55,6 +58,7 @@ Resolve the routing table at runtime. Vaults are redeployed and asset listings c
 | Depositable tokens on a chain                  | vault `getSupportedUnderlyings()`                                                                 |
 | `asset_id`, `balance_decimals`, withdrawal fee | `POST /info` [`assets`](../native-core/post-info.md#assets)                                        |
 | Withdrawable `(chain, asset)` and minimums     | `POST /info` [`accountingWithdrawTokens`](../native-core/post-info.md#accountingwithdrawtokens)    |
+| How much a route can release right now         | `$ACCOUNTING_URL` `POST /api/v3/accounting` [`availableWithdraw`](withdraw.md#the-withdrawable-ceiling) |
 | Gas-token price, to quote the activation fee   | `POST /info` [`markPrices`](../native-core/post-info.md#markprices)                                |
 
 The current vault addresses are listed in [Vault Contract](vault-contract.md#addresses).
