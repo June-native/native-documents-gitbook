@@ -24,19 +24,19 @@
 
 ### Monad
 
-<table><thead><tr><th width="257">Contract</th><th>Address</th></tr></thead><tbody><tr><td>NativeRouter V4</td><td>0x332e56e0b91eC3F08553eC7964E19CC041A38672</td></tr><tr><td>NativeRFQPool V4</td><td>0x3771009FCf8a926b17BAE8dFE626Cc9D426c6A46</td></tr><tr><td>CreditVault</td><td>0xcD1D2D602C3e7394515DaAe96e4FFe16DE71e5B4</td></tr></tbody></table>
+<table><thead><tr><th width="257">Contract</th><th>Address</th></tr></thead><tbody><tr><td>NativeRouter V6</td><td>0x0F9ee7f14D90c0b479cbbf368d15eE8023154b3a</td></tr><tr><td>NativeRFQPool V6</td><td>0xe6d7f78b797c4EbC8829bF1D6b2d9F5041fC825f</td></tr><tr><td>NativeRouter V4</td><td>0x332e56e0b91eC3F08553eC7964E19CC041A38672</td></tr><tr><td>NativeRFQPool V4</td><td>0x3771009FCf8a926b17BAE8dFE626Cc9D426c6A46</td></tr><tr><td>CreditVault</td><td>0xcD1D2D602C3e7394515DaAe96e4FFe16DE71e5B4</td></tr></tbody></table>
 
 ### Xlayer
 
-<table><thead><tr><th width="257">Contract</th><th>Address</th></tr></thead><tbody><tr><td>NativeRouter V4</td><td>0x45F4D4AED68A04E9a48EED69E1C8b15d7875d25F</td></tr><tr><td>NativeRFQPool V4</td><td>0xAb6c448570BBa62B712cFa272b5d8e208429f35D</td></tr><tr><td>NativeRouter V3</td><td>0xFF12771C74A9394477C2ce53F82b67C93d5D7B82</td></tr><tr><td>NativeRFQPool V3</td><td>0xE05f1635756b6f5046e53f8e911A14794A73a4e7</td></tr><tr><td>CreditVault</td><td>0x4Df7557734B382EB542BEa6c74786D398DF4CC19</td></tr></tbody></table>
+<table><thead><tr><th width="257">Contract</th><th>Address</th></tr></thead><tbody><tr><td>NativeRouter V6</td><td>0x149D45C599203E06d727b7D10bb00F7035023932</td></tr><tr><td>NativeRFQPool V6</td><td>0xC92E8B593dD23033a22Db58dF00235596c53431C</td></tr><tr><td>NativeRouter V4</td><td>0x45F4D4AED68A04E9a48EED69E1C8b15d7875d25F</td></tr><tr><td>NativeRFQPool V4</td><td>0xAb6c448570BBa62B712cFa272b5d8e208429f35D</td></tr><tr><td>NativeRouter V3</td><td>0xFF12771C74A9394477C2ce53F82b67C93d5D7B82</td></tr><tr><td>NativeRFQPool V3</td><td>0xE05f1635756b6f5046e53f8e911A14794A73a4e7</td></tr><tr><td>CreditVault</td><td>0x4Df7557734B382EB542BEa6c74786D398DF4CC19</td></tr></tbody></table>
 
 ### Robinhood
 
-<table><thead><tr><th width="257">Contract</th><th>Address</th></tr></thead><tbody><tr><td>NativeRouter V4</td><td>0xa5ec1f0aC784C3620fFDcdf2A7DbcEF9DA658ea4</td></tr><tr><td>NativeRFQPool V4</td><td>0x8428e1ee461cf1CA5fc5873E47A56A656E7b717D</td></tr><tr><td>NativeRouter V3</td><td>0xe7D5083b8cA725258552da45C781ED04eF079C7f</td></tr><tr><td>NativeRFQPool V3</td><td>0x55b503D1a03fC73a875765827ffC28cC15e15F06</td></tr><tr><td>CreditVault</td><td>0x57B8f68ef57Af2dB70BC9aAc891836661CA4cB51</td></tr></tbody></table>
+<table><thead><tr><th width="257">Contract</th><th>Address</th></tr></thead><tbody><tr><td>NativeRouter V6</td><td>0x4Df7557734B382EB542BEa6c74786D398DF4CC19</td></tr><tr><td>NativeRFQPool V6</td><td>0x45F4D4AED68A04E9a48EED69E1C8b15d7875d25F</td></tr><tr><td>NativeRouter V4</td><td>0xa5ec1f0aC784C3620fFDcdf2A7DbcEF9DA658ea4</td></tr><tr><td>NativeRFQPool V4</td><td>0x8428e1ee461cf1CA5fc5873E47A56A656E7b717D</td></tr><tr><td>NativeRouter V3</td><td>0xe7D5083b8cA725258552da45C781ED04eF079C7f</td></tr><tr><td>NativeRFQPool V3</td><td>0x55b503D1a03fC73a875765827ffC28cC15e15F06</td></tr><tr><td>CreditVault</td><td>0x57B8f68ef57Af2dB70BC9aAc891836661CA4cB51</td></tr></tbody></table>
 
 ### Morph
 
-<table><thead><tr><th width="257">Contract</th><th>Address</th></tr></thead><tbody><tr><td>NativeRouter V4</td><td>0x45F4D4AED68A04E9a48EED69E1C8b15d7875d25F</td></tr><tr><td>NativeRFQPool V4</td><td>0xAb6c448570BBA62b712CfA272B5d8e208429f35D</td></tr><tr><td>CreditVault</td><td>0x4Df7557734B382EB542BEa6c74786D398DF4CC19</td></tr></tbody></table>
+<table><thead><tr><th width="257">Contract</th><th>Address</th></tr></thead><tbody><tr><td>NativeRouter V6</td><td>0xDBb3F5F906fDa25784a8eD1Dd208Cf3772EFE6cB</td></tr><tr><td>NativeRFQPool V6</td><td>0x80096680894326FAbA21e298806A84826dCa3a83</td></tr><tr><td>NativeRouter V4</td><td>0x45F4D4AED68A04E9a48EED69E1C8b15d7875d25F</td></tr><tr><td>NativeRFQPool V4</td><td>0xAb6c448570BBA62b712CfA272B5d8e208429f35D</td></tr><tr><td>CreditVault</td><td>0x4Df7557734B382EB542BEa6c74786D398DF4CC19</td></tr></tbody></table>
 
 {% hint style="warning" %}
 ### ⚖️ License and Copyright
