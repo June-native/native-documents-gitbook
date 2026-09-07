@@ -415,7 +415,7 @@ Requires `auth_scheme:"eip712"`. See [EIP-712 signing](transaction-signing.md#ei
 
 ### activateFor
 
-Creates a balance-mode account for `target_address`, paid for by the signer (tag 11). **Owner-signed**, `auth_scheme:"eip712"` only — this action has no legacy form at all. `cloid` is a **required** 16-byte hex client operation id.
+Creates a balance-mode account for `target_address`, paid for by the signer (tag 43). **Owner-signed**, `auth_scheme:"eip712"` only — this action has no legacy form at all. `cloid` is a **required** 16-byte hex client operation id.
 
 There is deliberately **no fee amount field**: the activation fee is taken from the protocol schedule for `asset_id`, which must be one of the allowlisted activation assets (`InvalidActivationFeeAsset`). The signer must already be registered and must be balance-mode (`ActionNotAllowedForSpotCreditAccount`), and cannot be the protocol fee account. `target_address` must be non-zero and must not already exist (`AccountAlreadyActivated`).
 

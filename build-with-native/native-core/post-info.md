@@ -384,7 +384,7 @@ The account's multisig lifecycle row. Requires `user`; the response key is `owne
 
 `found` reports whether the **account** exists, not whether it has a multisig row — an ordinary account answers `found: true` with `enabled: false` and the remaining fields `null`/empty. That is the normal shape; read `enabled`, not `found`, to decide whether a row is configured.
 
-When `enabled` is `true`, `signers` and `threshold` describe the current quorum, `role` names the account's protocol role when it has one, and `policy_epoch` is the epoch an account-auth (v5) frame must bind. An epoch that has moved on is rejected as `AccountMultisigEpochMismatch`.
+When `enabled` is `true`, `signers` and `threshold` describe the current quorum and `policy_epoch` is the epoch an account-auth (v5) frame must bind. `role` is non-null only for the protocol accounts (`admin`, `accounting`) — and for exactly those the quorum is **deliberately masked**: `threshold` comes back `null` and `signers` empty even while `enabled` is `true`. A non-null `role` with an empty quorum is the masked shape, not missing data. An epoch that has moved on is rejected as `AccountMultisigEpochMismatch`.
 
 This row also decides whether the owner key may still trade directly: under the `PermanentAgentOnly` control rule, an owner holding an **Active** row must submit trading actions through an [API wallet](nonces-and-api-wallets.md#api-wallets), and a direct-owner frame is rejected pre-nonce with `AccountMultisigAgentRequired`.
 
@@ -801,9 +801,9 @@ Errors land at two different levels, and the distinction matters when parsing:
 * **Whole request** — `orders` not an array is `InvalidOrderStatusBatch` (`"orders must be an array"`); more than 20 elements is `TooManyOrderStatusQueries`. Neither returns a `results` array.
 * **Per item** — a bad selector does not fail the batch. That element carries its own `error` object in place of a result (for example `InvalidOrderStatusQuery`), and the remaining elements still resolve. Always read each entry's `error` before its `found`.
 
-Every entry in one response is answered at the same `query_height`, so the batch is a consistent snapshot rather than 20 independent reads.
+The node tries to answer every entry at the same `query_height`, retrying the whole batch if a block lands mid-read, so in practice the batch is a consistent snapshot rather than 20 independent reads. It is not a guarantee: after a few attempts the node serves the split answer rather than erroring or waiting. **Read `query_height` per entry** if you are comparing entries against each other — do not assume one height for the response.
 
-This is the most expensive `/info` type per request — cost scales with the number of lookups, and misses cost more than hits because they scan the retained window. Prefer it over 20 separate calls for the rate budget, but do not treat 20-item batches as free.
+This is the most expensive `/info` type per request — cost scales with the number of lookups. Prefer it over 20 separate calls for the rate budget, but do not treat 20-item batches as free.
 
 ### txStatusByCloid
 
