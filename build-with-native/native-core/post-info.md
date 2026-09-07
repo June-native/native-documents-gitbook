@@ -359,6 +359,35 @@ Whether an account exists and its freeze state.
 
 `found` is `true` once the account exists (it is created on its first deposit). `status` is `"active"` or `"frozen"`, and is `null` when `found` is `false`. `account_index` is the protocol's internal account index, `null` before the account exists.
 
+### accountMultisig
+
+The account's multisig lifecycle row. Requires `user`; the response key is `owner`.
+
+```json
+{ "type": "accountMultisig", "user": "0x0000000000000000000000000000000000000001" }
+```
+
+```json
+{
+  "query_height": 180000,
+  "app_hash": "0x...",
+  "owner": "0x0000000000000000000000000000000000000001",
+  "found": true,
+  "account_index": 93,
+  "enabled": false,
+  "role": null,
+  "threshold": null,
+  "signers": [],
+  "policy_epoch": null
+}
+```
+
+`found` reports whether the **account** exists, not whether it has a multisig row — an ordinary account answers `found: true` with `enabled: false` and the remaining fields `null`/empty. That is the normal shape; read `enabled`, not `found`, to decide whether a row is configured.
+
+When `enabled` is `true`, `signers` and `threshold` describe the current quorum, `role` names the account's protocol role when it has one, and `policy_epoch` is the epoch an account-auth (v5) frame must bind. An epoch that has moved on is rejected as `AccountMultisigEpochMismatch`.
+
+This row also decides whether the owner key may still trade directly: under the `PermanentAgentOnly` control rule, an owner holding an **Active** row must submit trading actions through an [API wallet](nonces-and-api-wallets.md#api-wallets), and a direct-owner frame is rejected pre-nonce with `AccountMultisigAgentRequired`.
+
 ### spotCreditAccount
 
 {% hint style="info" %}
@@ -746,6 +775,35 @@ Not found:
 ```
 
 A query that carries neither a parseable `oid` nor a complete `user` + `market_id` + `cloid` triple is rejected with **HTTP 400** and `InvalidOrderStatusQuery`. A malformed `market_id` or `cloid` is rejected the same way, as `InvalidMarketId` / `InvalidCloid`.
+
+### batchOrderStatus
+
+Resolves up to **20** `orderStatus` lookups in one request. Each element of `orders` takes the same selectors the single query does — either `oid`, or the complete `user` + `market_id` + `cloid` triple. The `cloid` form needs `user` here too; omitting it is the most common mistake.
+
+```json
+{
+  "type": "batchOrderStatus",
+  "orders": [
+    { "oid": 3181166949566721 },
+    { "user": "0x0000000000000000000000000000000000000001", "market_id": 35, "cloid": "0x000102030405060708090a0b0c0d0e0f" }
+  ]
+}
+```
+
+`results` comes back **in request order**, one entry per input, each entry the same object the single `orderStatus` returns:
+
+```json
+{ "results": [ { "found": true, "query_height": 180000, "app_hash": "0x...", "status": "open", "order": { } } ] }
+```
+
+Errors land at two different levels, and the distinction matters when parsing:
+
+* **Whole request** — `orders` not an array is `InvalidOrderStatusBatch` (`"orders must be an array"`); more than 20 elements is `TooManyOrderStatusQueries`. Neither returns a `results` array.
+* **Per item** — a bad selector does not fail the batch. That element carries its own `error` object in place of a result (for example `InvalidOrderStatusQuery`), and the remaining elements still resolve. Always read each entry's `error` before its `found`.
+
+Every entry in one response is answered at the same `query_height`, so the batch is a consistent snapshot rather than 20 independent reads.
+
+This is the most expensive `/info` type per request — cost scales with the number of lookups, and misses cost more than hits because they scan the retained window. Prefer it over 20 separate calls for the rate budget, but do not treat 20-item batches as free.
 
 ### txStatusByCloid
 
