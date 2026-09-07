@@ -44,7 +44,13 @@ The nonce is a decimal-string `u64` **Unix millisecond timestamp** — use `Date
 | **Retention** | Execution retains the latest **100** consumed nonces per authority. |
 | **Monotonic-when-full** | Once the retained set is full, a new nonce must be **greater than the current minimum retained nonce**. |
 
-Because the window is measured against the *block* timestamp and only the latest 100 are retained, a monotonic-from-now clock always satisfies every rule: each new millisecond timestamp is larger than everything retained and comfortably inside the window.
+Because the window is measured against the *block* timestamp and only the latest 100 are retained, a monotonic-from-now clock satisfies every rule at ordinary rates: each new millisecond timestamp is larger than everything retained and comfortably inside the window.
+
+**At high submit rates the retained set is the binding rule, not the timestamp window.** Retention is 100 transactions, not 100 milliseconds, so the span it covers is `100 ÷ your submissions per second` — a signer sending 200/s has a retained set only half a second deep. A transaction whose nonce was stamped more than that before it *executes* is at or below the minimum retained nonce by the time it lands, and is rejected as `BadNonce` even though the timestamp is monotonic and well inside the two-day window.
+
+This bites hardest when **one key carries two producers at different rates**: a high-frequency quote loop keeps the retained set moving in milliseconds, while a low-frequency action on the same authority — a withdrawal, a settlement, anything stamped and then queued — arrives already behind it. Both are monotonic; the slow one still loses. The fix is to separate the authorities rather than to tune the clock: a distinct key has a distinct retained set. Trading actions can be signed by an [API wallet](#api-wallets), which is a different authority from the owner and so a different window.
+
+The tell for this, as opposed to a genuinely bad clock, is that the rejections are intermittent and correlate with your own submit rate rather than with wall time.
 
 **Using the Python SDK?** It manages this for you: its nonce is a per-instance, lock-guarded, monotonic millisecond counter, so a single `Exchange` is safe to share across threads. The one rule to keep is to construct **one** `Exchange` per API wallet and share it — never one per worker, or two instances on the same key hand out colliding nonces. See [One Exchange per API wallet](python-sdk/core-concepts.md#one-exchange-per-api-wallet).
 

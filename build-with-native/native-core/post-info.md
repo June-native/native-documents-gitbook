@@ -281,6 +281,10 @@ Per-user retained withdraw records (3-day window), sorted by `(block_height, tx_
 
 Per-user retained deposit records. Requires `user`; the response key is `user`.
 
+**This is a projection of the replay-protection window, not a deposit archive — an empty `deposits` array does not mean the account never deposited.** The window retains records by committed block timestamp for three days, and pruning is lazy: it is materialised when a new record is written into the same window. Deposit windows are keyed by `(src_chain_id, src_contract)` and therefore **shared across every account depositing through that contract**, so anyone's deposit prunes everyone's expired records — in practice the window holds close to exactly the last three days. Withdrawals prune the same way but their windows are keyed per account, so a low-frequency account's own withdrawals can stay visible far longer than three days; do not read that asymmetry as a guarantee.
+
+For deposit or withdrawal history beyond that, join on `tx_hash` from the [explorer](https://app.native.org/explorer) rather than treating these endpoints as a ledger.
+
 ```json
 { "type": "deposits", "user": "0x0000000000000000000000000000000000000001" }
 ```
@@ -472,6 +476,10 @@ When the oracle is unavailable, `oracle_status` is `{ "status": "unavailable", "
 ```
 
 Pass `market_id: -1` (as the number `-1` or the string `"-1"`) to get the owner's open orders across **every** market in one call. The response echoes `"market_id": -1` and applies the same 500-item cap and `truncated` flag over the union.
+
+**Which 500 you get is not arbitrary, and it is not the newest.** Orders are ordered by `market_id` ascending, then by `oid` ascending within each market, and the cap takes the first 500 of that. So the union response fills up from the lowest market ids: an owner resting orders in many markets sees the low-numbered ones in full and the high-numbered ones **not at all** — not a thinned sample of each. There is no cursor or offset, so the remainder is unreachable through this call.
+
+If `truncated` is `true`, query per market instead — pass a concrete `market_id` for each market you quote. A per-market count is normally far under the cap, and the union call is still the right way to discover *which* markets you hold orders in as long as it is not truncating.
 
 ```json
 {
