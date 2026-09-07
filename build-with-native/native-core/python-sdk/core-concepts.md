@@ -114,7 +114,7 @@ else:
 
 `info.reconcile_by_cloid(user, market, cloid)` is the one-call recovery path. It returns `{state, undetermined, is_filled, filled_qty, status}`. It never reports "definitely never landed": order status cannot distinguish a not-yet-indexed order from one that never arrived, so an unconfirmed order stays `undetermined` rather than inviting the forbidden resubmit.
 
-A `submission_status` of `"timeout"` follows the same rule, **with one exception**. `is_safe_to_resend(resp)` is true for `HandoffTimeout`, `HandoffMultipleActive` and `HandoffBufferFull:*`, which prove the transaction was never admitted by a node, so it cannot have executed: sleep `retry_after_ms(resp)` and resend the same `cloid`. Every other timeout, including the plain wait-budget one that carries no error code, is indeterminate — reconcile, never resend.
+A `submission_status` of `"timeout"` follows the same rule, **with one exception**. `is_safe_to_resend(resp)` is true for `HandoffTimeout`, `HandoffMultipleActive` and `HandoffBufferFull*`, which prove the transaction was never admitted by a node, so it cannot have executed: sleep `retry_after_ms(resp)` and resend the same `cloid`. Every other timeout, including the plain wait-budget one that carries no error code, is indeterminate — reconcile, never resend.
 
 **Survive a restart.** An SDK-generated `cloid` is only known after the call returns; a crash after sending but before recording it cannot be reconciled. For crash safety, generate the `cloid` yourself and persist `{intent, cloid}` durably **before** you send:
 

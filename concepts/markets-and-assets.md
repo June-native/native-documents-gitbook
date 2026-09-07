@@ -31,4 +31,4 @@ raw_quantity = display_quantity * 10^base_quantity_decimals
 raw_price    = display_price * 10^price_decimals
 ```
 
-Submitting more fractional digits than a market's `price_decimals` or `base_quantity_decimals` allows is rejected (`invalid_price_precision` / `invalid_quantity_precision`). For the full conversion rules and worked examples, see the Decimal Units reference.
+Submitting more fractional digits than a market's `price_decimals` or `base_quantity_decimals` allows is rejected (`InvalidPricePrecision` / `InvalidQuantityPrecision`). For the full conversion rules and worked examples, see the Decimal Units reference.
