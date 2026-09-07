@@ -32,7 +32,7 @@ Both are owner EIP-712, single-signature, and carry a required `cloid` used only
 
 ## Signing
 
-These use the **EIP-712 v4** scheme (MetaMask-compatible), not the legacy binary payload. The typed-data fields are in [Transaction Signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712).
+These use the **EIP-712 v4** scheme (MetaMask-compatible), not the legacy binary payload. The exact field list for each action is in [Per-action typed-data fields](transaction-signing.md#per-action-typed-data-fields); note the typed-data names differ from the JSON ones (`slot_id` is `slotId`, `agent` is `agentAddress`).
 
 ## Next steps
 

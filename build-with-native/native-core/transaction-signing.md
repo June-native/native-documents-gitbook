@@ -41,6 +41,28 @@ A superseded **v3** EIP-712 scheme (domain included `chainId`; no `nativeChainId
 
 `withdraw` keeps an optional `cloid` at the protocol level (legacy WAL records may omit it), but the public API JSON requires `cloid`; the EIP-712 `cloidPresent` flag models the optionality.
 
+#### Per-action typed-data fields
+
+Every primary type below is the six common fields verbatim, then the action's own tail. Field names are **camelCase and are not the JSON field names** — `slot_id` in the request body is `slotId` in the typed data, `agent` is `agentAddress`, and `slotId` is a `uint256` even though the JSON carries it as a string.
+
+| Primary type   | Tail after the common fields                                                                                                     |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `Withdraw`     | `uint256 assetId`, `uint256 amount`, `uint256 dstChainId`, `address dstAddress`, `uint256 withdrawNonce`, `bool cloidPresent`, `bytes16 cloid` |
+| `Settle`       | `uint256 assetId`, `uint256 amount`, `address cashAccount`, `bytes16 cloid`                                                      |
+| `Repay`        | `uint256 assetId`, `uint256 amount`, `address marginAccount`, `bytes16 cloid`                                                    |
+| `ApproveAgent` | `uint256 slotId`, `address agentAddress`                                                                                          |
+| `RevokeAgent`  | `uint256 slotId`                                                                                                                  |
+
+`cloid` is handled three different ways and the difference is load-bearing: `Withdraw` carries it as optional (`cloidPresent` + `cloid`), `Settle` and `Repay` carry it as a bare required `bytes16` with no presence flag, and the two agent actions have no `cloid` field at all. Adding or dropping the flag changes the type string, which changes the digest, which recovers a different address.
+
+Written out, `ApproveAgent` is:
+
+```
+ApproveAgent(uint256 nativeChainId,uint256 authKind,uint256 authScope,uint256 nonce,bool expiresAfterMsPresent,uint256 expiresAfterMs,uint256 slotId,address agentAddress)
+```
+
+There is no way to detect a wrong type string from the response. A digest that differs by one field recovers an unrelated address, and the node answers `OwnerDoesNotExist` for that address — so the error names the symptom, never the mistake. Two attempts recovering to two *different* addresses is the signature of a digest mismatch rather than an unregistered account, since one key over one message always recovers the same address.
+
 Public action tags:
 
 | JSON action                | Canonical tag | Notes                                                                                                                         |
