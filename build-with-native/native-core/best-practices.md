@@ -29,13 +29,13 @@ description: The core habits a live Native Core integration should follow.
 ## Reads & rate limits
 
 * **Query `/info` by the owner address**, not the API-wallet address — the agent address returns nothing.
-* **Budget 1 request/second per IP on each endpoint.** Reads and writes hold separate buckets, so polling never eats your order rate — but neither bucket gives you a second request. Cache static metadata, poll on a fixed interval, and back off on `429` — see [rate limits](api-access.md#rate-limits-errors).
+* **Budget 1 request/second per IP on each endpoint.** Reads and writes hold separate buckets, so polling never eats your order rate — but neither bucket gives you a second request. Cache static metadata, poll on a fixed interval, and back off on `429` — see [rate limits](api-access.md#rate-limits-errors). This is the default for an unregistered IP; if your strategy needs more, ask us to raise it for your source IPs rather than designing around the floor.
 * **Once you need more than one read per second, stream instead of polling.** A [WebSocket](websocket.md) subscription costs nothing against the request budget.
 
 ## Streaming
 
-* **Quote off `bbo`, not `l2Book`.** On mainnet `l2Book` is a five-second snapshot — read it for depth and shape, never for the price you act on. `bbo` pushes on every change to the top of book.
-* **`orderUpdates` is the event stream; `openOrders` is the reconciliation.** `openOrders` is a full replacement at most every five seconds, so driving state off it silently drops every transition in between. Track lifecycle on `orderUpdates` and use `openOrders` to catch drift.
+* **Quote off `bbo`, not `l2Book`.** On mainnet `l2Book` is a half-second snapshot — read it for depth and shape, never for the price you act on. `bbo` is not throttled at all: it pushes on every change to the top of book, so its rate is your market's, not ours.
+* **`orderUpdates` is the event stream; `openOrders` is the reconciliation.** `openOrders` is a full replacement at most every half second, so driving state off it silently drops every transition in between. Track lifecycle on `orderUpdates` and use `openOrders` to catch drift.
 * **A partial fill arrives as `status: "open"`.** Compare `sz` (remaining) against `origSz` on every update — branching on `status` alone misses partials entirely.
 * **Never wait on the stream to confirm a submission.** `orderUpdates` carries only orders that reached the matching engine; a bad nonce or signature comes back on the `/trade` response and will never arrive as a frame.
 * **Deduplicate fills on `tid`.** After a reconnect the `userFills` snapshot overlaps the live stream by design. Resubscribe and rebuild from the snapshot packets rather than trying to patch the gap. [`POST /info userFills`](post-info.md#userfills) reports the same `tid`, so a backfill merges in on it too.
