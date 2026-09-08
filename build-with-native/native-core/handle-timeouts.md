@@ -48,7 +48,7 @@ Not every `timeout` is indeterminate. The `error.code` tells you whether the tra
 Treating the whole 503 family as indeterminate silently drops every write for the duration of a leadership handoff, which is why it is worth separating. Treating the 200 and 504 cases as safe to resubmit is how you double-fill.
 
 {% hint style="info" %}
-`HandoffBufferFull` is refused before any node is contacted, so a resubmit cannot duplicate. `HandoffTimeout` and `HandoffMultipleActive` mean every attempt either failed to connect or was explicitly refused — so a resubmit is expected to be safe, but the guarantee rests on the service classifying the connection failure correctly. If a duplicate fill would be expensive for you, reconcile by `cloid` first and resubmit only when the lookup comes back empty; you still recover the order, just one round trip later.
+The three `HandoffBufferFull*` codes are refused before any node is contacted, so a resubmit cannot duplicate. `HandoffTimeout` and `HandoffMultipleActive` are returned only when no attempt reached a node: a failure that happens after the transaction was written to the wire returns `NodeUnreachable` instead, on a separate path. A resubmit after any of these five codes cannot duplicate a submission.
 {% endhint %}
 
 When a code is not in this table, reconcile.
