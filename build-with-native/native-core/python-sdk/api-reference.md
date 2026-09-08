@@ -31,7 +31,6 @@ Wraps [`POST /info`](../post-info.md). Each call maps to one top-level `type` di
 | `open_orders(address, market)` | Resting orders in one market | `openOrders` |
 | `open_orders_all(address, markets=None, *, per_market=False)` | Open orders across markets, each tagged with its `market_id`. **One** read by default; logs a warning if the API truncated the list | `openOrders` (one call, `market_id: -1`) |
 | `order_status(oid=None, user=None, market=None, cloid=None)` | One order, by `oid` or by `(user, market, cloid)` | `orderStatus` |
-| `batch_order_status(orders)` | Up to **20** order selectors in one read, results in request order. The cap is checked locally, before a request is spent | `batchOrderStatus` |
 | `user_fills(address, from_height, to_height, limit)` | Fills in a raw block-height window (≤10,000 blocks) | `userFills` |
 | `iter_user_fills(address, start_height=None, ...)` | Iterator over all fills since a height, paged and deduped | `userFills` (paged) |
 | `recent_fills(address, blocks=10000)` | Every fill in roughly the last N blocks, window resolved for you | `queryStatus` + `userFills` |
