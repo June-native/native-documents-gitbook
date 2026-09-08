@@ -205,7 +205,7 @@ Read the top level of a `/trade` response. None of these can tell you whether yo
 | `error_code(response)` | The rejection `error.code` string (CamelCase), or `None` |
 | `retry_after_ms(response)` | Back-off hint from `error.retry_after_ms`, or `None` |
 | `is_retryable(response)` | `True` only for `RateLimited`. `TooManyPending` and `QueryLagBackpressure` were also never admitted and are equally safe to resend — handle those yourself |
-| `is_safe_to_resend(response)` | `True` for the `HandoffTimeout` / `HandoffMultipleActive` / `HandoffBufferFull*` timeouts, which prove the transaction never reached a node |
+| `is_safe_to_resend(response)` | `True` for an `Unavailable` timeout, which proves the transaction never reached a node |
 | `next_action(response)` | One verdict string to branch on, folding all three families together (`None` for a non-trade response) |
 
 ### The order, inside the `response` envelope
@@ -245,7 +245,7 @@ Present on an accepted write. This is the only place a per-action failure is rep
 | `USE_RESPONSE_OUTCOME` | accepted, the order worked | Nothing more. The `oid` and the fill are already on the response |
 | `ORDER_CLOSED_UNFILLED` | accepted, benign cancel | The order is over and needs no fix. Read `filled_qty` before resending — a `selftradepreventioncancel` may have swept real fills before it stopped |
 | `FIX_AND_RESUBMIT` | accepted but the order failed, or a rejection other than the resend-safe ones (`RateLimited`, `TooManyPending`, `QueryLagBackpressure`) | Fix the input or the account state. There is nothing to reconcile; what you send next is a fresh order |
-| `BACKOFF_AND_RETRY` | `RateLimited`, or a `Handoff*` timeout — never reached a node | Sleep `retry_after_ms`, then resend the **same** `cloid` |
+| `BACKOFF_AND_RETRY` | `RateLimited`, or an `Unavailable` timeout — never reached a node | Sleep `retry_after_ms`, then resend the **same** `cloid` |
 | `RECONCILE_BY_CLOID` | a timeout that is not safe to resend | `reconcile_by_cloid`; **never** resubmit under a fresh nonce |
 | `READ_ORDER_STATUS` | accepted with no `response` envelope at all | Read `order_status` once. Only an API older than the release that reports outcomes inline answers this way |
 
@@ -272,7 +272,7 @@ Everything subclasses `native_core.Error`. Business rejections are **not** excep
 It covers only the **CamelCase** codes on a rejected body's `error.code`. Two families are deliberately not members:
 
 * execution-stage failures, which are lowercase and live on the `response` leaf — read them with `leaf_error_code`
-* the `Handoff*` timeout codes, matched by `is_safe_to_resend` rather than by equality
+* the `Unavailable` timeout code, matched by `is_safe_to_resend`
 
 So `error_code(resp) == ErrorCode.INSUFFICIENT_SPOT_BALANCE` misses the lowercase `insufficientspotbalance` the same condition produces at execution.
 

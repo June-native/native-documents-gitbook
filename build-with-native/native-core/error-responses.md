@@ -22,7 +22,7 @@ There are exactly three values.
 | --- | --- | --- |
 | `accepted` | The **transaction** landed and executed. For an order that covers rested, filled, a benign IOC/FOK/self-trade/no-liquidity cancel, **and a genuine per-action failure whose code sits in a `response` leaf**; for a non-order action it committed. No top-level `error` in any of those cases. | Not done — read `response.status` before you trust it. The leaf says what happened to the order: `filled` carries `total_sz`, `avg_px` and the `oid`; `open` and `cancelled` carry the `oid` and `cloid`; an `{"error": …}` leaf carries only the code. |
 | `rejected` | The write was refused — request-shaping, gateway (rate limit / suspension / expiry), or a check before inclusion — **or** it failed at execution. `error.code` says why; `tx_hash` is present once canonical bytes exist. | If `RateLimited`, back off `error.retry_after_ms` and resend the same signed action. Otherwise fix the cause and submit a **fresh** action. |
-| `timeout` | The outcome wasn't observed within the 3-second wait budget, or the submission couldn't be routed to a node. | Depends on `error.code` — the `Handoff*` family (503) never reached a node, so resubmit rather than lose the write; everything else may still land, so reconcile by `cloid` and **never** resubmit under a new nonce. |
+| `timeout` | The outcome wasn't observed within the 3-second wait budget, or the submission couldn't be routed to a node. | Depends on `error.code` — `Unavailable` (503) never reached a node, so resubmit rather than lose the write; everything else may still land, so reconcile by `cloid` and **never** resubmit under a new nonce. |
 
 {% hint style="warning" %}
 `timeout` is not `rejected` — the transaction may still commit in a later block, and resubmitting under a new nonce is the one move that can double-fill you. Reconcile an order by `cloid` via [`orderStatus`](post-info.md#orderstatus). Not `txStatusByCloid`: only funding and admin actions are indexed there, so an order cloid always comes back `found: false`.
@@ -33,8 +33,7 @@ A `timeout` has three shapes, and only one of them is safe to resubmit:
 | `error.code` | HTTP | Reached a node? | Do next |
 | --- | --- | --- | --- |
 | *(none)* — the wait budget elapsed | 200 | Yes, it is executing | Reconcile by `cloid` |
-| `HandoffBufferFull*` | 503 | No — refused before any submission was attempted | Resubmit; nothing was delivered |
-| `HandoffTimeout` / `HandoffMultipleActive` | 503 | No — no writable node accepted it | Resubmit; reconcile first if a duplicate would be costly |
+| `Unavailable` | 503 | No — refused before the write left the API | Resubmit the same signed bytes; nothing was delivered |
 | `NodeUnreachable` | 504 | Unknown — the connection broke mid-submission | Reconcile by `cloid` |
 
 ## Where a code comes from
@@ -44,7 +43,7 @@ Every `error.code` comes from one of four layers, and the **spelling tells you w
 | Layer | Style | Examples | HTTP | `submission_status` |
 | --- | --- | --- | --- | --- |
 | Request-shaping | `CamelCase` | `InvalidJson`, `InvalidQuantityPrecision`, `MissingCloid` | 400 | `rejected` (no `tx_hash`) |
-| Gateway | `CamelCase` | `RateLimited`, `PlaceOrderSuspended`, `ExpiredTx`, `HandoffTimeout`, `NodeUnreachable` | 429 / 503 / 504 / 200 | `rejected` or `timeout` |
+| Gateway | `CamelCase` | `RateLimited`, `PlaceOrderSuspended`, `ExpiredTx`, `Unavailable`, `NodeUnreachable` | 429 / 503 / 504 / 200 | `rejected` or `timeout` |
 | Checked before inclusion | `CamelCase` | `MinTradeSpotNtl`, `DuplicateCloid`, `InsufficientSpotBalance`, `AccountFrozen` | 200 | `rejected` |
 | Execution — order-ish | lowercase (the variant name) | `tick`, `insufficientspotbalance`, | 200 | `accepted`, code in the `response` leaf |
 | Execution — envelope | CamelCase display form | `BadNonce`, `BadSignature`, `ExpiredTx` | 200 | `rejected` |
@@ -59,7 +58,7 @@ The wire carries `error.code`, not display copy — the **Message** column is il
 | --- | --- | --- | --- |
 | `RateLimited` | Over quota on either limiter, never admitted. HTTP `429`, carries `error.retry_after_ms`. **`tx_hash` tells them apart**: the per-IP budget (1 req/s) is enforced before the body is parsed, so the reply has no `tx_hash`; the per-signer rate (1000 req/s) is enforced after canonicalization, so it does. | "Too many requests — retrying shortly." | Back off `retry_after_ms`, then resend the same signed action — one of the three rejections that is safe to resend unchanged, with `TooManyPending` and `QueryLagBackpressure`. |
 | `PlaceOrderSuspended` | The write path is degraded, so order placement is suspended: `order`, `modify`, and any `batch` that contains a non-cancel item are refused. Only `cancel` / `cancelAll` — and a `batch` whose **every** item is `cancel` / `cancelAll` — still go through; an empty `batch` is also refused. HTTP `503`, `error.retry_after_ms: 1000`. | "Placing orders is paused — try again shortly." | Back off and retry; keep cancelling if you need to reduce exposure. |
-| `HandoffTimeout` / `HandoffBufferFullRequestCount` / `HandoffBufferFullBytes` / `HandoffBufferFullSigner` / `HandoffMultipleActive` (`timeout`) | The submission couldn't be routed to a single writable node (leadership handoff / backpressure). `submission_status: "timeout"`, HTTP `503`, `error.retry_after_ms: 1000`. No node accepted it. | "Reconnecting — retrying your order." | Back off `retry_after_ms` and resubmit, rather than losing the write for the whole handoff. Reconcile by `cloid` first if a duplicate would be costly — see [submission_status](#submission_status). |
+| `Unavailable` (`timeout`) | The write plane could not take the transaction and did not run it. `submission_status: "timeout"`, HTTP `503`, `error.retry_after_ms: 1000`. | "Reconnecting — retrying your order." | Back off `retry_after_ms` and resubmit the same signed bytes. There is nothing to reconcile — see [submission_status](#submission_status). |
 | `NodeUnreachable` (`timeout`) | The transaction could not be delivered to the chain; `submission_status: "timeout"`, HTTP `504`. The action may still land. | "Order submitted — confirming status." | Reconcile by `cloid`; never resubmit under a new nonce. |
 | `MinTradeSpotNtl` | Order, modify replacement, or batch item is below the market's quote-asset minimum notional. Market orders use their protection price. | "Order must have a minimum value of 10 USDC." | Size up so `price × quantity` clears the minimum. |
 | `InvalidPricePrecision` / `InvalidQuantityPrecision` | `price` / `quantity` has more fractional digits than the market's `price_decimals` / `base_quantity_decimals`. | "Price has too many decimal places for this market." | Snap to market precision before signing; send strings, never floats. |
@@ -149,7 +148,7 @@ Request-shaping and gateway errors:
 | `TooManyPending` | Too many synchronous `/trade` waits are already in flight on this instance. HTTP `503`, `submission_status: "rejected"`, `retry_after_ms: 50` — transient, retry immediately. Distinct from the same-named node-admission code below. |
 | `PlaceOrderSuspended` | Order placement is suspended while the write path is degraded. Admitted: `cancel`, `cancelAll`, and a `batch` whose **every** item is `cancel` / `cancelAll`. Refused: `order`, `modify`, any `batch` that mixes in a non-cancel item, and an empty `batch`. HTTP `503`, `retry_after_ms: 1000`. |
 | `ExpiredTx` | The envelope's `expires_after_ms` was already past at the gateway clock; fast-failed before the node hop. HTTP `200`, `submission_status: "rejected"`. |
-| `HandoffTimeout` / `HandoffBufferFullRequestCount` / `HandoffBufferFullBytes` / `HandoffBufferFullSigner` / `HandoffMultipleActive` | The submission could not be routed to a single writable node (leadership handoff / backpressure). HTTP `503`, `submission_status: "timeout"`, `retry_after_ms: 1000`. |
+| `Unavailable` | The write plane could not take the transaction, and did not run it. HTTP `503`, `submission_status: "timeout"`, `retry_after_ms: 1000`. Safe to resend unchanged. |
 | `NodeUnreachable` | The transaction could not be delivered to the chain. HTTP `504`, `submission_status: "timeout"`. |
 
 Errors returned before the transaction is included in a block:

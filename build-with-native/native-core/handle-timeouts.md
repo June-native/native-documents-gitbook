@@ -49,14 +49,13 @@ Not every `timeout` is indeterminate. The `error.code` tells you whether the tra
 | Code | HTTP | Reached a node? | What to do |
 | --- | --- | --- | --- |
 | *(none)* — the wait budget elapsed | 200 | **Yes**, it is executing | Reconcile by `cloid`. **Never** resubmit under a new nonce. |
-| `HandoffBufferFullRequestCount` / `HandoffBufferFullBytes` / `HandoffBufferFullSigner` | 503 | **No** — refused before any submission was attempted | Resubmit. There is nothing to reconcile. |
-| `HandoffTimeout` / `HandoffMultipleActive` | 503 | **No** — no writable node accepted it | Resubmit, or reconcile first if a duplicate would be costly (see below). |
+| `Unavailable` | 503 | **No** — refused before the write left the API | Resubmit the same signed bytes. There is nothing to reconcile. |
 | `NodeUnreachable` | 504 | **Unknown** — the connection broke mid-submission | Reconcile by `cloid`. **Never** resubmit under a new nonce. |
 
 Treating the whole 503 family as indeterminate silently drops every write for the duration of a leadership handoff, which is why it is worth separating. Treating the 200 and 504 cases as safe to resubmit is how you double-fill.
 
 {% hint style="info" %}
-The three `HandoffBufferFull*` codes are refused before any node is contacted, so a resubmit cannot duplicate. `HandoffTimeout` and `HandoffMultipleActive` are returned only when no attempt reached a node: a failure that happens after the transaction was written to the wire returns `NodeUnreachable` instead, on a separate path. A resubmit after any of these five codes cannot duplicate a submission.
+`Unavailable` is returned only when the write was refused before it reached a node, so a resubmit cannot duplicate it. A failure that happens *after* the transaction went out returns `NodeUnreachable` instead, on a separate path — that one is the uncertain case, and the only one of the two you reconcile.
 {% endhint %}
 
 **Set your HTTP client timeout above 10 seconds.** The 3 seconds above is only part of it — a slow call can take up to 10. Giving up earlier turns a reply that was about to arrive into the uncertain case this page exists to resolve.

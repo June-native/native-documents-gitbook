@@ -95,7 +95,7 @@ Response envelope:
   "tx_hash": "0x…",                  // present once canonical bytes exist; omitted on a request-shaping reject
   "error": {                         // present only on a non-successful outcome
     "code": "<code>",
-    "retry_after_ms": 1000           // present only on RateLimited / PlaceOrderSuspended / TooManyPending / Handoff*
+    "retry_after_ms": 1000           // present only on RateLimited / PlaceOrderSuspended / TooManyPending / Unavailable
   },
   "response": { … }                  // present only on `accepted` — the per-order outcome, see below
 }
@@ -208,13 +208,12 @@ The `error.code` tells you, and the two cases need opposite handling:
 | Code | HTTP | Did it reach a node? | Do next |
 | --- | --- | --- | --- |
 | *(none)* — the wait budget elapsed | 200 | **Yes.** It was admitted and is executing. | Reconcile by `cloid`. **Never** resubmit under a new nonce. |
-| `HandoffBufferFullRequestCount` / `HandoffBufferFullBytes` / `HandoffBufferFullSigner` | 503 | **No.** Refused before any submission was attempted. | Resubmit. Nothing will be there to reconcile. |
-| `HandoffTimeout` / `HandoffMultipleActive` | 503 | **No.** No writable node accepted it. | Resubmit; reconcile first if a duplicate would be costly. |
+| `Unavailable` | 503 | **No.** Refused before the write left the API. | Resubmit the same signed bytes. Nothing will be there to reconcile. |
 | `NodeUnreachable` | 504 | **Unknown.** The connection broke mid-submission and the node may already hold it. | Reconcile by `cloid`. **Never** resubmit under a new nonce. |
 
 When in doubt, treat it as the 504 case and reconcile. The [outcomes playbook](handle-timeouts.md#reconciling-a-timeout) has the reasoning behind each row.
 
-Beyond per-action outcomes, the API can refuse a write for operational reasons: `RateLimited` (HTTP 429 — the per-IP budget, 1 request/second by default, or the per-signer 1000/second, with `error.retry_after_ms`), `TooManyPending` (HTTP 503 with `error.retry_after_ms: 50` — too many synchronous writes are already in flight; retry immediately, it is transient), `PlaceOrderSuspended` (HTTP 503 — while the write path is degraded, only `cancel`/`cancelAll` and an all-cancel `batch` are accepted so you can reduce exposure; `order`, `modify`, any `batch` that mixes in a non-cancel item, and an empty `batch` are refused), `ExpiredTx` (HTTP 200), and the routing codes `HandoffTimeout` / `HandoffBufferFullRequestCount` / `HandoffBufferFullBytes` / `HandoffBufferFullSigner` / `HandoffMultipleActive` (HTTP 503) and `NodeUnreachable` (HTTP 504), which come back as `submission_status: "timeout"`. A request body over 256 KiB is rejected with HTTP 413. See the full `/trade` error-code table in [Error responses](error-responses.md).
+Beyond per-action outcomes, the API can refuse a write for operational reasons: `RateLimited` (HTTP 429 — the per-IP budget, 1 request/second by default, or the per-signer 1000/second, with `error.retry_after_ms`), `TooManyPending` (HTTP 503 with `error.retry_after_ms: 50` — too many synchronous writes are already in flight; retry immediately, it is transient), `PlaceOrderSuspended` (HTTP 503 — while the write path is degraded, only `cancel`/`cancelAll` and an all-cancel `batch` are accepted so you can reduce exposure; `order`, `modify`, any `batch` that mixes in a non-cancel item, and an empty `batch` are refused), `ExpiredTx` (HTTP 200), and the routing codes `Unavailable` (HTTP 503) and `NodeUnreachable` (HTTP 504), which come back as `submission_status: "timeout"`. A request body over 256 KiB is rejected with HTTP 413. See the full `/trade` error-code table in [Error responses](error-responses.md).
 
 **Limits on resting orders.** You may hold **1000 open orders per market** per
 account; the 1001st is rejected with `accountopenorderlimit`. A single order may
