@@ -83,6 +83,8 @@ An admitted action still runs against the book and **can fail at execution**. Be
 * **Six envelope-level failures** demote any action to `rejected` because they invalidate the transaction itself: `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `invalidbatchlength`, `featuredisabled`. These surface in their CamelCase display form — `BadNonce`, `BadSignature`, and so on.
 
 {% hint style="warning" %}
+**The same failure has two spellings, and which one you get depends on where you read it.** `error.code` at the top level is always CamelCase; a leaf code inside `response` is always lowercase with no separator. An order rejected for balance reads `insufficientspotbalance` in the leaf, while the same failure on a `withdraw` reads `InsufficientSpotBalance` at the top level. Match each field against its own vocabulary.
+
 `error.code` at the top level is never a lowercase execution code for an order. If you are matching on `error.code == "tick"`, you will never hit it — look in the `response` leaf instead.
 
 Whether you can look the order up afterwards depends on how far it got:

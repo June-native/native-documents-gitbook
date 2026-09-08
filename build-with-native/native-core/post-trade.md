@@ -104,7 +104,7 @@ Response envelope:
 `submission_status` answers **"did the transaction land?"**, and it has exactly three values:
 
 * `accepted` — the transaction landed and reached execution. There is no top-level `error`. **This does not mean the order succeeded** — see [what `accepted` carries](#what-accepted-carries) below.
-* `rejected` — the write never reached execution: request-shaping, rate limit, expiry, place-order suspension, or node admission. `error.code` carries the reason; `tx_hash` is present once canonical bytes exist. A handful of envelope-level execution failures also land here — `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `featuredisabled` — returned in their CamelCase display form (`BadNonce`, …).
+* `rejected` — the write never reached execution: request-shaping, rate limit, expiry, place-order suspension, or node admission. `error.code` carries the reason; `tx_hash` is present once canonical bytes exist. Six envelope-level execution failures also land here — `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `invalidbatchlength`, `featuredisabled` — returned in their CamelCase display form (`BadNonce`, `BadSignature`, `ExpiredTx`, `MalformedTx`, `InvalidBatchLength`, `FeatureDisabled`).
 * `timeout` — the outcome was not observed within the 3-second budget, or the submission could not be routed. Whether it can still land depends on the code — see [timeout](#timeout-can-it-still-land).
 
 ### What `accepted` carries
