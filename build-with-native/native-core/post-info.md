@@ -768,35 +768,6 @@ Treat that as "too old to answer", not as "no such order"; `oldest_available_hei
 
 A query that carries neither a parseable `oid` nor a complete `user` + `market_id` + `cloid` triple is rejected with **HTTP 400** and `InvalidOrderStatusQuery`. A malformed `market_id` or `cloid` is rejected the same way, as `InvalidMarketId` / `InvalidCloid`.
 
-### batchOrderStatus
-
-Resolves up to **20** `orderStatus` lookups in one request. Each element of `orders` takes the same selectors the single query does — either `oid`, or the complete `user` + `market_id` + `cloid` triple. The `cloid` form needs `user` here too; omitting it is the most common mistake.
-
-```json
-{
-  "type": "batchOrderStatus",
-  "orders": [
-    { "oid": 3181166949566721 },
-    { "user": "0x0000000000000000000000000000000000000001", "market_id": 35, "cloid": "0x000102030405060708090a0b0c0d0e0f" }
-  ]
-}
-```
-
-`results` comes back **in request order**, one entry per input, each entry the same object the single `orderStatus` returns:
-
-```json
-{ "results": [ { "found": true, "query_height": 180000, "app_hash": "0x...", "status": "open", "order": { } } ] }
-```
-
-Errors land at two different levels, and the distinction matters when parsing:
-
-* **Whole request** — `orders` not an array is `InvalidOrderStatusBatch` (`"orders must be an array"`); more than 20 elements is `TooManyOrderStatusQueries`. Neither returns a `results` array.
-* **Per item** — a bad element does not fail the batch; the remaining elements still resolve. An element whose selector is unusable carries only an `error` object in place of a result (`InvalidOrderStatusQuery`, `InvalidMarketId`, `InvalidCloid`). An element whose selector is valid but whose order is older than the retained window carries `HistoryWindowExceeded` **alongside** the usual `found`, `query_height` and `app_hash`. Always read each entry's `error` before its `found`.
-
-The node tries to answer every entry at the same `query_height`, retrying the whole batch if a block lands mid-read, so in practice the batch is a consistent snapshot rather than 20 independent reads. It is not a guarantee: after a few attempts the node serves the split answer rather than erroring or waiting. **Read `query_height` per entry** if you are comparing entries against each other — do not assume one height for the response.
-
-This is the most expensive `/info` type per request — cost scales with the number of lookups. Prefer it over 20 separate calls for the rate budget, but do not treat 20-item batches as free.
-
 ### txStatusByCloid
 
 Transaction status by `cloid` uses the transaction authority as the `user` namespace and does not require a market id. For `withdraw`, `settle`, and `repay`, `user` is the recovered signer authority.
