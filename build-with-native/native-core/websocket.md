@@ -285,12 +285,11 @@ Lifecycle transitions of your accepted orders. `data` is an array of the transit
 | `fokCancelRejected` | FOK order could not be filled in full |
 | `marketOrderNoLiquidityRejected` | market order found no liquidity |
 
-  There is no bare `rejected` — every rejection names its reason.
-
-  Values meaning "the order died without resting" end in `Rejected`, so **match
-  the suffix, not the exact word** — `status.endsWith("Rejected")` stays correct
-  as reasons are added. Post-only crossings are by far the most common
-  rejection, and arrive as `badAloPxRejected`.
+  The four values above end in `Rejected`, but **do not match on that suffix** —
+  some rejections arrive as a plain lowercase code instead, such as
+  `insufficientspotcredit`. Treat any `status` you do not recognise as a
+  rejection. Post-only crossings are by far the most common one, and arrive as
+  `badAloPxRejected`.
 
 * **`selfTradeCanceled` is a cancel, not a rejection, and it may have traded.**
   A crossing order can sweep several price levels and only then meet your own
@@ -566,7 +565,7 @@ The two `post` budgets are independent of each other and shared with the REST en
 
 The two kinds of channel recover differently.
 
-* **Snapshot channels self-heal.** `l2Book`, `bbo`, `allMids`, `openOrders`, `spotState`, and `spotCreditState` always carry complete state, so a dropped frame is corrected by the next one and a reconnect needs no backfill. They are also **conflated per topic**: only the newest frame for a given book or account is held for you, so falling behind costs you resolution, never correctness — and never the connection.
+* **Snapshot channels self-heal.** `l2Book`, `allMids`, `openOrders`, `spotState`, and `spotCreditState` always carry complete state, so a dropped frame is corrected by the next one and a reconnect needs no backfill. They are also **conflated per topic**: only the newest frame for a given book or account is held for you, so falling behind costs you resolution, never correctness — and never the connection. `bbo`, `trades` and `orderUpdates` send **no** snapshot when you subscribe — after a reconnect they stay silent until the next event. Read your starting state from `l2Book` or `POST /info` instead of waiting on them.
 * **`userFills` backfills itself.** Its first packet after subscribing is your 100 most recent fills, so a short disconnect costs you nothing. For a longer gap, [`userFills`](post-info.md#userfills) over `POST /info` accepts `from_height` / `to_height` within the recent query window — 10000 blocks, roughly 8 minutes.
 * **`trades` and `orderUpdates` can gap.** They are pure increments and are not replayed. Reconstruct from `POST /info` — [`userFills`](post-info.md#userfills) for your own activity, [`orderStatus`](post-info.md#orderstatus) for one order.
 * **Event frames can also be dropped without a disconnect.** When the server's broadcast falls behind, the missed blocks' event frames — `trades`, `userFills` and `orderUpdates` alike — are dropped outright and only the snapshot channels are re-pushed. The connection stays up, so nothing signals it and `userFills` does **not** replay the way it does on a resubscribe. Anything that needs complete fills must poll [`userFills`](post-info.md#userfills) periodically and reconcile by `tid`.
