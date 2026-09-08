@@ -39,8 +39,6 @@ The signature covers an EIP-712 typed-data digest, not a binary payload. Clients
 
 A superseded **v3** EIP-712 scheme (domain included `chainId`; no `nativeChainId` field) is retained only for historical decode/replay and is **not accepted at submit**. Because `/trade` carries no codec-version field, a request whose signature was produced under the old v3 scheme is assembled as v4 and recovers a different address, so it fails with a signature/authority error — re-sign with the v4 scheme.
 
-`withdraw` keeps an optional `cloid` at the protocol level (older records may omit it), but the public API JSON requires `cloid`; the EIP-712 `cloidPresent` flag models the optionality.
-
 #### Per-action typed-data fields
 
 Every primary type below is the six common fields verbatim, then the action's own tail. Field names are **camelCase and are not the JSON field names** — `slot_id` in the request body is `slotId` in the typed data, `agent` is `agentAddress`, and `slotId` is a `uint256` even though the JSON carries it as a string.
@@ -55,7 +53,7 @@ Every primary type below is the six common fields verbatim, then the action's ow
 | `ApproveAgent` | `uint256 slotId`, `address agentAddress`                                                                                          |
 | `RevokeAgent`  | `uint256 slotId`                                                                                                                  |
 
-`cloid` is handled three different ways and the difference is load-bearing: `Transfer` and `Withdraw` carry it as optional (`cloidPresent` + `cloid`), `ActivateFor`, `Settle` and `Repay` carry it as a bare required `bytes16` with no presence flag, and the two agent actions have no `cloid` field at all. Adding or dropping the flag changes the type string, which changes the digest, which recovers a different address. The JSON payload requires `cloid` on all five actions that have the field, so the presence flag is not a licence to omit it — it exists because the protocol still decodes legacy records that lack one.
+`cloid` is handled three different ways and the difference is load-bearing: `Transfer` and `Withdraw` carry it as optional (`cloidPresent` + `cloid`), `ActivateFor`, `Settle` and `Repay` carry it as a bare required `bytes16` with no presence flag, and the two agent actions have no `cloid` field at all. Adding or dropping the flag changes the type string, which changes the digest, which recovers a different address. The JSON payload requires `cloid` on all five actions that have the field, so the presence flag is not a licence to omit it.
 
 Written out, `ApproveAgent` is:
 
@@ -77,7 +75,7 @@ Public action tags:
 | `cancelAll`                |          `26` | Cancel every open order for the effective owner in one market. No `cloid`.                                                    |
 | `batch`                    |          `18` | Batch item tags are `order=0`, `cancel by oid=1`, `modify by oid=2`, `modify by cloid=3`, `cancel by cloid=4`, `cancelAll=5`. |
 
-These are the only top-level tags a client encodes; a `batch` additionally encodes one item tag per item, from the separate numbering in the `batch` row above. The tag space is not contiguous — some numbers in the same range are permanently retired and are never reassigned, so **do not infer a tag by counting from a neighbouring one**. A wrong tag is not reported as a bad tag: it changes the digest, which recovers a different address, so the request is attributed to someone else and fails on that account's state instead. Owner-signed EIP-712 actions (`transfer`, `withdraw`, `settle`, `repay`, `activateFor`, `approveAgent`, `revokeAgent`) do not appear here because their clients sign typed data and never encode a tag at all.
+These are the only top-level tags a client encodes; a `batch` additionally encodes one item tag per item, from the separate numbering in the `batch` row above. The tag space is not contiguous — some numbers in the same range are permanently retired and are never reassigned, so **do not infer a tag by counting from a neighbouring one**. A wrong tag is not reported as a bad tag: it changes the digest, so the request recovers an address you never used and comes back as `OwnerDoesNotExist` — the same symptom, and the same diagnosis, as the wrong type string described above. Owner-signed EIP-712 actions (`transfer`, `withdraw`, `settle`, `repay`, `activateFor`, `approveAgent`, `revokeAgent`) do not appear here because their clients sign typed data and never encode a tag at all.
 
 Order action bytes:
 
