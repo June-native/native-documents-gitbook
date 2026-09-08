@@ -85,7 +85,7 @@ Protected market order example:
 }
 ```
 
-`POST /trade` is **synchronous**: the request blocks while the transaction is admitted, executed on-chain, and the outcome is read back. Typical latency is a block or two; the wait budget is **3 seconds**, so set your client timeout above that or you will abandon replies that were about to arrive.
+`POST /trade` is **synchronous**: the request blocks while the transaction is admitted, executed on-chain, and the outcome is read back. Typical latency is a block or two. The 3-second budget covers only the wait for the execution outcome; a request can also spend up to 2 seconds per submit attempt and up to 5 seconds parked during a leadership handoff before that wait even starts. **Set your client timeout above 10 seconds** or you will abandon replies that were about to arrive.
 
 Response envelope:
 
@@ -124,7 +124,7 @@ Each leaf is one of four shapes, keyed by its single field:
 | `{"open":{"oid","cloid"}}` | The order rested on the book |
 | `{"filled":{"total_sz","avg_px","oid","cloid"}}` | The order filled. `total_sz` and `avg_px` are display values, formatted exactly as `/info` formats them. |
 | `{"cancelled":{"oid","cloid"}}` | The order was cancelled — by an explicit cancel, or by its own time-in-force / self-trade rule |
-| `{"error":"<code>"}` | **The order failed at execution** — e.g. `insufficientspotbalance`, `mintradespotntl`, `tick`, `lotsize`, `missingorder` |
+| `{"error":"<code>"}` | **The order failed at execution** — e.g. `insufficientspotbalance`, `mintradespotntl`, `tick`, `missingorder` |
 
 {% hint style="warning" %}
 A per-order failure keeps `submission_status: "accepted"` and puts the code in the `{"error":…}` leaf, with **no** top-level `error`. Branching on `submission_status` alone reads a rejected order as a success. Always inspect `response`.

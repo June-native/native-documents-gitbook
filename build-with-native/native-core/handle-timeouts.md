@@ -14,7 +14,7 @@ description: What to do with each /trade outcome — when to resend, when to rec
 | --- | --- | --- |
 | `accepted` | The transaction landed and reached execution. | **Not done — read `response`.** It carries `{"open":…}`, `{"filled":…}`, `{"cancelled":…}`, or `{"error":"<code>"}`. |
 | `rejected` | Refused before execution (shaping / rate limit / suspension / expiry / admission), or an envelope-level execution failure. `error.code` says why. | Fix the cause, submit a **fresh** action. One exception below. |
-| `timeout` | The outcome was not observed in the 3-second budget, or the submission could not be routed. | Depends on the code — see [below](#reconciling-a-timeout). |
+| `timeout` | The outcome was not observed in the 3-second execution-wait budget, or the submission could not be routed. | Depends on the code — see [below](#reconciling-a-timeout). |
 
 {% hint style="warning" %}
 **`accepted` is not success.** An order that failed at execution — insufficient balance, below minimum notional, off the tick grid — still returns `accepted` with **no** top-level `error`; the code appears only inside `response`, at `response.status.error` for a single order. A client that branches on `submission_status` alone records a rejected order as live and will keep quoting against a position it never had.
@@ -30,9 +30,17 @@ description: What to do with each /trade outcome — when to resend, when to rec
 
 The full leaf vocabulary is in [POST /trade](post-trade.md#what-accepted-carries). You only need [`orderStatus`](post-info.md#orderstatus) afterwards to reconcile a `timeout`, or to re-read an order later in its life.
 
-## The one safe resend
+## Resending the same signed action
 
-`RateLimited` (HTTP 429) is the **only** rejection you resend as-is: back off `error.retry_after_ms`, then send the **same signed action**. Every other `rejected` needs a fresh action after you fix the cause — never blindly resend.
+Three rejections are pure backpressure: nothing about your action was wrong, so back off and send the **same signed action** again.
+
+| Code | HTTP | Back off by |
+| --- | --- | --- |
+| `RateLimited` | 429 | `error.retry_after_ms` |
+| `TooManyPending` | 503 | `error.retry_after_ms` (50 ms) |
+| `QueryLagBackpressure` | 503 | a few blocks, until the node's query view catches up |
+
+Every other `rejected` needs a fresh action after you fix the cause — never blindly resend.
 
 ## Reconciling a timeout
 
@@ -50,6 +58,8 @@ Treating the whole 503 family as indeterminate silently drops every write for th
 {% hint style="info" %}
 The three `HandoffBufferFull*` codes are refused before any node is contacted, so a resubmit cannot duplicate. `HandoffTimeout` and `HandoffMultipleActive` are returned only when no attempt reached a node: a failure that happens after the transaction was written to the wire returns `NodeUnreachable` instead, on a separate path. A resubmit after any of these five codes cannot duplicate a submission.
 {% endhint %}
+
+**Set your HTTP client timeout above 10 seconds.** The 3-second budget above is only the wait for the execution outcome. Before it starts, a request can spend up to 2 seconds per submit attempt and up to 5 seconds parked during a leadership handoff. A client that gives up earlier turns a reply that was about to arrive into the indeterminate case this page exists to resolve.
 
 When a code is not in this table, reconcile.
 

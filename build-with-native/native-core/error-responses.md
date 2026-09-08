@@ -22,7 +22,7 @@ There are exactly three values.
 | --- | --- | --- |
 | `accepted` | The **transaction** landed and executed. For an order that covers rested, filled, a benign IOC/FOK/self-trade/no-liquidity cancel, **and a genuine per-action failure whose code sits in a `response` leaf**; for a non-order action it committed. No top-level `error` in any of those cases. | Not done — read `response.status` before you trust it. The leaf says what happened to the order: `filled` carries `total_sz`, `avg_px` and the `oid`; `open` and `cancelled` carry the `oid` and `cloid`; an `{"error": …}` leaf carries only the code. |
 | `rejected` | The write was refused — request-shaping, gateway (rate limit / suspension / expiry), node admission — **or** it failed at execution. `error.code` says why; `tx_hash` is present once canonical bytes exist. | If `RateLimited`, back off `error.retry_after_ms` and resend the same signed action. Otherwise fix the cause and submit a **fresh** action. |
-| `timeout` | The outcome wasn't observed within the 3-second budget, or the submission couldn't be routed to a node. | Depends on `error.code` — the `Handoff*` family (503) never reached a node, so resubmit rather than lose the write; everything else may still land, so reconcile by `cloid` and **never** resubmit under a new nonce. |
+| `timeout` | The outcome wasn't observed within the 3-second execution-wait budget, or the submission couldn't be routed to a node. | Depends on `error.code` — the `Handoff*` family (503) never reached a node, so resubmit rather than lose the write; everything else may still land, so reconcile by `cloid` and **never** resubmit under a new nonce. |
 
 {% hint style="warning" %}
 `timeout` is not `rejected` — the transaction may still commit in a later block, and resubmitting under a new nonce is the one move that can double-fill you. Reconcile an order by `cloid` via [`orderStatus`](post-info.md#orderstatus). Not `txStatusByCloid`: only funding and admin actions are indexed there, so an order cloid always comes back `found: false`.
@@ -46,7 +46,7 @@ Every `error.code` comes from one of four layers, and the **spelling tells you w
 | Request-shaping | `CamelCase` | `InvalidJson`, `InvalidQuantityPrecision`, `MissingCloid` | 400 | `rejected` (no `tx_hash`) |
 | Gateway | `CamelCase` | `RateLimited`, `PlaceOrderSuspended`, `ExpiredTx`, `HandoffTimeout`, `NodeUnreachable` | 429 / 503 / 504 / 200 | `rejected` or `timeout` |
 | Node admission | `CamelCase`, verbatim from the node | `MinTradeSpotNtl`, `DuplicateCloid`, `InsufficientSpotBalance`, `AccountFrozen` | 200 | `rejected` |
-| Execution — order-ish | lowercase (the variant name) | `tick`, `insufficientspotbalance`, `lotsize` | 200 | `accepted`, code in the `response` leaf |
+| Execution — order-ish | lowercase (the variant name) | `tick`, `insufficientspotbalance`, | 200 | `accepted`, code in the `response` leaf |
 | Execution — envelope | CamelCase display form | `BadNonce`, `BadSignature`, `ExpiredTx` | 200 | `rejected` |
 
 One condition can surface at two layers with different spellings — an under-minimum order is usually caught at admission as `MinTradeSpotNtl`, but the same failure at execution reads `mintradespotntl`. Match on the code you actually receive.
@@ -66,7 +66,7 @@ The wire carries `error.code`, not display copy — the **Message** column is il
 | `DuplicateCloid` | The `cloid` is already open for this owner and market, or the tx repeats a `(market_id, cloid)`. | "An order with this ID already exists." | Use a fresh `cloid` per order. When reconciling a `timeout`, look the existing one up — don't resend. |
 | `ExpiredTx` | The signed `expires_after_ms` had already passed when execution reached the tx. | "Order expired before it was placed." | Widen `expires_after_ms`, re-sign, resubmit. |
 | `InsufficientSpotBalance` | Balance-mode precheck found too little available balance for the order reserve. | "Insufficient balance." | Fund the account's quote asset — deposit from your main wallet in the web app. |
-| `DirectSignerIsActiveAgent` | An active API-wallet key signed in direct-owner mode. An agent key may never sign as an owner. | "This API wallet can't trade as an owner." | Sign in agent mode — pass the owner `accountAddress` alongside the agent key. |
+| `DirectSignerIsActiveAgent` | An active API-wallet key signed in direct-owner mode. An agent key may never sign as an owner. | "This API wallet can't trade as an owner." | Sign in agent mode — send `agent_epoch` with the agent-signed request. The owner address is never sent on the wire — the API recovers it from the signature. |
 | `AgentEpochMismatch` | The signed `agent_epoch` doesn't match the live agent-slot epoch. | "Session expired — reconnecting." | Re-resolve `agent_epoch` from [`userAgents`](post-info.md#useragents) and resubmit. If it persists, the API wallet was revoked or re-approved — create a new one in the web app. |
 | `AccountFrozen` | The account was frozen by an operator; while frozen, only `cancel` / `cancelAll` are admitted — new orders and modifies are rejected. | "Your account is frozen — trading is paused." | Stop placing orders until the freeze is lifted; cancels still go through. |
 
@@ -78,7 +78,7 @@ A [`batch`](post-trade.md#batch) is one `/trade` call under one envelope nonce, 
 
 An admitted action still runs against the book and **can fail at execution**. Because `/trade` is synchronous, that failure comes back on the `/trade` response — but **where** it appears depends on the action, and getting this wrong reads a failed order as a success.
 
-* **Order-ish actions** (`order`, `cancel`, `cancelAll`, `modify`, `batch`) stay `submission_status: "accepted"` with **no** top-level `error`. The code appears only as a leaf inside the [`response` envelope](post-trade.md#what-accepted-carries), as `{"error":"<code>"}`. How deep that leaf sits follows the action: `response.status.error` for an `order`, `cancel`, or `modify`; `response.statuses[i].error` for a `cancelAll`; `response.statuses[i].status.error` for a [`batch`](post-trade.md#batch) item. This covers `insufficientspotbalance`, `mintradespotntl`, `tick`, `lotsize`, `missingorder`, and the rest.
+* **Order-ish actions** (`order`, `cancel`, `cancelAll`, `modify`, `batch`) stay `submission_status: "accepted"` with **no** top-level `error`. The code appears only as a leaf inside the [`response` envelope](post-trade.md#what-accepted-carries), as `{"error":"<code>"}`. How deep that leaf sits follows the action: `response.status.error` for an `order`, `cancel`, or `modify`; `response.statuses[i].error` for a `cancelAll`; `response.statuses[i].status.error` for a [`batch`](post-trade.md#batch) item. This covers `insufficientspotbalance`, `mintradespotntl`, `tick`,, `missingorder`, and the rest.
 * **Non-order actions** (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`) do map an execution failure to `submission_status: "rejected"` with a top-level `error.code`.
 * **Six envelope-level failures** demote any action to `rejected` because they invalidate the transaction itself: `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `invalidbatchlength`, `featuredisabled`. These surface in their CamelCase display form — `BadNonce`, `BadSignature`, and so on.
 
@@ -91,9 +91,9 @@ Whether you can look the order up afterwards depends on how far it got:
 
 | Leaf code | What it leaves behind |
 | --- | --- |
-| `tick` `lotsize` `insufficientspotbalance` `mintradespotntl` `missingorder` | **Nothing.** The leaf is the only record. Reconciling the `cloid` finds nothing and times out |
+| `tick` `insufficientspotbalance` `mintradespotntl` `missingorder` | **Nothing.** The leaf is the only record. Reconciling the `cloid` finds nothing and times out |
 | `badalopx` `insufficientspotcredit` | An [`orderStatus`](post-info.md#orderstatus) row under that lowercase status, and an `orderUpdates` frame (`badAloPxRejected`) |
-| `ioccancel` `fokcancel` `marketordernoliquidity` | The same, and benign: the order simply did not fill |
+| `ioccancel` `fokcancel` `selftradepreventioncancel` `marketordernoliquidity` | The same, and benign: the order simply did not fill |
 
 Either way, read the leaf on the response, then send a corrected order under a **new** `cloid`.
 {% endhint %}
@@ -101,7 +101,7 @@ Either way, read the leaf on the response, then send a corrected order under a *
 | Code | Where it appears | What it means | Fix |
 | --- | --- | --- | --- |
 | `tick` | the `response` leaf, with `submission_status: "accepted"` | A non-integer `price` exceeded the market's `max_price_sig_figs`. The transaction landed; the order never entered the book. | Snap the price to the market's `price_decimals` / `max_price_sig_figs` before signing. The [Python SDK](python-sdk/README.md) checks this locally (`LocalValidationError`) and never sends it; see [Decimals & units](decimals-units.md#valid-invalid-examples). |
-| `insufficientspotbalance` / `mintradespotntl` / `lotsize` / `badalopx` / `missingorder` | the `response` leaf, with `submission_status: "accepted"` | The order failed at execution for the stated reason. | Same handling as the CamelCase admission form of the condition — the difference is only which layer caught it. |
+| `insufficientspotbalance` / `mintradespotntl` / / `badalopx` / `missingorder` | the `response` leaf, with `submission_status: "accepted"` | The order failed at execution for the stated reason. | Same handling as the CamelCase admission form of the condition — the difference is only which layer caught it. |
 | `BadNonce` / `BadSignature` / `ExpiredTx` / `MalformedTx` / `InvalidBatchLength` / `FeatureDisabled` | top-level `error.code`, with `submission_status: "rejected"` | The transaction envelope itself was invalid, so nothing executed. `InvalidBatchLength` is the execution-layer guard on an empty or over-long `batch`; over `POST /trade` you will not normally see it, because an oversized batch fails at canonicalization first and returns HTTP 400 with `error.code: "EncodeLengthOverflow"` and no `tx_hash`. | Re-sign correctly and submit a fresh action. |
 
 ## Full /trade error-code reference
@@ -122,7 +122,6 @@ Request-shaping and gateway errors:
 | `LegacySignatureNotAccepted` | A legacy (`auth_scheme` absent or `"legacy"`) signature was sent for an EIP-712 cutover action (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`, or an operator `deposit`/`admin*`). These require `auth_scheme:"eip712"`. |
 | `Eip712NotAllowedForAction` | `auth_scheme:"eip712"` was sent for a non-target action; only legacy is accepted for those. |
 | `Eip712AgentEpochNotAllowed` | An `auth_scheme:"eip712"` request carried `agent_epoch`, which EIP-712 forbids. |
-| `query_view_unavailable` | The query view was not yet available when the write path needed market/asset metadata. Transient — retry shortly. |
 | `UnknownMarket` | The request referenced a market that is not in the current query view's market metadata. |
 | `UnknownAsset` | The request referenced an asset that is not in the current query view's asset metadata. |
 | `InvalidMarketId` | A market id was a valid `u64` JSON value but exceeded the protocol `u32` range. |
@@ -156,7 +155,7 @@ Node admission pass-through errors:
 
 | Code | Meaning |
 | --- | --- |
-| `QueryLagBackpressure` | The node's query view is missing or more than four blocks behind execution; retry the same signed request after projection catches up. |
+| `QueryLagBackpressure` | The node's query view is missing, more than two blocks behind execution, or its job queue is full; retry the same signed request after projection catches up. |
 | `DuplicateTxHash` | The same transaction hash is already pending in ingress. |
 | `DuplicateAuthorityNonce` | The same authority/nonce pair is already pending in ingress (authority is the recovered signer for single-sig, or the policy authority for multisig). |
 | `MalformedTx` | The node could not decode canonical transaction bytes. Public JSON normally fails earlier if bytes cannot be built. |
