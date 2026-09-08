@@ -85,7 +85,7 @@ Protected market order example:
 }
 ```
 
-`POST /trade` is **synchronous**: the request blocks while the transaction is admitted, executed on-chain, and the outcome is read back. Typical latency is a block or two; the wait budget is **3 seconds**, so set your client timeout above that or you will abandon replies that were about to arrive.
+`POST /trade` is **synchronous**: the request blocks while the transaction is admitted, executed on-chain, and the outcome is read back. Typical latency is a block or two, and a slow call can take up to 10 seconds. **Set your client timeout above 10 seconds** or you will abandon replies that were about to arrive.
 
 Response envelope:
 
@@ -104,7 +104,7 @@ Response envelope:
 `submission_status` answers **"did the transaction land?"**, and it has exactly three values:
 
 * `accepted` — the transaction landed and reached execution. There is no top-level `error`. **This does not mean the order succeeded** — see [what `accepted` carries](#what-accepted-carries) below.
-* `rejected` — the write never reached execution: request-shaping, rate limit, expiry, place-order suspension, or node admission. `error.code` carries the reason; `tx_hash` is present once canonical bytes exist. Six envelope-level execution failures also land here — `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `invalidbatchlength`, `featuredisabled` — returned in their CamelCase display form (`BadNonce`, `BadSignature`, `ExpiredTx`, `MalformedTx`, `InvalidBatchLength`, `FeatureDisabled`).
+* `rejected` — the write never reached execution: request-shaping, rate limit, expiry, place-order suspension, or a check before inclusion. `error.code` carries the reason; `tx_hash` is present once canonical bytes exist. Six envelope-level execution failures also land here — `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `invalidbatchlength`, `featuredisabled` — returned in their CamelCase display form (`BadNonce`, `BadSignature`, `ExpiredTx`, `MalformedTx`, `InvalidBatchLength`, `FeatureDisabled`).
 * `timeout` — the outcome was not observed within the 3-second budget, or the submission could not be routed. Whether it can still land depends on the code — see [timeout](#timeout-can-it-still-land).
 
 ### What `accepted` carries
@@ -124,7 +124,7 @@ Each leaf is one of four shapes, keyed by its single field:
 | `{"open":{"oid","cloid"}}` | The order rested on the book |
 | `{"filled":{"total_sz","avg_px","oid","cloid"}}` | The order filled. `total_sz` and `avg_px` are display values, formatted exactly as `/info` formats them. |
 | `{"cancelled":{"oid","cloid"}}` | The order was cancelled — by an explicit cancel, or by its own time-in-force / self-trade rule |
-| `{"error":"<code>"}` | **The order failed at execution** — e.g. `insufficientspotbalance`, `mintradespotntl`, `tick`, `lotsize`, `missingorder` |
+| `{"error":"<code>"}` | **The order failed at execution** — e.g. `insufficientspotbalance`, `mintradespotntl`, `tick`, `missingorder` |
 
 {% hint style="warning" %}
 A per-order failure keeps `submission_status: "accepted"` and puts the code in the `{"error":…}` leaf, with **no** top-level `error`. Branching on `submission_status` alone reads a rejected order as a success. Always inspect `response`.
@@ -214,7 +214,13 @@ The `error.code` tells you, and the two cases need opposite handling:
 
 When in doubt, treat it as the 504 case and reconcile. The [outcomes playbook](handle-timeouts.md#reconciling-a-timeout) has the reasoning behind each row.
 
-Beyond per-action outcomes, the API can refuse a write for operational reasons: `RateLimited` (HTTP 429 — the per-IP budget, 1 request/second by default, or the per-signer 1000/second, with `error.retry_after_ms`), `TooManyPending` (HTTP 503 with `error.retry_after_ms: 50` — too many synchronous writes are already in flight; retry immediately, it is transient), `PlaceOrderSuspended` (HTTP 503 — while the write path is degraded, only `cancel`/`cancelAll` and an all-cancel `batch` are accepted so you can reduce exposure; `order`, `modify`, any `batch` that mixes in a non-cancel item, and an empty `batch` are refused), `ExpiredTx` (HTTP 200), and the routing codes `HandoffTimeout` / `HandoffBufferFull{request_count|bytes|signer}` / `HandoffMultipleActive` (HTTP 503) and `NodeUnreachable` (HTTP 504), which come back as `submission_status: "timeout"`. A request body over 256 KiB is rejected with HTTP 413. See the full `/trade` error-code table in [Error responses](error-responses.md).
+Beyond per-action outcomes, the API can refuse a write for operational reasons: `RateLimited` (HTTP 429 — the per-IP budget, 1 request/second by default, or the per-signer 1000/second, with `error.retry_after_ms`), `TooManyPending` (HTTP 503 with `error.retry_after_ms: 50` — too many synchronous writes are already in flight; retry immediately, it is transient), `PlaceOrderSuspended` (HTTP 503 — while the write path is degraded, only `cancel`/`cancelAll` and an all-cancel `batch` are accepted so you can reduce exposure; `order`, `modify`, any `batch` that mixes in a non-cancel item, and an empty `batch` are refused), `ExpiredTx` (HTTP 200), and the routing codes `HandoffTimeout` / `HandoffBufferFullRequestCount` / `HandoffBufferFullBytes` / `HandoffBufferFullSigner` / `HandoffMultipleActive` (HTTP 503) and `NodeUnreachable` (HTTP 504), which come back as `submission_status: "timeout"`. A request body over 256 KiB is rejected with HTTP 413. See the full `/trade` error-code table in [Error responses](error-responses.md).
+
+**Limits on resting orders.** You may hold **1000 open orders per market** per
+account; the 1001st is rejected with `accountopenorderlimit`. A single order may
+take at most **100 fills** — one that would sweep more comes back as
+`maxfillsexceeded`, so split large market orders. Both arrive as leaf codes with
+`submission_status: "accepted"`.
 
 ### cancel
 
@@ -417,9 +423,9 @@ Clients should use the current Unix millisecond timestamp for `withdraw_nonce` a
 
 Withdraw consumes a windowed-unique business nonce with 3-day retention: a nonce at/below the pruned floor or already retained for its account window is rejected (`WithdrawDuplicateNonce`). A failed withdraw burns the envelope `nonce` but not the business nonce, so a retry reuses the business nonce under a new envelope `nonce`.
 
-Node admission also fail-fast rejects withdraw actions that the current committed state already proves invalid: missing accounting config, missing asset/config, invalid account shape, duplicate committed business nonce, withdraw amount/fee/minimum failures, or insufficient withdraw cash. Once a withdraw is accepted into ingress, its business nonce is also held in a live-only pending overlay, so a concurrent replay of the same business nonce is rejected before block inclusion. This overlay is not canonical state and is retired after the accepted transaction's result publishes to QueryView.
+These are also rejected before inclusion when the current committed state already proves them invalid: missing accounting config, missing asset/config, invalid account shape, duplicate committed business nonce, withdraw amount/fee/minimum failures, or insufficient withdraw cash. Once a withdraw is accepted into ingress, its business nonce is also held in a live-only pending overlay, so a concurrent replay of the same business nonce is rejected before block inclusion. This overlay is not canonical state and is retired after the accepted transaction's result publishes to QueryView.
 
-Parse errors include `MissingCloid` and `InvalidCloid`. Historical WAL records encoded before this field existed still replay without a cloid and are not queryable by `txStatusByCloid`.
+Parse errors include `MissingCloid` and `InvalidCloid`. Older records written before this field existed still replay without a cloid and are not queryable by `txStatusByCloid`.
 
 ### settle
 
@@ -448,7 +454,7 @@ Requires `auth_scheme:"eip712"`. See [EIP-712 signing](transaction-signing.md#ei
 
 Parse errors: `MissingCloid` (cloid absent), `InvalidCloid` (not 16 bytes), `InvalidCashAccount` (not a 20-byte hex address), `InvalidAssetId`. Execution errors include `InvalidSettle` (signer not a credit account, `cash_account` missing/credit, zero amount, no settleable long, or over-settle), `SpotCreditAccountFrozen` (frozen signer), `OracleMarkPriceMissing` (a residual nonzero-net asset lacks a fresh mark), and `InsufficientSpotCredit` (post `available_usd < 0`). A full settle that clears the asset's net to zero needs no mark.
 
-Node admission may return these same settle errors before block inclusion when the current committed state already proves the settle invalid. Execution remains authoritative for any transaction accepted into ingress.
+These same settle errors can come back before block inclusion when the current committed state already proves the settle invalid. Execution remains authoritative for any transaction accepted into ingress.
 
 ### repay
 
@@ -473,7 +479,7 @@ Requires `auth_scheme:"eip712"`. See [EIP-712 signing](transaction-signing.md#ei
 
 Parse errors: `MissingCloid`, `InvalidCloid`, `InvalidMarginAccount`, `InvalidAssetId`. Execution errors include `InvalidRepay` (signer is a credit account, `margin_account` missing/non-credit, zero amount, no short, or over-repay past zero) and `InsufficientSpotBalance` (signer's cash is too low).
 
-Node admission may return these same repay errors before block inclusion when the current committed state already proves the repay invalid. Execution remains authoritative for any transaction accepted into ingress.
+These same repay errors can come back before block inclusion when the current committed state already proves the repay invalid. Execution remains authoritative for any transaction accepted into ingress.
 
 Settle/repay carry **no** business nonce and provide **no** idempotency: the `cloid` is used only for `txStatusByCloid` lookups within the recent query window (see [txStatusByCloid](post-info.md#txstatusbycloid)). The envelope `nonce` is the only replay protection — the same `cloid` resubmitted under a new envelope `nonce` is a distinct transaction. The lookup is keyed on the **recovered signer** (settle → margin owner; repay → cash owner); a counterparty cannot find the tx by `cloid`.
 
@@ -504,7 +510,7 @@ Parse errors: `InvalidAgentSlot` (slot outside `0`–`3`), `InvalidAgent` (not a
 
 ### revokeAgent
 
-Clears the agent approval on one owner slot. **Owner-signed** under `auth_scheme:"eip712"`, same constraints as `approveAgent` (no `agent_epoch`, single signature, not batchable). After revocation, agent-signed writes from that key are rejected by node admission.
+Clears the agent approval on one owner slot. **Owner-signed** under `auth_scheme:"eip712"`, same constraints as `approveAgent` (no `agent_epoch`, single signature, not batchable). After revocation, writes signed by that key are rejected with `UnknownAgent`.
 
 | Field     | Required | Values                    |
 | --------- | -------- | ------------------------- |

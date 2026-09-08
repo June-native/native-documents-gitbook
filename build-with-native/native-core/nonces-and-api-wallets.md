@@ -66,7 +66,7 @@ The nonce rides in the `/trade` envelope alongside the action, and it is one of 
 
 ## `agent_epoch`
 
-An agent-signed request also carries `agent_epoch`, a decimal `u64` identifying the live approval **generation** (epoch) for the API wallet — distinct from its `slot_id` (`0`–`3`). The current epoch is not something you hardcode — it is resolved live from the `userAgents` read (the `epoch` of the slot holding your API-wallet address), so a stale value from an old bundle does no harm. If the epoch has rotated underneath you, node admission rejects the write with `AgentEpochMismatch`; the SDK catches that once, re-resolves the epoch from `userAgents`, and retries the same action under a fresh nonce. Omit `agent_epoch` for owner-signed requests.
+An agent-signed request also carries `agent_epoch`, a decimal `u64` identifying the live approval **generation** (epoch) for the API wallet — distinct from its `slot_id` (`0`–`3`). The current epoch is not something you hardcode — it is resolved live from the `userAgents` read (the `epoch` of the slot holding your API-wallet address), so a stale value from an old bundle does no harm. If the API wallet was revoked or replaced, the write is rejected with `UnknownAgent`; if the same key is still approved under a newer epoch, it is `AgentEpochMismatch`. The SDK catches either once, re-resolves the epoch from `userAgents`, and retries the same action under a fresh nonce. Omit `agent_epoch` for owner-signed requests.
 
 ## Safety
 

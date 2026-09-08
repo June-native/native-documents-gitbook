@@ -50,7 +50,7 @@ Prefer a client library? The official Python SDK wraps both REST endpoints and t
 * `API_URL` examples use `https://api.native.org` (mainnet); for testnet and signing chain ids, see [environments](api-access.md#environments).
 * Hex values are `0x`-prefixed lowercase strings unless noted otherwise.
 * Protocol numeric fields in signed actions are decimal strings; integer-valued fields (ids, nonces) also accept an unsigned JSON integer, while decimal price/quantity/amount fields must be strings.
-* Business query responses carry `query_height` and `app_hash` when a query view is available — the execution height represented by the published read view.
+* Business query responses carry `query_height` and `app_hash` — the chain height the answer was read at.
 * `POST /trade` is **synchronous**: it blocks for the execution outcome and returns `submission_status` (`accepted` / `rejected` / `timeout`) with a `tx_hash`. It reports that a write **landed**, not an order's fill state — read the outcome per the [Handle outcomes & timeouts](handle-timeouts.md) playbook.
 
 ## Reference & concepts

@@ -39,7 +39,7 @@ The signature covers an EIP-712 typed-data digest, not a binary payload. Clients
 
 A superseded **v3** EIP-712 scheme (domain included `chainId`; no `nativeChainId` field) is retained only for historical decode/replay and is **not accepted at submit**. Because `/trade` carries no codec-version field, a request whose signature was produced under the old v3 scheme is assembled as v4 and recovers a different address, so it fails with a signature/authority error — re-sign with the v4 scheme.
 
-`withdraw` keeps an optional `cloid` at the protocol level (legacy WAL records may omit it), but the public API JSON requires `cloid`; the EIP-712 `cloidPresent` flag models the optionality.
+`withdraw` keeps an optional `cloid` at the protocol level (older records may omit it), but the public API JSON requires `cloid`; the EIP-712 `cloidPresent` flag models the optionality.
 
 #### Per-action typed-data fields
 
