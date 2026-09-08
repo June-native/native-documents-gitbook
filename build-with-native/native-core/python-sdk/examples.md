@@ -156,7 +156,7 @@ print(order_state(final))                                    # cancelled
 {% hint style="warning" %}
 `accepted` is not `placed`. `submission_status: "accepted"` is a verdict on the **transaction**; your order can still have failed inside it, on a leaf of the `response` envelope. Check `is_order_failed(resp)` and read `leaf_error_code(resp)`, and take the `oid` and fill from `order_oid` / `fill` rather than an `/info` read. A failed order is never written to `/info`, so reconciling its `cloid` can only time out.
 
-If a write times out on the wire the SDK raises `SubmissionUncertain` (carrying `.cloids` and `.nonce`): reconcile by `cloid` and **never** resubmit — that risks a double-fill. A returned `submission_status: "timeout"` follows the same rule, except when `is_safe_to_resend(resp)` is `True` (the `Handoff*` family, which never reached a node), where you back off by `retry_after_ms` and resend the same `cloid`.
+If a write times out on the wire the SDK raises `SubmissionUncertain` (carrying `.cloids` and `.nonce`): reconcile by `cloid` and **never** resubmit — that risks a double-fill. A returned `submission_status: "timeout"` follows the same rule, except when `is_safe_to_resend(resp)` is `True` (`Unavailable`, which never reached a node), where you back off by `retry_after_ms` and resend the same `cloid`.
 {% endhint %}
 
 ## Rounding & precision
