@@ -118,7 +118,7 @@ The genesis quote allowlist is USDC asset `1` with `min_quantity="10"`, USDT ass
 `POST /trade` validates signed action numbers before reconstructing the canonical signed payload:
 
 * Integer fields accept a base-10 integer string or an unsigned JSON integer (no decimal point, no sign, no exponent notation, no commas); the string form is preferred for values above 2^53.
-* Order and modify `price` / `quantity` are human decimal strings: no sign, no exponent notation, no commas, and no more fractional digits than the market's `price_decimals` / `base_quantity_decimals`. A value that overflows `u64` after conversion is rejected with `invalid_price_overflow` / `invalid_quantity_overflow`.
+* Order and modify `price` / `quantity` are human decimal strings: no sign, no exponent notation, no commas, and no more fractional digits than the market's `price_decimals` / `base_quantity_decimals`. A value that overflows `u64` after conversion is rejected with `InvalidPriceOverflow` / `InvalidQuantityOverflow`.
 * `market_id` parses as `u32`.
 * `oid`, `nonce`, `agent_epoch`, and `expires_after_ms` parse as `u64`.
 * `quantity` greater than zero is enforced at **execution**, not at this admission stage — a zero quantity passes shaping and is rejected when the order runs.
@@ -134,7 +134,7 @@ The pairs below use an **illustrative** market with `price_decimals = 2`, `max_p
 
 Two independent gates apply to a `price`, and they fail at **different layers**:
 
-* **Fractional digits `>` `price_decimals`** — rejected at **admission**: `POST /trade` returns `submission_status: "rejected"` with `invalid_price_precision` (or `invalid_quantity_precision` for `quantity`).
+* **Fractional digits `>` `price_decimals`** — rejected at **admission**: `POST /trade` returns `submission_status: "rejected"` with `InvalidPricePrecision` (or `InvalidQuantityPrecision` for `quantity`).
 * **Non-integer price with more than `max_price_sig_figs` significant figures** — clears admission, then **fails at execution** as [`tick`](error-responses.md#execution-level-failures). Because `/trade` is synchronous, that failure comes back on the `/trade` response itself — but as a per-order leaf: `submission_status` stays `"accepted"` and the code appears as `response.status.error: "tick"`, with no top-level `error`. **That leaf is the only record.** The order never entered the book, so it is never written to [`orderStatus`](post-info.md#orderstatus) and reconciling its `cloid` finds nothing. The [Python SDK](python-sdk/README.md) saves you the round trip by rejecting it locally (`LocalValidationError: … significant figures`) before it ever signs.
 
 `price`:
@@ -144,8 +144,8 @@ Two independent gates apply to a `price`, and they fail at **different layers**:
 | `3500.00`    | valid                                 | raw `350000` is an integer price; the significant-figures gate is skipped.                         |
 | `3500.1`     | valid                                 | 1 fractional digit `<=` `price_decimals`; 5 significant figures — exactly at `max_price_sig_figs`. |
 | `3500.12`    | admitted, then fails `tick`           | 2 fractional digits clear admission, but 6 significant figures `>` `max_price_sig_figs` (5). `submission_status` stays `"accepted"` and the code appears as `response.status.error: "tick"`. The SDK rejects it locally first. |
-| `3500.123`   | rejected `invalid_price_precision`    | 3 fractional digits `>` `price_decimals` (2) — rejected at admission.                              |
-| `3500.120`   | rejected `invalid_price_precision`    | trailing zeros count — still 3 fractional digits `>` 2.                                            |
+| `3500.123`   | rejected `InvalidPricePrecision`    | 3 fractional digits `>` `price_decimals` (2) — rejected at admission.                              |
+| `3500.120`   | rejected `InvalidPricePrecision`    | trailing zeros count — still 3 fractional digits `>` 2.                                            |
 
 `quantity` — only the fractional-digit gate applies; `quantity` has no significant-figures cap:
 
@@ -154,7 +154,7 @@ Two independent gates apply to a `price`, and they fail at **different layers**:
 | `1.0000`  | valid                                 | 4 fractional digits `<=` `base_quantity_decimals`.         |
 | `0.0001`  | valid                                 | smallest lot — 1 order quantity atom.                      |
 | `1.2345`  | valid                                 | 4 fractional digits.                                       |
-| `1.12345` | rejected `invalid_quantity_precision` | 5 fractional digits `>` `base_quantity_decimals` (4).      |
-| `1.10000` | rejected `invalid_quantity_precision` | trailing zeros count — still 5 fractional digits `>` 4.    |
+| `1.12345` | rejected `InvalidQuantityPrecision` | 5 fractional digits `>` `base_quantity_decimals` (4).      |
+| `1.10000` | rejected `InvalidQuantityPrecision` | trailing zeros count — still 5 fractional digits `>` 4.    |
 
 Fractional-digit precision (`price_decimals` / `base_quantity_decimals`) is a `POST /trade` **admission** rejection — see [`/trade` error codes](transaction-signing.md#trade-error-codes). Significant figures (`max_price_sig_figs`) apply only to non-integer prices and are enforced one layer deeper, at **execution**, as a [`tick`](error-responses.md#execution-level-failures) failure — returned synchronously on the `/trade` response, but as a per-order leaf: `submission_status` stays `"accepted"` and the code is `response.status.error: "tick"`. An integer display price such as `3500` skips that gate entirely.

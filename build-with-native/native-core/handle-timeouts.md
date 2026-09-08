@@ -41,9 +41,9 @@ Not every `timeout` is indeterminate. The `error.code` tells you whether the tra
 | Code | HTTP | Reached a node? | What to do |
 | --- | --- | --- | --- |
 | *(none)* — the wait budget elapsed | 200 | **Yes**, it is executing | Reconcile by `cloid`. **Never** resubmit under a new nonce. |
-| `HandoffBufferFull:{request_count\|bytes\|signer}` | 503 | **No** — refused before any submission was attempted | Resubmit. There is nothing to reconcile. |
+| `HandoffBufferFullRequestCount` / `HandoffBufferFullBytes` / `HandoffBufferFullSigner` | 503 | **No** — refused before any submission was attempted | Resubmit. There is nothing to reconcile. |
 | `HandoffTimeout` / `HandoffMultipleActive` | 503 | **No** — no writable node accepted it | Resubmit, or reconcile first if a duplicate would be costly (see below). |
-| `node_unreachable: …` | 504 | **Unknown** — the connection broke mid-submission | Reconcile by `cloid`. **Never** resubmit under a new nonce. |
+| `NodeUnreachable` | 504 | **Unknown** — the connection broke mid-submission | Reconcile by `cloid`. **Never** resubmit under a new nonce. |
 
 Treating the whole 503 family as indeterminate silently drops every write for the duration of a leadership handoff, which is why it is worth separating. Treating the 200 and 504 cases as safe to resubmit is how you double-fill.
 
