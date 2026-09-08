@@ -85,7 +85,7 @@ Protected market order example:
 }
 ```
 
-`POST /trade` is **synchronous**: the request blocks while the transaction is admitted, executed on-chain, and the outcome is read back. Typical latency is a block or two. The 3-second budget covers only the wait for the execution outcome; a request can also spend up to 2 seconds per submit attempt and up to 5 seconds parked during a leadership handoff before that wait even starts. **Set your client timeout above 10 seconds** or you will abandon replies that were about to arrive.
+`POST /trade` is **synchronous**: the request blocks while the transaction is admitted, executed on-chain, and the outcome is read back. Typical latency is a block or two, and a slow call can take up to 10 seconds. **Set your client timeout above 10 seconds** or you will abandon replies that were about to arrive.
 
 Response envelope:
 

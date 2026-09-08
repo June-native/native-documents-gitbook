@@ -14,7 +14,7 @@ description: What to do with each /trade outcome — when to resend, when to rec
 | --- | --- | --- |
 | `accepted` | The transaction landed and reached execution. | **Not done — read `response`.** It carries `{"open":…}`, `{"filled":…}`, `{"cancelled":…}`, or `{"error":"<code>"}`. |
 | `rejected` | Refused before execution (shaping / rate limit / suspension / expiry / admission), or an envelope-level execution failure. `error.code` says why. | Fix the cause, submit a **fresh** action. One exception below. |
-| `timeout` | The outcome was not observed in the 3-second execution-wait budget, or the submission could not be routed. | Depends on the code — see [below](#reconciling-a-timeout). |
+| `timeout` | The outcome was not observed in the 3-second wait budget, or the submission could not be routed. | Depends on the code — see [below](#reconciling-a-timeout). |
 
 {% hint style="warning" %}
 **`accepted` is not success.** An order that failed at execution — insufficient balance, below minimum notional, off the tick grid — still returns `accepted` with **no** top-level `error`; the code appears only inside `response`, at `response.status.error` for a single order. A client that branches on `submission_status` alone records a rejected order as live and will keep quoting against a position it never had.
@@ -38,7 +38,7 @@ Three rejections are pure backpressure: nothing about your action was wrong, so 
 | --- | --- | --- |
 | `RateLimited` | 429 | `error.retry_after_ms` |
 | `TooManyPending` | 503 | `error.retry_after_ms` (50 ms) |
-| `QueryLagBackpressure` | 503 | a few blocks, until the node's query view catches up |
+| `QueryLagBackpressure` | 503 | a moment, until the node catches up |
 
 Every other `rejected` needs a fresh action after you fix the cause — never blindly resend.
 
@@ -59,7 +59,7 @@ Treating the whole 503 family as indeterminate silently drops every write for th
 The three `HandoffBufferFull*` codes are refused before any node is contacted, so a resubmit cannot duplicate. `HandoffTimeout` and `HandoffMultipleActive` are returned only when no attempt reached a node: a failure that happens after the transaction was written to the wire returns `NodeUnreachable` instead, on a separate path. A resubmit after any of these five codes cannot duplicate a submission.
 {% endhint %}
 
-**Set your HTTP client timeout above 10 seconds.** The 3-second budget above is only the wait for the execution outcome. Before it starts, a request can spend up to 2 seconds per submit attempt and up to 5 seconds parked during a leadership handoff. A client that gives up earlier turns a reply that was about to arrive into the indeterminate case this page exists to resolve.
+**Set your HTTP client timeout above 10 seconds.** The 3 seconds above is only part of it — a slow call can take up to 10. Giving up earlier turns a reply that was about to arrive into the uncertain case this page exists to resolve.
 
 When a code is not in this table, reconcile.
 

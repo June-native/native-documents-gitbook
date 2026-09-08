@@ -68,7 +68,7 @@ Always set a `cloid` — it is how you reconcile a `timeout` (step 5). Send `pri
 
 ## 5. Read the outcome
 
-`/trade` is synchronous: the call blocks until the transaction executes and returns the outcome. Typical latency is a block or two. The 3-second budget covers only the wait for the execution outcome; a request can also spend up to 2 seconds per submit attempt and up to 5 seconds parked during a leadership handoff before that wait even starts. **Set your client timeout above 10 seconds** — a shorter one abandons replies that were about to arrive and leaves you in the indeterminate state [Handle outcomes & timeouts](handle-timeouts.md) exists to avoid.
+`/trade` is synchronous: the call blocks until the transaction executes and returns the outcome. Typical latency is a block or two, and a slow call can take up to 10 seconds. **Set your client timeout above 10 seconds** — a shorter one abandons replies that were about to arrive and leaves you unsure whether the order landed.
 
 ```json
 {
