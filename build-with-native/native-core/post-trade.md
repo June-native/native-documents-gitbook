@@ -396,6 +396,49 @@ A `cancelAll` item is itself multi-result, so it nests one level further, with b
 }
 ```
 
+### transfer
+
+Moves an asset between two Native accounts (tag 10). **Owner-signed**: sign with the main wallet — `transfer` is not in the agent-signable set, so an API wallet cannot sign it. `asset_id`/`amount` are raw atoms. `cloid` is a **required** 16-byte hex client operation id.
+
+Both sides must be ordinary balance-mode accounts that already exist. The transfer is rejected if the **sender** is a `SpotCreditAccount` or the **recipient** is one (`ActionNotAllowedForSpotCreditAccount`), if `to` is unregistered (`AccountNotFound`) — this action never creates an account, use [`activateFor`](#activatefor) for that — if `to` equals the signer (`TransferToSelf`), or if `to` is the zero address or `amount` is `0` (`InvalidTransfer`). Only `available` balance moves — quantity locked by resting orders cannot be transferred, and a shortfall is `InsufficientSpotBalance`.
+
+Requires `auth_scheme:"eip712"`. See [EIP-712 signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712).
+
+```json
+{
+  "action": {
+    "type": "transfer",
+    "to": "0x1111111111111111111111111111111111111111",
+    "asset_id": "3",
+    "amount": "4000",
+    "cloid": "0x000102030405060708090a0b0c0d0e0f"
+  },
+  "nonce": "1717000000006",
+  "auth_scheme": "eip712",
+  "signature": "0x..."
+}
+```
+
+### activateFor
+
+Creates a balance-mode account for `target_address`, paid for by the signer (tag 43). **Owner-signed**, `auth_scheme:"eip712"` only — this action has no legacy form at all. `cloid` is a **required** 16-byte hex client operation id.
+
+There is deliberately **no fee amount field**: the activation fee is taken from the protocol schedule for `asset_id`, which must be one of the allowlisted activation assets (`InvalidActivationFeeAsset`). On mainnet the fee is **exactly 1.0 unit** — `asset_id` `1` (USDC) or `2` (USDT), both 8-decimal, so `100000000` atoms — debited from the signer's **available** balance and credited to the protocol fee account, so quantity locked by resting orders cannot pay it (a shortfall is `InsufficientSpotBalance`). The allowlist is append-only and the listed amounts are frozen, so read the fee asset from the schedule rather than hardcoding the pair. The signer must already be registered (`AccountNotFound`) and must be balance-mode (`ActionNotAllowedForSpotCreditAccount`). `target_address` must not already exist (`AccountAlreadyActivated`) and must not be a registered API wallet (`AddressIsAgent`). A zero `target_address`, or a signer that is the protocol fee account, is `InvalidAccountActivation`.
+
+```json
+{
+  "action": {
+    "type": "activateFor",
+    "asset_id": "1",
+    "target_address": "0x2222222222222222222222222222222222222222",
+    "cloid": "0x000102030405060708090a0b0c0d0e0f"
+  },
+  "nonce": "1717000000007",
+  "auth_scheme": "eip712",
+  "signature": "0x..."
+}
+```
+
 ### withdraw
 
 User single-signature withdrawal (tag 32). On success it debits `amount` from the signer owner's **available** balance. The asset's `withdraw_fee_atoms` is **recorded** (in the event and `/info withdraws`) but **not** deducted; `amount` must be strictly greater than the fee and at least the configured `min_withdraw_atoms` for `(dst_chain_id, asset_id)`. `amount` and `withdraw_nonce` are raw atoms/values. Must use `signature`; `signatures` is rejected (`SignaturesNotAllowedForAction`). New requests must include a fixed 16-byte hex `cloid` used only for `txStatusByCloid`; it is not an idempotency key.

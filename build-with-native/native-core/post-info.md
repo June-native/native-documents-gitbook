@@ -745,6 +745,27 @@ Not found:
 }
 ```
 
+A bare `found: false` means there is no such order inside the retained window. When you look up by `oid` and that `oid` was created *before* the window starts, the response says so explicitly instead — still **HTTP 200**, with an in-band `error` beside the usual fields:
+
+```json
+{
+  "found": false,
+  "query_height": 199793262,
+  "app_hash": "0x...",
+  "oid": 3181166949566721,
+  "error": {
+    "code": "HistoryWindowExceeded",
+    "requested": 189612326,
+    "oldest_available_height": 199783263,
+    "latest_available_height": 199793262,
+    "recent_query_window_blocks": 10000,
+    "message": "This node keeps detailed query data only for the most recent configured block window. The requested data is older than the local query window."
+  }
+}
+```
+
+Treat that as "too old to answer", not as "no such order"; `oldest_available_height` tells you where the window currently starts. The `user` + `market_id` + `cloid` form carries no height, so it cannot draw that distinction — an aged-out order comes back there as a plain `found: false`. For anything past the window, keep your own record of the order from when you placed it.
+
 A query that carries neither a parseable `oid` nor a complete `user` + `market_id` + `cloid` triple is rejected with **HTTP 400** and `InvalidOrderStatusQuery`. A malformed `market_id` or `cloid` is rejected the same way, as `InvalidMarketId` / `InvalidCloid`.
 
 ### txStatusByCloid

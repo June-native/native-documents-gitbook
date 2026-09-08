@@ -33,7 +33,7 @@ The legacy scheme above applies to trading actions. Authorization-sensitive acti
 
 ### EIP-712 signing (auth_scheme: "eip712")
 
-Public `withdraw`, `settle`, `repay`, `approveAgent`, and `revokeAgent` must be submitted with `auth_scheme: "eip712"`. (The full cutover set also covers `deposit` and the operator `admin*` writes, which are not part of this public trading contract.) This is a **direct cutover**: the moment the new binary is live, legacy signatures over these actions are rejected (`LegacySignatureNotAccepted`), and there is no config switch, height activation, or grace window — clients must switch at deploy. Conversely, `auth_scheme="eip712"` on any non-target action (`order`/`cancel`/`cancelAll`/`modify`/`batch`) is rejected (`Eip712NotAllowedForAction`), and an EIP-712 request may not carry `agent_epoch` (`Eip712AgentEpochNotAllowed`).
+Public `transfer`, `activateFor`, `withdraw`, `settle`, `repay`, `approveAgent`, and `revokeAgent` must be submitted with `auth_scheme: "eip712"`. (The full cutover set also covers `deposit` and the operator `admin*` writes, which are not part of this public trading contract.) This is a **direct cutover**: the moment the new binary is live, legacy signatures over these actions are rejected (`LegacySignatureNotAccepted`), and there is no config switch, height activation, or grace window — clients must switch at deploy. Conversely, `auth_scheme="eip712"` on any non-target action (`order`/`cancel`/`cancelAll`/`modify`/`batch`) is rejected (`Eip712NotAllowedForAction`), and an EIP-712 request may not carry `agent_epoch` (`Eip712AgentEpochNotAllowed`).
 
 The signature covers an EIP-712 typed-data digest, not a binary payload. Clients sign the **v4** scheme, which is MetaMask-compatible: the domain is `EIP712Domain{name:"Native Core", version:"1", verifyingContract:0x0000…0000}` — **no `chainId`** — so a wallet can sign while connected to any EVM chain. The Native chain id is instead a signed message field, `nativeChainId`, so replay separation across environments is preserved. Each target action has its own primary type whose fields mirror the action, prefixed by the common fields `uint256 nativeChainId, uint256 authKind, uint256 authScope, uint256 nonce, bool expiresAfterMsPresent, uint256 expiresAfterMs`. `nativeChainId` is the Native Core chain id; `authKind` is `1` (single) and `authScope` is `0` for these public user actions. Amounts are signed as canonical atoms; addresses as `address`; an optional `cloid` as `bool cloidPresent` + `bytes16 cloid`. The presence flags keep an absent value distinct from an explicit `0`. The transaction **authority** is the recovered signer, exactly as for legacy single-signature actions.
 
@@ -47,13 +47,15 @@ Every primary type below is the six common fields verbatim, then the action's ow
 
 | Primary type   | Tail after the common fields                                                                                                     |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `Transfer`     | `address to`, `uint256 assetId`, `uint256 amount`, `bool cloidPresent`, `bytes16 cloid`                                          |
+| `ActivateFor`  | `uint256 assetId`, `address targetAddress`, `bytes16 cloid`                                                                      |
 | `Withdraw`     | `uint256 assetId`, `uint256 amount`, `uint256 dstChainId`, `address dstAddress`, `uint256 withdrawNonce`, `bool cloidPresent`, `bytes16 cloid` |
 | `Settle`       | `uint256 assetId`, `uint256 amount`, `address cashAccount`, `bytes16 cloid`                                                      |
 | `Repay`        | `uint256 assetId`, `uint256 amount`, `address marginAccount`, `bytes16 cloid`                                                    |
 | `ApproveAgent` | `uint256 slotId`, `address agentAddress`                                                                                          |
 | `RevokeAgent`  | `uint256 slotId`                                                                                                                  |
 
-`cloid` is handled three different ways and the difference is load-bearing: `Withdraw` carries it as optional (`cloidPresent` + `cloid`), `Settle` and `Repay` carry it as a bare required `bytes16` with no presence flag, and the two agent actions have no `cloid` field at all. Adding or dropping the flag changes the type string, which changes the digest, which recovers a different address.
+`cloid` is handled three different ways and the difference is load-bearing: `Transfer` and `Withdraw` carry it as optional (`cloidPresent` + `cloid`), `ActivateFor`, `Settle` and `Repay` carry it as a bare required `bytes16` with no presence flag, and the two agent actions have no `cloid` field at all. Adding or dropping the flag changes the type string, which changes the digest, which recovers a different address. The JSON payload requires `cloid` on all five actions that have the field, so the presence flag is not a licence to omit it — it exists because the protocol still decodes legacy records that lack one.
 
 Written out, `ApproveAgent` is:
 
@@ -74,6 +76,8 @@ Public action tags:
 | `modify` with only `cloid` |           `8` | Canonical modify-by-cloid.                                                                                                    |
 | `cancelAll`                |          `26` | Cancel every open order for the effective owner in one market. No `cloid`.                                                    |
 | `batch`                    |          `18` | Batch item tags are `order=0`, `cancel by oid=1`, `modify by oid=2`, `modify by cloid=3`, `cancel by cloid=4`, `cancelAll=5`. |
+
+These are the only top-level tags a client encodes; a `batch` additionally encodes one item tag per item, from the separate numbering in the `batch` row above. The tag space is not contiguous — some numbers in the same range are permanently retired and are never reassigned, so **do not infer a tag by counting from a neighbouring one**. A wrong tag is not reported as a bad tag: it changes the digest, which recovers a different address, so the request is attributed to someone else and fails on that account's state instead. Owner-signed EIP-712 actions (`transfer`, `withdraw`, `settle`, `repay`, `activateFor`, `approveAgent`, `revokeAgent`) do not appear here because their clients sign typed data and never encode a tag at all.
 
 Order action bytes:
 
