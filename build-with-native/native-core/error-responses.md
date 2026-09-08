@@ -141,9 +141,9 @@ Request-shaping and gateway errors:
 | `InvalidQuantityPrecision` | `quantity` had more fractional digits than the market's `base_quantity_decimals`. |
 | `InvalidQuantityOverflow` | Decimal-to-atom conversion for `quantity` overflowed `u64`. |
 | `InvalidSignatureHex` | `signature` was not hex or did not decode to exactly 65 bytes. |
-| `Encode<Variant>` | The write path could not assemble canonical signed tx bytes, for example because a batch length exceeded codec limits. |
+| `Encode…` | The write path could not assemble canonical signed tx bytes, for example because a batch length exceeded codec limits. |
 | `EmptyTxBytes` | Defensive guard: canonical byte assembly produced an empty byte vector. This should not occur for normal JSON requests. |
-| `Decode<Variant>` | The write path assembled bytes but could not decode them or recover the authorization (single signature, or a multisig proof — empty/too-many/duplicate/unsorted recovered signers). For public JSON this is the usual shape for a malformed or unrecoverable signature. |
+| `DecodeCodec…` / `DecodeSignature…` / `DecodeMultisigProof…` | The write path assembled bytes but could not decode them or recover the authorization (single signature, or a multisig proof — empty/too-many/duplicate/unsorted recovered signers). For public JSON this is the usual shape for a malformed or unrecoverable signature. |
 | `RateLimited` | Over quota on either limiter: the per-IP budget (1 req/s per endpoint by default, enforced before parsing — no `tx_hash`) or the per-signer rate (1000/s over a 1-second window, enforced after canonicalization — carries `tx_hash`). HTTP `429`; includes `retry_after_ms`. |
 | `TooManyPending` | Too many synchronous `/trade` waits are already in flight on this instance. HTTP `503`, `submission_status: "rejected"`, `retry_after_ms: 50` — transient, retry immediately. Distinct from the same-named node-admission code below. |
 | `PlaceOrderSuspended` | Order placement is suspended while the write path is degraded. Admitted: `cancel`, `cancelAll`, and a `batch` whose **every** item is `cancel` / `cancelAll`. Refused: `order`, `modify`, any `batch` that mixes in a non-cancel item, and an empty `batch`. HTTP `503`, `retry_after_ms: 1000`. |

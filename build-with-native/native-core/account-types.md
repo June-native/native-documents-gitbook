@@ -14,6 +14,13 @@ Native Core has two kinds of trading account. Every owner is exactly one of them
 | Order-time risk gate | Sufficient `available` balance. | `available_usd_atoms >= 0` against the credit line. |
 | State | `active` / `frozen` | `active` / `frozen` |
 
+{% hint style="danger" %}
+**A credit order that fails the risk check freezes the account.** The order is
+rejected with `insufficientspotcredit` **and the account is left frozen** — it
+cannot place new orders until an operator unfreezes it. Size against your
+current headroom before sending; there is no self-service recovery.
+{% endhint %}
+
 A `frozen` account may only cancel — new orders and modifies are rejected. Most integrations use a **spot account**; without a protocol-granted credit line, an owner is a spot account and the credit-account reads below report no credit position.
 
 ## Reading an account
