@@ -29,7 +29,7 @@ description: The core habits a live Native Core integration should follow.
 ## Reads & rate limits
 
 * **Query `/info` by the owner address**, not the API-wallet address — the agent address returns nothing.
-* **Budget 1 request/second per IP on each endpoint.** Reads and writes hold separate buckets, so polling never eats your order rate — but neither bucket gives you a second request. Cache static metadata, poll on a fixed interval, and back off on `429` — see [rate limits](api-access.md#rate-limits-errors). This is the default for an unregistered IP; if your strategy needs more, ask us to raise it for your source IPs rather than designing around the floor.
+* **Budget the default 1 request/second per IP on each endpoint.** Reads and writes hold separate buckets, so polling never eats your order rate — but neither bucket gives you a second request. Cache static metadata, poll on a fixed interval, and back off on `429` — see [rate limits](api-access.md#rate-limits-errors). This is the default for an unregistered IP; if your strategy needs more, ask us to raise it for your source IPs rather than designing around the floor.
 * **Once you need more than one read per second, stream instead of polling.** A [WebSocket](websocket.md) subscription costs nothing against the request budget.
 
 ## Streaming
