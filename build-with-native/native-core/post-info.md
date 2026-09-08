@@ -359,35 +359,6 @@ Whether an account exists and its freeze state.
 
 `found` is `true` once the account exists (it is created on its first deposit). `status` is `"active"` or `"frozen"`, and is `null` when `found` is `false`. `account_index` is the protocol's internal account index, `null` before the account exists.
 
-### accountMultisig
-
-The account's multisig lifecycle row. Requires `user`; the response key is `owner`.
-
-```json
-{ "type": "accountMultisig", "user": "0x0000000000000000000000000000000000000001" }
-```
-
-```json
-{
-  "query_height": 180000,
-  "app_hash": "0x...",
-  "owner": "0x0000000000000000000000000000000000000001",
-  "found": true,
-  "account_index": 93,
-  "enabled": false,
-  "role": null,
-  "threshold": null,
-  "signers": [],
-  "policy_epoch": null
-}
-```
-
-`found` reports whether the **account** exists, not whether it has a multisig row — an ordinary account answers `found: true` with `enabled: false` and the remaining fields `null`/empty. That is the normal shape; read `enabled`, not `found`, to decide whether a row is configured.
-
-When `enabled` is `true`, `signers` and `threshold` describe the current quorum and `policy_epoch` is the epoch an account-auth (v5) frame must bind. `role` is non-null only for the protocol accounts (`admin`, `accounting`) — and for exactly those the quorum is **deliberately masked**: `threshold` comes back `null` and `signers` empty even while `enabled` is `true`. A non-null `role` with an empty quorum is the masked shape, not missing data. An epoch that has moved on is rejected as `AccountMultisigEpochMismatch`.
-
-This row also decides whether the owner key may still trade directly: under the `PermanentAgentOnly` control rule, an owner holding an **Active** row must submit trading actions through an [API wallet](nonces-and-api-wallets.md#api-wallets), and a direct-owner frame is rejected pre-nonce with `AccountMultisigAgentRequired`.
-
 ### spotCreditAccount
 
 {% hint style="info" %}
