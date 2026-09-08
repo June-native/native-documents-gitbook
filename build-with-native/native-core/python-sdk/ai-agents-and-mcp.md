@@ -122,7 +122,7 @@ Every **write** result is normalized with the SDK's own helpers, so the assistan
 
 `ok` is decided by the order's own outcome, not by the transaction: when the `response` envelope is present, any error leaf means the placement did not work. A cancel result is narrower, `{ok, submission_status, error}` only.
 
-The never-resubmit contract is enforced by shape: a write whose outcome the transport could not determine comes back with `next_action = RECONCILE_BY_CLOID` and the `cloid`, and the model is pointed at `reconcile_order` — never told to resend. A gateway `timeout` body is the exception and is split by `is_safe_to_resend`: the three `Handoff*` codes report `BACKOFF_AND_RETRY`, every other timeout reports `RECONCILE_BY_CLOID`.
+The never-resubmit contract is enforced by shape: a write whose outcome the transport could not determine comes back with `next_action = RECONCILE_BY_CLOID` and the `cloid`, and the model is pointed at `reconcile_order` — never told to resend. A gateway `timeout` body is the exception and is split by `is_safe_to_resend`: the five `Handoff*` codes report `BACKOFF_AND_RETRY`, every other timeout reports `RECONCILE_BY_CLOID`.
 
 These tools are thin wrappers over the same SDK calls (`get_order` ≈ `reconcile_by_cloid`, `get_min_order_size` ≈ `min_order_size`, `preview_order` ≈ `build_order`).
 

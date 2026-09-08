@@ -57,7 +57,7 @@ Client-side conveniences on `Info`. The first three read only the market metadat
 | `snap_price(market, price, rounding=ROUND_DOWN)` | `price` rounded to the market's precision, as a wire-ready string | local — no request (cached metadata) |
 | `min_order_size(market, price, margin="1.1")` | Smallest size at `price` clearing the quote minimum notional | local — no request (cached metadata) |
 | `protection_price(market, is_buy, slippage_bps, ref_price=None)` | Worst acceptable price for a market order, derived from the book. Raises `LocalValidationError` when no book is published or the crossed side is empty | polls `l2Book` (skipped when `ref_price` is given) |
-| `wait_for_open(user, market, cloid, timeout=5.0)` | Poll until the order is resting (`open`) or terminal | polls `orderStatus` |
+| `wait_for_open(user, market, cloid, timeout=5.0)` | Poll until the order is resting (`open` **or** `partiallyfilledresting`) or terminal | polls `orderStatus` |
 | `wait_for_order(user, market, cloid, timeout=5.0)` | Poll until the order is terminal (`filled` / `cancelled` / …) | polls `orderStatus` |
 | `reconcile_by_cloid(user, market, cloid, timeout=5.0)` | One-call verdict `{state, undetermined, is_filled, filled_qty, status}` for the uncertain/timeout recovery path | polls `orderStatus` |
 
@@ -78,7 +78,7 @@ Wraps [`POST /trade`](../post-trade.md); one signed action per call. `Exchange` 
 | `cancel(market, oid)` | Cancels one order by server order id | `cancel` |
 | `cancel_by_cloid(market, cloid)` | Cancels one order by client order id | `cancel` |
 | `cancel_all(market)` | Cancels every open order for the effective owner in one market | `cancelAll` |
-| `cancel_open(markets=None)` | Cancels every open order across markets, only where orders actually rest; returns `{market_id: TradeResponse}` | `openOrders` scan + `cancelAll` per market |
+| `cancel_open(markets=None)` | Cancels open orders across markets, only where orders actually rest; returns `{market_id: TradeResponse}`. It discovers them through one `openOrders` read, which returns **at most 500** orders by ascending `market_id` — an account above that will not be fully flattened by one call, so pass `markets=` explicitly if you rely on this as a kill switch | `openOrders` scan + `cancelAll` per market |
 | `modify(market, oid_or_cloid, replacement)` | Atomically cancels the target and places `replacement` in one action | `modify` |
 | `batch(items)` | Up to 10 mixed `order` / `cancel` / `cancelAll` / `modify` items under one nonce; echoes `cloids`. Per-leg outcomes come from `batch_legs(response)` | `batch` |
 | `set_expires_after(expires_after_ms)` | Sets the instance-level expiry threaded into every signed action (`None` to omit) | local — no request |
@@ -204,7 +204,7 @@ Read the top level of a `/trade` response. None of these can tell you whether yo
 | `is_timeout(response)` | `True` when `submission_status` is `timeout` |
 | `error_code(response)` | The rejection `error.code` string (CamelCase), or `None` |
 | `retry_after_ms(response)` | Back-off hint from `error.retry_after_ms`, or `None` |
-| `is_retryable(response)` | `True` only for `RateLimited` (never admitted, so safe to resend) |
+| `is_retryable(response)` | `True` only for `RateLimited`. `TooManyPending` and `QueryLagBackpressure` were also never admitted and are equally safe to resend — handle those yourself |
 | `is_safe_to_resend(response)` | `True` for the `HandoffTimeout` / `HandoffMultipleActive` / `HandoffBufferFull*` timeouts, which prove the transaction never reached a node |
 | `next_action(response)` | One verdict string to branch on, folding all three families together (`None` for a non-trade response) |
 
@@ -217,7 +217,7 @@ Present on an accepted write. This is the only place a per-action failure is rep
 | `is_order_failed(response)` | `True` when a leaf carries a genuine failure. Benign cancels excluded, so an unfilled IOC is not a failure |
 | `leaf_error_code(response)` | The first failing leaf's code, **lowercase** (`tick`, `lotsize`, `insufficientspotbalance`, `ioccancel`, …), or `None` |
 | `leaf_errors(response)` | Every failing leaf's code in request order, benign cancels included |
-| `is_benign_cancel(code)` | `True` for `ioccancel`, `fokcancel`, `selftradepreventioncancel`, `marketordernoliquidity`. **Takes a code string, not a response** |
+| `is_benign_cancel(code)` | `True` for `ioccancel`, `fokcancel`, `selftradepreventioncancel`, `marketordernoliquidity`. **Takes a code string, not a response.** "Benign" means the order is closed and needs no fix — it does **not** mean nothing traded. `selftradepreventioncancel` in particular can carry real fills, so read `filled_qty` before you resend anything |
 | `order_oid(response)` | The assigned order id off the write itself, or `None` |
 | `fill(response)` | The first `filled` leaf — `{total_sz, avg_px, oid}` as display strings — or `None` when nothing filled |
 | `batch_legs(response)` | One sub-envelope per batch leg, in request order, so leg *N*'s outcome is `legs[N]["status"]`. Empty for a non-batch |
@@ -243,8 +243,8 @@ Present on an accepted write. This is the only place a per-action failure is rep
 | `next_action` | Situation | What to do |
 | --- | --- | --- |
 | `USE_RESPONSE_OUTCOME` | accepted, the order worked | Nothing more. The `oid` and the fill are already on the response |
-| `ORDER_CLOSED_UNFILLED` | accepted, benign cancel | Nothing more. The order is over and nothing filled |
-| `FIX_AND_RESUBMIT` | accepted but the order failed, or a rejection other than `RateLimited` | Fix the input or the account state. There is nothing to reconcile; what you send next is a fresh order |
+| `ORDER_CLOSED_UNFILLED` | accepted, benign cancel | The order is over and needs no fix. Read `filled_qty` before resending — a `selftradepreventioncancel` may have swept real fills before it stopped |
+| `FIX_AND_RESUBMIT` | accepted but the order failed, or a rejection other than the resend-safe ones (`RateLimited`, `TooManyPending`, `QueryLagBackpressure`) | Fix the input or the account state. There is nothing to reconcile; what you send next is a fresh order |
 | `BACKOFF_AND_RETRY` | `RateLimited`, or a `Handoff*` timeout — never reached a node | Sleep `retry_after_ms`, then resend the **same** `cloid` |
 | `RECONCILE_BY_CLOID` | a timeout that is not safe to resend | `reconcile_by_cloid`; **never** resubmit under a fresh nonce |
 | `READ_ORDER_STATUS` | accepted with no `response` envelope at all | Read `order_status` once. Only an API older than the release that reports outcomes inline answers this way |
@@ -296,7 +296,7 @@ from native_core import Exchange
 
 exchange = Exchange.from_bundle(
     "bundle.json",
-    timeout=10,
+    timeout=30,
     trace_id_factory=lambda: str(uuid.uuid4()),
     on_response=lambda path, status, body, ms, trace_id: print(path, status, ms, trace_id),
 )
@@ -312,7 +312,7 @@ Exposed under `native_core.constants`.
 | --- | --- | --- |
 | `MAINNET_API_URL` | `https://api.native.org` | Mainnet base URL |
 | `TESTNET_API_URL` | `https://api-test.native.org` | Testnet base URL |
-| `MAINNET_CHAIN_ID` | `696969` | Signed into every action; a key signed for one network is rejected on the other with `WrongChainId` |
+| `MAINNET_CHAIN_ID` | `696969` | Signed into every action but never sent on the wire, so signing for the wrong network does not report a chain-id error — it recovers a different address and comes back as `OwnerDoesNotExist` |
 | `TESTNET_CHAIN_ID` | `969696` | As above |
 | `NETWORK_URLS` | network name → endpoint URL | The bundle's `network` field maps through this |
 | `resolve_chain_id(base_url)` | chain id, or `None` | `None` for a URL that is not one of the two public endpoints |

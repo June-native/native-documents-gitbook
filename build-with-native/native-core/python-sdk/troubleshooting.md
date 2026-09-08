@@ -97,7 +97,7 @@ For crash safety, generate the `cloid` yourself with `Exchange.random_cloid()`, 
 
 ## Retry only on RateLimited
 
-`RateLimited` is the only **rejection** that is safe to resend, because it was never admitted. Resend the *same* signed request, which means a fixed `cloid` — `order()` mints a new one on every call, so a bare re-call is a different order, not a retry:
+`RateLimited` is safe to resend because it was never admitted. So are `TooManyPending` and `QueryLagBackpressure`, for the same reason; the SDK's `is_retryable` only covers `RateLimited`, so handle those two yourself. Resend the *same* signed request, which means a fixed `cloid` — `order()` mints a new one on every call, so a bare re-call is a different order, not a retry:
 
 ```python
 import time

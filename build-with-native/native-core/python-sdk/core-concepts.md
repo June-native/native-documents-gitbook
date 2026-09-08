@@ -53,7 +53,7 @@ else:
     filled = fill(resp)                           # {total_sz, avg_px, oid}, or None
 ```
 
-The `oid` and the fill ride back on the response, so the ordinary path costs **no** `/info` read. Reads are capped at one per second per client IP ([rate limits](../api-access.md#rate-limits-errors)), which is what makes that worth doing.
+The `oid` and the fill ride back on the response, so the ordinary path costs **no** `/info` read. Reads default to one per second per client IP (the rate is configurable per integration — see [API access](../api-access.md#rate-limits-errors)) ([rate limits](../api-access.md#rate-limits-errors)), which is what makes that worth doing.
 
 You still need a read to follow an order's later life, such as a resting bid that fills minutes after you placed it. Pick the wait that matches the order's time-in-force:
 
@@ -77,7 +77,7 @@ Reconcile in one situation only: **the response never told you what happened.** 
 Three things raise it:
 
 * a transport failure over HTTP
-* a **5xx** answer to a write sent over the WebSocket
+* a **5xx** answer to a write sent over the WebSocket — but not every 5xx: `PlaceOrderSuspended` and `TooManyPending` are 503s that never executed, and are as determinate as a 4xx. Only the routing timeouts (`Handoff*`, `NodeUnreachable`) are genuinely unknown
 * a connection that dies before the answer arrives
 
 A 4xx over the WebSocket raises `ClientError` instead. It cannot have executed.
