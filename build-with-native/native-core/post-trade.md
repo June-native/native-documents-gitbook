@@ -104,7 +104,7 @@ Response envelope:
 `submission_status` answers **"did the transaction land?"**, and it has exactly three values:
 
 * `accepted` — the transaction landed and reached execution. There is no top-level `error`. **This does not mean the order succeeded** — see [what `accepted` carries](#what-accepted-carries) below.
-* `rejected` — the write never reached execution: request-shaping, rate limit, expiry, place-order suspension, or node admission. `error.code` carries the reason; `tx_hash` is present once canonical bytes exist. Six envelope-level execution failures also land here — `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `invalidbatchlength`, `featuredisabled` — returned in their CamelCase display form (`BadNonce`, `BadSignature`, `ExpiredTx`, `MalformedTx`, `InvalidBatchLength`, `FeatureDisabled`).
+* `rejected` — the write never reached execution: request-shaping, rate limit, expiry, place-order suspension, or a check before inclusion. `error.code` carries the reason; `tx_hash` is present once canonical bytes exist. Six envelope-level execution failures also land here — `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `invalidbatchlength`, `featuredisabled` — returned in their CamelCase display form (`BadNonce`, `BadSignature`, `ExpiredTx`, `MalformedTx`, `InvalidBatchLength`, `FeatureDisabled`).
 * `timeout` — the outcome was not observed within the 3-second budget, or the submission could not be routed. Whether it can still land depends on the code — see [timeout](#timeout-can-it-still-land).
 
 ### What `accepted` carries
@@ -417,9 +417,9 @@ Clients should use the current Unix millisecond timestamp for `withdraw_nonce` a
 
 Withdraw consumes a windowed-unique business nonce with 3-day retention: a nonce at/below the pruned floor or already retained for its account window is rejected (`WithdrawDuplicateNonce`). A failed withdraw burns the envelope `nonce` but not the business nonce, so a retry reuses the business nonce under a new envelope `nonce`.
 
-Node admission also fail-fast rejects withdraw actions that the current committed state already proves invalid: missing accounting config, missing asset/config, invalid account shape, duplicate committed business nonce, withdraw amount/fee/minimum failures, or insufficient withdraw cash. Once a withdraw is accepted into ingress, its business nonce is also held in a live-only pending overlay, so a concurrent replay of the same business nonce is rejected before block inclusion. This overlay is not canonical state and is retired after the accepted transaction's result publishes to QueryView.
+These are also rejected before inclusion when the current committed state already proves them invalid: missing accounting config, missing asset/config, invalid account shape, duplicate committed business nonce, withdraw amount/fee/minimum failures, or insufficient withdraw cash. Once a withdraw is accepted into ingress, its business nonce is also held in a live-only pending overlay, so a concurrent replay of the same business nonce is rejected before block inclusion. This overlay is not canonical state and is retired after the accepted transaction's result publishes to QueryView.
 
-Parse errors include `MissingCloid` and `InvalidCloid`. Historical WAL records encoded before this field existed still replay without a cloid and are not queryable by `txStatusByCloid`.
+Parse errors include `MissingCloid` and `InvalidCloid`. Older records written before this field existed still replay without a cloid and are not queryable by `txStatusByCloid`.
 
 ### settle
 
@@ -448,7 +448,7 @@ Requires `auth_scheme:"eip712"`. See [EIP-712 signing](transaction-signing.md#ei
 
 Parse errors: `MissingCloid` (cloid absent), `InvalidCloid` (not 16 bytes), `InvalidCashAccount` (not a 20-byte hex address), `InvalidAssetId`. Execution errors include `InvalidSettle` (signer not a credit account, `cash_account` missing/credit, zero amount, no settleable long, or over-settle), `SpotCreditAccountFrozen` (frozen signer), `OracleMarkPriceMissing` (a residual nonzero-net asset lacks a fresh mark), and `InsufficientSpotCredit` (post `available_usd < 0`). A full settle that clears the asset's net to zero needs no mark.
 
-Node admission may return these same settle errors before block inclusion when the current committed state already proves the settle invalid. Execution remains authoritative for any transaction accepted into ingress.
+These same settle errors can come back before block inclusion when the current committed state already proves the settle invalid. Execution remains authoritative for any transaction accepted into ingress.
 
 ### repay
 
@@ -473,7 +473,7 @@ Requires `auth_scheme:"eip712"`. See [EIP-712 signing](transaction-signing.md#ei
 
 Parse errors: `MissingCloid`, `InvalidCloid`, `InvalidMarginAccount`, `InvalidAssetId`. Execution errors include `InvalidRepay` (signer is a credit account, `margin_account` missing/non-credit, zero amount, no short, or over-repay past zero) and `InsufficientSpotBalance` (signer's cash is too low).
 
-Node admission may return these same repay errors before block inclusion when the current committed state already proves the repay invalid. Execution remains authoritative for any transaction accepted into ingress.
+These same repay errors can come back before block inclusion when the current committed state already proves the repay invalid. Execution remains authoritative for any transaction accepted into ingress.
 
 Settle/repay carry **no** business nonce and provide **no** idempotency: the `cloid` is used only for `txStatusByCloid` lookups within the recent query window (see [txStatusByCloid](post-info.md#txstatusbycloid)). The envelope `nonce` is the only replay protection — the same `cloid` resubmitted under a new envelope `nonce` is a distinct transaction. The lookup is keyed on the **recovered signer** (settle → margin owner; repay → cash owner); a counterparty cannot find the tx by `cloid`.
 
@@ -504,7 +504,7 @@ Parse errors: `InvalidAgentSlot` (slot outside `0`–`3`), `InvalidAgent` (not a
 
 ### revokeAgent
 
-Clears the agent approval on one owner slot. **Owner-signed** under `auth_scheme:"eip712"`, same constraints as `approveAgent` (no `agent_epoch`, single signature, not batchable). After revocation, agent-signed writes from that key are rejected by node admission.
+Clears the agent approval on one owner slot. **Owner-signed** under `auth_scheme:"eip712"`, same constraints as `approveAgent` (no `agent_epoch`, single signature, not batchable). After revocation, writes signed by that key are rejected with `UnknownAgent`.
 
 | Field     | Required | Values                    |
 | --------- | -------- | ------------------------- |

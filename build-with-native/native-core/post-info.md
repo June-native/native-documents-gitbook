@@ -75,7 +75,7 @@ Returns public query-view metadata and the retained recent-height window. This i
 }
 ```
 
-When no query view is available yet, all fields are `null`.
+All fields are `null` until the node has state to answer from.
 
 ### quoteAssets
 
@@ -281,7 +281,7 @@ Per-user retained withdraw records (3-day window), sorted by `(block_height, tx_
 
 Per-user retained deposit records. Requires `user`; the response key is `user`.
 
-**This is a projection of the replay-protection window, not a deposit archive — an empty `deposits` array does not mean the account never deposited.** The window retains records by committed block timestamp for three days, and pruning is lazy: it is materialised when a new record is written into the same window. Deposit windows are keyed by `(src_chain_id, src_contract)` and therefore **shared across every account depositing through that contract**, so anyone's deposit prunes everyone's expired records — in practice the window holds close to exactly the last three days. Withdrawals prune the same way but their windows are keyed per account, so a low-frequency account's own withdrawals can stay visible far longer than three days; do not read that asymmetry as a guarantee.
+**This is a view of the replay-protection window, not a deposit archive — an empty `deposits` array does not mean the account never deposited.** The window retains records by committed block timestamp for three days, and pruning is lazy: it is materialised when a new record is written into the same window. Deposit windows are keyed by `(src_chain_id, src_contract)` and therefore **shared across every account depositing through that contract**, so anyone's deposit prunes everyone's expired records — in practice the window holds close to exactly the last three days. Withdrawals prune the same way but their windows are keyed per account, so a low-frequency account's own withdrawals can stay visible far longer than three days; do not read that asymmetry as a guarantee.
 
 For deposit or withdrawal history beyond that, join on `tx_hash` from the [explorer](https://app.native.org/explorer) rather than treating these endpoints as a ledger.
 
@@ -671,7 +671,7 @@ Order-validation failures write no status record at all. Tick size, minimum noti
 
 A partially filled order that is still on the book reports `status: "partiallyfilledresting"`, not `"open"` — match on both if you are testing for "still working".
 
-For an in-flight order — a `/trade` you just sent — you do **not** poll `orderStatus` to learn the outcome: the synchronous `/trade` response already carries it in its [`response` envelope](post-trade.md#what-accepted-carries). A just-submitted tx that the query view has not yet advanced to reads back `found: false` here until its block is published.
+For an in-flight order — a `/trade` you just sent — you do **not** poll `orderStatus` to learn the outcome: the synchronous `/trade` response already carries it in its [`response` envelope](post-trade.md#what-accepted-carries). A just-submitted transaction reads back `found: false` here until its block is published.
 
 Open order response:
 

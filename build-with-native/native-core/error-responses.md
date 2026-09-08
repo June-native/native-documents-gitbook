@@ -21,7 +21,7 @@ There are exactly three values.
 | `submission_status` | When | Do next |
 | --- | --- | --- |
 | `accepted` | The **transaction** landed and executed. For an order that covers rested, filled, a benign IOC/FOK/self-trade/no-liquidity cancel, **and a genuine per-action failure whose code sits in a `response` leaf**; for a non-order action it committed. No top-level `error` in any of those cases. | Not done — read `response.status` before you trust it. The leaf says what happened to the order: `filled` carries `total_sz`, `avg_px` and the `oid`; `open` and `cancelled` carry the `oid` and `cloid`; an `{"error": …}` leaf carries only the code. |
-| `rejected` | The write was refused — request-shaping, gateway (rate limit / suspension / expiry), node admission — **or** it failed at execution. `error.code` says why; `tx_hash` is present once canonical bytes exist. | If `RateLimited`, back off `error.retry_after_ms` and resend the same signed action. Otherwise fix the cause and submit a **fresh** action. |
+| `rejected` | The write was refused — request-shaping, gateway (rate limit / suspension / expiry), or a check before inclusion — **or** it failed at execution. `error.code` says why; `tx_hash` is present once canonical bytes exist. | If `RateLimited`, back off `error.retry_after_ms` and resend the same signed action. Otherwise fix the cause and submit a **fresh** action. |
 | `timeout` | The outcome wasn't observed within the 3-second wait budget, or the submission couldn't be routed to a node. | Depends on `error.code` — the `Handoff*` family (503) never reached a node, so resubmit rather than lose the write; everything else may still land, so reconcile by `cloid` and **never** resubmit under a new nonce. |
 
 {% hint style="warning" %}
@@ -45,7 +45,7 @@ Every `error.code` comes from one of four layers, and the **spelling tells you w
 | --- | --- | --- | --- | --- |
 | Request-shaping | `CamelCase` | `InvalidJson`, `InvalidQuantityPrecision`, `MissingCloid` | 400 | `rejected` (no `tx_hash`) |
 | Gateway | `CamelCase` | `RateLimited`, `PlaceOrderSuspended`, `ExpiredTx`, `HandoffTimeout`, `NodeUnreachable` | 429 / 503 / 504 / 200 | `rejected` or `timeout` |
-| Node admission | `CamelCase`, verbatim from the node | `MinTradeSpotNtl`, `DuplicateCloid`, `InsufficientSpotBalance`, `AccountFrozen` | 200 | `rejected` |
+| Checked before inclusion | `CamelCase` | `MinTradeSpotNtl`, `DuplicateCloid`, `InsufficientSpotBalance`, `AccountFrozen` | 200 | `rejected` |
 | Execution — order-ish | lowercase (the variant name) | `tick`, `insufficientspotbalance`, | 200 | `accepted`, code in the `response` leaf |
 | Execution — envelope | CamelCase display form | `BadNonce`, `BadSignature`, `ExpiredTx` | 200 | `rejected` |
 
@@ -60,7 +60,7 @@ The wire carries `error.code`, not display copy — the **Message** column is il
 | `RateLimited` | Over quota on either limiter, never admitted. HTTP `429`, carries `error.retry_after_ms`. **`tx_hash` tells them apart**: the per-IP budget (1 req/s) is enforced before the body is parsed, so the reply has no `tx_hash`; the per-signer rate (1000 req/s) is enforced after canonicalization, so it does. | "Too many requests — retrying shortly." | Back off `retry_after_ms`, then resend the same signed action. The only safe resend. |
 | `PlaceOrderSuspended` | The write path is degraded, so order placement is suspended: `order`, `modify`, and any `batch` that contains a non-cancel item are refused. Only `cancel` / `cancelAll` — and a `batch` whose **every** item is `cancel` / `cancelAll` — still go through; an empty `batch` is also refused. HTTP `503`, `error.retry_after_ms: 1000`. | "Placing orders is paused — try again shortly." | Back off and retry; keep cancelling if you need to reduce exposure. |
 | `HandoffTimeout` / `HandoffBufferFullRequestCount` / `HandoffBufferFullBytes` / `HandoffBufferFullSigner` / `HandoffMultipleActive` (`timeout`) | The submission couldn't be routed to a single writable node (leadership handoff / backpressure). `submission_status: "timeout"`, HTTP `503`, `error.retry_after_ms: 1000`. No node accepted it. | "Reconnecting — retrying your order." | Back off `retry_after_ms` and resubmit, rather than losing the write for the whole handoff. Reconcile by `cloid` first if a duplicate would be costly — see [submission_status](#submission_status). |
-| `NodeUnreachable` (`timeout`) | Node admission couldn't be reached; `submission_status: "timeout"`, HTTP `504`. The action may still land. | "Order submitted — confirming status." | Reconcile by `cloid`; never resubmit under a new nonce. |
+| `NodeUnreachable` (`timeout`) | The transaction could not be delivered to the chain; `submission_status: "timeout"`, HTTP `504`. The action may still land. | "Order submitted — confirming status." | Reconcile by `cloid`; never resubmit under a new nonce. |
 | `MinTradeSpotNtl` | Order, modify replacement, or batch item is below the market's quote-asset minimum notional. Market orders use their protection price. | "Order must have a minimum value of 10 USDC." | Size up so `price × quantity` clears the minimum. |
 | `InvalidPricePrecision` / `InvalidQuantityPrecision` | `price` / `quantity` has more fractional digits than the market's `price_decimals` / `base_quantity_decimals`. | "Price has too many decimal places for this market." | Snap to market precision before signing; send strings, never floats. |
 | `DuplicateCloid` | The `cloid` is already open for this owner and market, or the tx repeats a `(market_id, cloid)`. | "An order with this ID already exists." | Use a fresh `cloid` per order. When reconciling a `timeout`, look the existing one up — don't resend. |
@@ -122,8 +122,8 @@ Request-shaping and gateway errors:
 | `LegacySignatureNotAccepted` | A legacy (`auth_scheme` absent or `"legacy"`) signature was sent for an EIP-712 cutover action (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`, or an operator `deposit`/`admin*`). These require `auth_scheme:"eip712"`. |
 | `Eip712NotAllowedForAction` | `auth_scheme:"eip712"` was sent for a non-target action; only legacy is accepted for those. |
 | `Eip712AgentEpochNotAllowed` | An `auth_scheme:"eip712"` request carried `agent_epoch`, which EIP-712 forbids. |
-| `UnknownMarket` | The request referenced a market that is not in the current query view's market metadata. |
-| `UnknownAsset` | The request referenced an asset that is not in the current query view's asset metadata. |
+| `UnknownMarket` | The request referenced a market that does not exist. |
+| `UnknownAsset` | The request referenced an asset that does not exist. |
 | `InvalidMarketId` | A market id was a valid `u64` JSON value but exceeded the protocol `u32` range. |
 | `InvalidAssetId` | An asset id was a valid `u64` JSON value but exceeded the protocol `u32` range. |
 | `InvalidDstAddress` | `withdraw.dst_address` was not a 20-byte hex address. |
@@ -149,9 +149,9 @@ Request-shaping and gateway errors:
 | `PlaceOrderSuspended` | Order placement is suspended while the write path is degraded. Admitted: `cancel`, `cancelAll`, and a `batch` whose **every** item is `cancel` / `cancelAll`. Refused: `order`, `modify`, any `batch` that mixes in a non-cancel item, and an empty `batch`. HTTP `503`, `retry_after_ms: 1000`. |
 | `ExpiredTx` | The envelope's `expires_after_ms` was already past at the gateway clock; fast-failed before the node hop. HTTP `200`, `submission_status: "rejected"`. |
 | `HandoffTimeout` / `HandoffBufferFullRequestCount` / `HandoffBufferFullBytes` / `HandoffBufferFullSigner` / `HandoffMultipleActive` | The submission could not be routed to a single writable node (leadership handoff / backpressure). HTTP `503`, `submission_status: "timeout"`, `retry_after_ms: 1000`. |
-| `NodeUnreachable` | The submit path could not complete node admission. HTTP `504`, `submission_status: "timeout"`. |
+| `NodeUnreachable` | The transaction could not be delivered to the chain. HTTP `504`, `submission_status: "timeout"`. |
 
-Node admission pass-through errors:
+Errors returned before the transaction is included in a block:
 
 | Code | Meaning |
 | --- | --- |
