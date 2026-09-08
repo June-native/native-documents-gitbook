@@ -506,7 +506,7 @@ Branch accordingly, and do not treat 5xx as one bucket:
 | String | Executed? | Do |
 | --- | --- | --- |
 | any **4xx** | Never | Fix it and send again |
-| `PlaceOrderSuspended`, `TooManyPending` (503) | Never | Honour the `retry_after_ms` and resend |
+| `PlaceOrderSuspended`, `TooManyPending` (503) | Never | Back off and resend — no `retry_after_ms` is delivered over the socket |
 | `Handoff*` (503), `NodeUnreachable` (504) | **Unknown** | Reconcile by `cloid`. Do **not** resubmit under a fresh nonce | Submit over `POST /trade` when you need the full outcome; see [Handle outcomes & timeouts](handle-timeouts.md).
 {% endhint %}
 
@@ -553,7 +553,8 @@ Reconnect on disconnect, always. The server may drop a connection without warnin
 | Inbound messages per connection | 2000 / minute | not yet — counted only |
 | In-flight `post` requests per IP | 1 | yes |
 | `post` request rate per IP | 1/second `info`, 1/second `action` | yes |
-| Message size, either direction | 64 KiB | yes |
+| Message size, inbound | 64 KiB | yes |
+| Message size, outbound | not capped | — |
 
 The connection caps are being measured against real traffic before they start refusing. **Design to them anyway** — one connection carrying every subscription — because they will be enforced, and a client built on many sockets breaks when they are.
 

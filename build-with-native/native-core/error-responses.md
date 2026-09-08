@@ -79,7 +79,7 @@ A [`batch`](post-trade.md#batch) is one `/trade` call under one envelope nonce, 
 An admitted action still runs against the book and **can fail at execution**. Because `/trade` is synchronous, that failure comes back on the `/trade` response — but **where** it appears depends on the action, and getting this wrong reads a failed order as a success.
 
 * **Order-ish actions** (`order`, `cancel`, `cancelAll`, `modify`, `batch`) stay `submission_status: "accepted"` with **no** top-level `error`. The code appears only as a leaf inside the [`response` envelope](post-trade.md#what-accepted-carries), as `{"error":"<code>"}`. How deep that leaf sits follows the action: `response.status.error` for an `order`, `cancel`, or `modify`; `response.statuses[i].error` for a `cancelAll`; `response.statuses[i].status.error` for a [`batch`](post-trade.md#batch) item. This covers `insufficientspotbalance`, `mintradespotntl`, `tick`, `missingorder`, and the rest.
-* **Non-order actions** (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`) do map an execution failure to `submission_status: "rejected"` with a top-level `error.code`.
+* **Non-order actions** (`transfer` / `activateFor` / `withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`) do map an execution failure to `submission_status: "rejected"` with a top-level `error.code`.
 * **Six envelope-level failures** demote any action to `rejected` because they invalidate the transaction itself: `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `invalidbatchlength`, `featuredisabled`. These surface in their CamelCase display form — `BadNonce`, `BadSignature`, and so on.
 
 {% hint style="warning" %}
@@ -91,7 +91,8 @@ Whether you can look the order up afterwards depends on how far it got:
 
 | Leaf code | What it leaves behind |
 | --- | --- |
-| `tick` `insufficientspotbalance` `mintradespotntl` `missingorder` | **Nothing.** The leaf is the only record. Reconciling the `cloid` finds nothing and times out |
+| `tick` `insufficientspotbalance` `mintradespotntl` | A status row keyed by `cloid` with no `oid`. Reconciling the `cloid` finds it |
+| `missingorder` | **Nothing.** A cancel carries no client order intent, so there is nothing to key a row on. Reconciling finds nothing and times out |
 | `badalopx` `insufficientspotcredit` | An [`orderStatus`](post-info.md#orderstatus) row under that lowercase status, and an `orderUpdates` frame (`badAloPxRejected`) |
 | `ioccancel` `fokcancel` `selftradepreventioncancel` `marketordernoliquidity` | The same, and benign: the order simply did not fill |
 
@@ -119,7 +120,7 @@ Request-shaping and gateway errors:
 | `InvalidSignaturesLen` | The `signatures` array was empty or exceeded 32 entries. |
 | `SignaturesRequiredForAction` | A single `signature` was sent for a multisig-only action (e.g. `deposit`/ACCOUNTING, or an admin action under an active admin multisig policy). |
 | `InsufficientSignatures` | Fewer `signatures` than the required admin multisig threshold. |
-| `LegacySignatureNotAccepted` | A legacy (`auth_scheme` absent or `"legacy"`) signature was sent for an EIP-712 cutover action (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`, or an operator `deposit`/`admin*`). These require `auth_scheme:"eip712"`. |
+| `LegacySignatureNotAccepted` | A legacy (`auth_scheme` absent or `"legacy"`) signature was sent for an EIP-712 cutover action (`transfer` / `activateFor` / `withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`, or an operator `deposit`/`admin*`). These require `auth_scheme:"eip712"`. |
 | `Eip712NotAllowedForAction` | `auth_scheme:"eip712"` was sent for a non-target action; only legacy is accepted for those. |
 | `Eip712AgentEpochNotAllowed` | An `auth_scheme:"eip712"` request carried `agent_epoch`, which EIP-712 forbids. |
 | `UnknownMarket` | The request referenced a market that does not exist. |

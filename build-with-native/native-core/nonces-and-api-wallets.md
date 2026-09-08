@@ -16,12 +16,12 @@ Writes are authorized by an **API wallet**: a protocol-level *agent* key scoped 
 
 You create one by generating an agent keypair locally and authorizing it with a single owner-signed `approveAgent` — sign it with your **main wallet** directly against the API, or let the **[Native web app](https://app.native.org/markets/ETH-USDT?agentWallets=agents)** do it and hand you a one-time **connection bundle** with the agent key. Deposit from your main wallet to create the trading account first. See [API Access](api-access.md#access-model-api-wallets) for the full flow and the bundle shape; revoke or rotate the agent any time.
 
-Anything that moves value or manages agents is **owner-signed** and outside the API wallet's reach: `withdraw`, `settle`, `repay`, and the agent-lifecycle `approveAgent` / `revokeAgent` must be signed by your **main wallet** under `auth_scheme:"eip712"`. These *are* real `/trade` action types — the API accepts them directly — but the API-wallet (agent) key cannot sign them; sign them with your **main wallet**, directly against the API or through the web app. The API wallet's allowlist is exactly `order`, `cancel`, `cancelAll`, `modify`, and `batch`.
+Anything that moves value or manages agents is **owner-signed** and outside the API wallet's reach: `transfer`, `activateFor`, `withdraw`, `settle`, `repay`, and the agent-lifecycle `approveAgent` / `revokeAgent` must be signed by your **main wallet** under `auth_scheme:"eip712"`. These *are* real `/trade` action types — the API accepts them directly — but the API-wallet (agent) key cannot sign them; sign them with your **main wallet**, directly against the API or through the web app. The API wallet's allowlist is exactly `order`, `cancel`, `cancelAll`, `modify`, and `batch`.
 
 | Concept | Web app label | Signs | Can move funds? |
 | --- | --- | --- | --- |
 | **Agent** — API wallet | *API wallet* | `order` · `cancel` · `cancelAll` · `modify` · `batch` (legacy) | No |
-| **Owner** — trading account | *Account* | `withdraw` · `settle` · `repay` · `approveAgent` · `revokeAgent` (EIP-712) | Yes |
+| **Owner** — trading account | *Account* | `transfer` · `activateFor` · `withdraw` · `settle` · `repay` · `approveAgent` · `revokeAgent` (EIP-712) | Yes |
 
 The API-wallet setup and connection-bundle shape are on the API access page. If you integrate with the Python SDK, its quickstart walks the same web-app setup click-by-click.
 

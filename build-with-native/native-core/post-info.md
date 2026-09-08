@@ -164,14 +164,13 @@ When a policy is set:
   "policy": {
     "scope": 2,
     "scope_name": "ACCOUNTING",
-    "threshold": 2,
-    "signers": [
-      "0x1111111111111111111111111111111111111111",
-      "0x2222222222222222222222222222222222222222"
-    ]
+    "threshold": null,
+    "signers": []
   }
 }
 ```
+
+`threshold` and `signers` are always `null` and `[]` on this endpoint — the keys are present so the shape is stable, but the quorum itself is not published. Use `found` to learn whether a policy exists at all.
 
 When none is set, `found` is `false` and the body echoes `scope` / `scope_name` instead of `policy`.
 
@@ -382,11 +381,16 @@ Whether an account exists and its freeze state.
   "credit_usd_atoms": 100000000000,
   "available_usd_atoms": "99850000000",
   "last_known_available_usd_atoms": "99850000000",
-  "oracle_status": { "status": "available" }
+  "oracle_status": { "status": "available" },
+  "credit_trading_whitelisted_market_ids": ["35"]
 }
 ```
 
-`status` is `"active"` or `"frozen"`. `credit_usd_atoms` and the available fields are in `usd_atoms` (`USD_SCALE = 10^8`). `available_usd_atoms` is `null` when any nonzero position asset lacks a mark at the latest query height; accounts with no exposure can report their credit without marks. `last_known_available_usd_atoms` always uses the most recently committed marks regardless of staleness and is `null` only when a position asset has never had a mark. Negative fractional USD-atom position values are rounded down conservatively, matching the execution credit gate.
+`credit_trading_whitelisted_market_ids` is always present. Its entries are market ids **as strings**, unlike every other market id in the API — compare them as strings.
+
+For an owner with no credit line the response still returns every key, but `authorized` is `false` and `status`, `credit_usd_atoms`, `available_usd_atoms` and `last_known_available_usd_atoms` are all `null`. This is the common case, so type these four as nullable.
+
+`status` is `"active"`, `"frozen"`, or `null`. `credit_usd_atoms` and the available fields are in `usd_atoms` (`USD_SCALE = 10^8`). `available_usd_atoms` is `null` when any nonzero position asset lacks a mark at the latest query height; accounts with no exposure can report their credit without marks. `last_known_available_usd_atoms` always uses the most recently committed marks regardless of staleness and is `null` only when a position asset has never had a mark. Negative fractional USD-atom position values are rounded down conservatively, matching the execution credit gate.
 
 ### spotCreditPositions
 
@@ -551,7 +555,7 @@ This listing is deliberately lean. To read back how an order was placed — its 
 `limit` must be positive and is capped at `max_limit` (500). Two different failure shapes, and the difference matters to your parser:
 
 * A `limit` that is **missing, non-numeric, or beyond `u32`** is rejected with **HTTP 400** and `InvalidFillsQuery` — there is no `fills` key at all.
-* A `limit` of `0`, a `from_height` above `to_height`, or a range wider than the recent window returns **HTTP 200** with an in-band `error` object (`InvalidFillsQuery` or `HistoryWindowExceeded`) and an empty `fills` array. On success the response echoes the effective `limit`, your `requested_limit`, and `max_limit`.
+* A `limit` of `0`, a `from_height` above `to_height`, or a range wider than the recent window returns **HTTP 200** with an in-band `error` object (`InvalidFillsQuery`) and an empty `fills` array. A range that is short enough but starts *below* the retained window returns `HistoryWindowExceeded` instead, in the same shape — read `error.code`, not just the presence of `error`. On success the response echoes the effective `limit`, your `requested_limit`, and `max_limit`.
 
 ```json
 {
@@ -665,7 +669,7 @@ Query by client order id:
 }
 ```
 
-`orderStatus` checks the current open-order view, then falls back to the latest retained status record for that `oid` or `(user, market_id, cloid)`. Status records are action-result records, not a complete lifecycle stream: a successful incoming order writes one record even when it rests on the book, but later passive maker fills are exposed through `userFills` and open-order state changes rather than a new status record for the maker order. Explicit cancel and modify actions do write status records for the affected resting order. Outcome-stage failed order attempts also write retained status records when execution has enough order context: `IocCancel`, `FokCancel`, `BadAloPx`, `MarketOrderNoLiquidity`, and `InsufficientSpotCredit` can be queried by `oid` or `(user, market_id, cloid)` inside the recent query window.
+`orderStatus` checks the current open-order view, then falls back to the latest retained status record for that `oid` or `(user, market_id, cloid)`. Status records are action-result records, not a complete lifecycle stream: a successful incoming order writes one record even when it rests on the book, but later passive maker fills are exposed through `userFills` and open-order state changes rather than a new status record for the maker order. Explicit cancel and modify actions do write status records for the affected resting order. Outcome-stage failures inside a **`batch`** also write retained status records when execution has enough order context: `ioccancel`, `fokcancel`, `badalopx`, `marketordernoliquidity`, and `insufficientspotcredit` can be queried by `oid` or `(user, market_id, cloid)` inside the recent query window. A **single** `order` action that fails this way writes no such record — the whole transaction fails, and the outcome is only in the synchronous [`POST /trade`](post-trade.md) response.
 
 Order-validation failures write no status record at all. Tick size, minimum notional, and insufficient balance are checked *before* the order is assigned an order id, so there is nothing to look up: they are reported only on the synchronous [`POST /trade`](post-trade.md) response. This is the same `found: false` you get for a tx whose block is not published yet, so `orderStatus` alone cannot tell a refused order from one still in flight — read the `/trade` response.
 
