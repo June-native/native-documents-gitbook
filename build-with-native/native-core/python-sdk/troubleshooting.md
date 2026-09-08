@@ -91,7 +91,7 @@ except SubmissionUncertain as e:
         ...   # resting, unfilled (verdict["state"], e.g. "open")
 ```
 
-The same applies when `order()` returns `submission_status: "timeout"` rather than raising — **with one exception**. `is_safe_to_resend(resp)` is `True` for `HandoffTimeout`, `HandoffMultipleActive` and `HandoffBufferFull:*`, which prove the transaction never reached a node: back off by `retry_after_ms(resp)` and send the same `cloid` again. Treating those as indeterminate silently discards orders that were safe to resend.
+The same applies when `order()` returns `submission_status: "timeout"` rather than raising — **with one exception**. `is_safe_to_resend(resp)` is `True` for `HandoffTimeout`, `HandoffMultipleActive` and `HandoffBufferFull*`, which prove the transaction never reached a node: back off by `retry_after_ms(resp)` and send the same `cloid` again. Treating those as indeterminate silently discards orders that were safe to resend.
 
 For crash safety, generate the `cloid` yourself with `Exchange.random_cloid()`, persist `{intent, cloid}` **before** calling `order(..., cloid=cloid)`, and resolve every persisted cloid on restart — `info.batch_order_status([...])` settles up to 20 in one read.
 

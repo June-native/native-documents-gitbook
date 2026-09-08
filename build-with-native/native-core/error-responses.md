@@ -33,9 +33,9 @@ A `timeout` has three shapes, and only one of them is safe to resubmit:
 | `error.code` | HTTP | Reached a node? | Do next |
 | --- | --- | --- | --- |
 | *(none)* — the wait budget elapsed | 200 | Yes, it is executing | Reconcile by `cloid` |
-| `HandoffBufferFull:*` | 503 | No — refused before any submission was attempted | Resubmit; nothing was delivered |
+| `HandoffBufferFull*` | 503 | No — refused before any submission was attempted | Resubmit; nothing was delivered |
 | `HandoffTimeout` / `HandoffMultipleActive` | 503 | No — no writable node accepted it | Resubmit; reconcile first if a duplicate would be costly |
-| `node_unreachable: …` | 504 | Unknown — the connection broke mid-submission | Reconcile by `cloid` |
+| `NodeUnreachable` | 504 | Unknown — the connection broke mid-submission | Reconcile by `cloid` |
 
 ## Where a code comes from
 
@@ -43,8 +43,8 @@ Every `error.code` comes from one of four layers, and the **spelling tells you w
 
 | Layer | Style | Examples | HTTP | `submission_status` |
 | --- | --- | --- | --- | --- |
-| Request-shaping | lowercase `snake_case` | `invalid_json`, `invalid_quantity_precision`, `missing_cloid` | 400 | `rejected` (no `tx_hash`) |
-| Gateway | `CamelCase` / prefixed | `RateLimited`, `PlaceOrderSuspended`, `ExpiredTx`, `HandoffTimeout`, `node_unreachable: …` | 429 / 503 / 504 / 200 | `rejected` or `timeout` |
+| Request-shaping | `CamelCase` | `InvalidJson`, `InvalidQuantityPrecision`, `MissingCloid` | 400 | `rejected` (no `tx_hash`) |
+| Gateway | `CamelCase` | `RateLimited`, `PlaceOrderSuspended`, `ExpiredTx`, `HandoffTimeout`, `NodeUnreachable` | 429 / 503 / 504 / 200 | `rejected` or `timeout` |
 | Node admission | `CamelCase`, verbatim from the node | `MinTradeSpotNtl`, `DuplicateCloid`, `InsufficientSpotBalance`, `AccountFrozen` | 200 | `rejected` |
 | Execution — order-ish | lowercase (the variant name) | `tick`, `insufficientspotbalance`, `lotsize` | 200 | `accepted`, code in the `response` leaf |
 | Execution — envelope | CamelCase display form | `BadNonce`, `BadSignature`, `ExpiredTx` | 200 | `rejected` |
@@ -59,10 +59,10 @@ The wire carries `error.code`, not display copy — the **Message** column is il
 | --- | --- | --- | --- |
 | `RateLimited` | Over quota on either limiter, never admitted. HTTP `429`, carries `error.retry_after_ms`. **`tx_hash` tells them apart**: the per-IP budget (1 req/s) is enforced before the body is parsed, so the reply has no `tx_hash`; the per-signer rate (1000 req/s) is enforced after canonicalization, so it does. | "Too many requests — retrying shortly." | Back off `retry_after_ms`, then resend the same signed action. The only safe resend. |
 | `PlaceOrderSuspended` | The write path is degraded, so order placement is suspended: `order`, `modify`, and any `batch` that contains a non-cancel item are refused. Only `cancel` / `cancelAll` — and a `batch` whose **every** item is `cancel` / `cancelAll` — still go through; an empty `batch` is also refused. HTTP `503`, `error.retry_after_ms: 1000`. | "Placing orders is paused — try again shortly." | Back off and retry; keep cancelling if you need to reduce exposure. |
-| `HandoffTimeout` / `HandoffBufferFull:{request_count\|bytes\|signer}` / `HandoffMultipleActive` (`timeout`) | The submission couldn't be routed to a single writable node (leadership handoff / backpressure). `submission_status: "timeout"`, HTTP `503`, `error.retry_after_ms: 1000`. No node accepted it. | "Reconnecting — retrying your order." | Back off `retry_after_ms` and resubmit, rather than losing the write for the whole handoff. Reconcile by `cloid` first if a duplicate would be costly — see [submission_status](#submission_status). |
-| `node_unreachable: …` (`timeout`) | Node admission couldn't be reached; `submission_status: "timeout"`, HTTP `504`. The action may still land. | "Order submitted — confirming status." | Reconcile by `cloid`; never resubmit under a new nonce. |
+| `HandoffTimeout` / `HandoffBufferFullRequestCount` / `HandoffBufferFullBytes` / `HandoffBufferFullSigner` / `HandoffMultipleActive` (`timeout`) | The submission couldn't be routed to a single writable node (leadership handoff / backpressure). `submission_status: "timeout"`, HTTP `503`, `error.retry_after_ms: 1000`. No node accepted it. | "Reconnecting — retrying your order." | Back off `retry_after_ms` and resubmit, rather than losing the write for the whole handoff. Reconcile by `cloid` first if a duplicate would be costly — see [submission_status](#submission_status). |
+| `NodeUnreachable` (`timeout`) | Node admission couldn't be reached; `submission_status: "timeout"`, HTTP `504`. The action may still land. | "Order submitted — confirming status." | Reconcile by `cloid`; never resubmit under a new nonce. |
 | `MinTradeSpotNtl` | Order, modify replacement, or batch item is below the market's quote-asset minimum notional. Market orders use their protection price. | "Order must have a minimum value of 10 USDC." | Size up so `price × quantity` clears the minimum. |
-| `invalid_price_precision` / `invalid_quantity_precision` | `price` / `quantity` has more fractional digits than the market's `price_decimals` / `base_quantity_decimals`. | "Price has too many decimal places for this market." | Snap to market precision before signing; send strings, never floats. |
+| `InvalidPricePrecision` / `InvalidQuantityPrecision` | `price` / `quantity` has more fractional digits than the market's `price_decimals` / `base_quantity_decimals`. | "Price has too many decimal places for this market." | Snap to market precision before signing; send strings, never floats. |
 | `DuplicateCloid` | The `cloid` is already open for this owner and market, or the tx repeats a `(market_id, cloid)`. | "An order with this ID already exists." | Use a fresh `cloid` per order. When reconciling a `timeout`, look the existing one up — don't resend. |
 | `ExpiredTx` | The signed `expires_after_ms` had already passed when execution reached the tx. | "Order expired before it was placed." | Widen `expires_after_ms`, re-sign, resubmit. |
 | `InsufficientSpotBalance` | Balance-mode precheck found too little available balance for the order reserve. | "Insufficient balance." | Fund the account's quote asset — deposit from your main wallet in the web app. |
@@ -83,6 +83,8 @@ An admitted action still runs against the book and **can fail at execution**. Be
 * **Six envelope-level failures** demote any action to `rejected` because they invalidate the transaction itself: `badnonce`, `badsignature`, `expiredtx`, `malformedtx`, `invalidbatchlength`, `featuredisabled`. These surface in their CamelCase display form — `BadNonce`, `BadSignature`, and so on.
 
 {% hint style="warning" %}
+**The same failure has two spellings, and which one you get depends on where you read it.** `error.code` at the top level is always CamelCase; a leaf code inside `response` is always lowercase with no separator. An order rejected for balance reads `insufficientspotbalance` in the leaf, while the same failure on a `withdraw` reads `InsufficientSpotBalance` at the top level. Match each field against its own vocabulary.
+
 `error.code` at the top level is never a lowercase execution code for an order. If you are matching on `error.code == "tick"`, you will never hit it — look in the `response` leaf instead.
 
 Whether you can look the order up afterwards depends on how far it got:
@@ -100,55 +102,55 @@ Either way, read the leaf on the response, then send a corrected order under a *
 | --- | --- | --- | --- |
 | `tick` | the `response` leaf, with `submission_status: "accepted"` | A non-integer `price` exceeded the market's `max_price_sig_figs`. The transaction landed; the order never entered the book. | Snap the price to the market's `price_decimals` / `max_price_sig_figs` before signing. The [Python SDK](python-sdk/README.md) checks this locally (`LocalValidationError`) and never sends it; see [Decimals & units](decimals-units.md#valid-invalid-examples). |
 | `insufficientspotbalance` / `mintradespotntl` / `lotsize` / `badalopx` / `missingorder` | the `response` leaf, with `submission_status: "accepted"` | The order failed at execution for the stated reason. | Same handling as the CamelCase admission form of the condition — the difference is only which layer caught it. |
-| `BadNonce` / `BadSignature` / `ExpiredTx` / `MalformedTx` / `InvalidBatchLength` / `FeatureDisabled` | top-level `error.code`, with `submission_status: "rejected"` | The transaction envelope itself was invalid, so nothing executed. `InvalidBatchLength` is the execution-layer guard on an empty or over-long `batch`; over `POST /trade` you will not normally see it, because an oversized batch fails at canonicalization first and returns HTTP 400 with `error.code: "encode_error: LengthOverflow"` and no `tx_hash`. | Re-sign correctly and submit a fresh action. |
+| `BadNonce` / `BadSignature` / `ExpiredTx` / `MalformedTx` / `InvalidBatchLength` / `FeatureDisabled` | top-level `error.code`, with `submission_status: "rejected"` | The transaction envelope itself was invalid, so nothing executed. `InvalidBatchLength` is the execution-layer guard on an empty or over-long `batch`; over `POST /trade` you will not normally see it, because an oversized batch fails at canonicalization first and returns HTTP 400 with `error.code: "EncodeLengthOverflow"` and no `tx_hash`. | Re-sign correctly and submit a fresh action. |
 
 ## Full /trade error-code reference
 
-Every `error.code` `/trade` can return. **Request-shaping** codes are lowercase `snake_case` (HTTP 400, no `tx_hash`); the gateway operational codes at the end of the first table carry their own HTTP status. **Node-admission** codes are CamelCase, returned verbatim.
+Every `error.code` `/trade` can return. **Request-shaping** codes are `CamelCase` (HTTP 400, no `tx_hash`); the gateway operational codes at the end of the first table carry their own HTTP status. **Node-admission** codes are CamelCase, returned verbatim.
 
 Request-shaping and gateway errors:
 
 | Code | Meaning |
 | --- | --- |
-| `invalid_json` | The request body was not valid JSON. |
-| `must provide action + nonce and a signature or signatures` | Required envelope fields were omitted. |
-| `must provide exactly one of signature or signatures` | Both `signature` and `signatures` were present, or neither. |
-| `signatures_not_allowed_for_action` | `signatures` (multisig) was sent for an action whose type does not accept a multisig proof. |
-| `invalid_signatures_len` | The `signatures` array was empty or exceeded 32 entries. |
-| `signatures_required_for_action` | A single `signature` was sent for a multisig-only action (e.g. `deposit`/ACCOUNTING, or an admin action under an active admin multisig policy). |
-| `insufficient_signatures` | Fewer `signatures` than the required admin multisig threshold. |
-| `legacy_signature_not_accepted` | A legacy (`auth_scheme` absent or `"legacy"`) signature was sent for an EIP-712 cutover action (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`, or an operator `deposit`/`admin*`). These require `auth_scheme:"eip712"`. |
-| `eip712_not_allowed_for_action` | `auth_scheme:"eip712"` was sent for a non-target action; only legacy is accepted for those. |
-| `eip712_agent_epoch_not_allowed` | An `auth_scheme:"eip712"` request carried `agent_epoch`, which EIP-712 forbids. |
+| `InvalidJson` | The request body was not valid JSON. |
+| `MissingAuthFields` | Required envelope fields were omitted. |
+| `AmbiguousAuthFields` | Both `signature` and `signatures` were present, or neither. |
+| `SignaturesNotAllowedForAction` | `signatures` (multisig) was sent for an action whose type does not accept a multisig proof. |
+| `InvalidSignaturesLen` | The `signatures` array was empty or exceeded 32 entries. |
+| `SignaturesRequiredForAction` | A single `signature` was sent for a multisig-only action (e.g. `deposit`/ACCOUNTING, or an admin action under an active admin multisig policy). |
+| `InsufficientSignatures` | Fewer `signatures` than the required admin multisig threshold. |
+| `LegacySignatureNotAccepted` | A legacy (`auth_scheme` absent or `"legacy"`) signature was sent for an EIP-712 cutover action (`withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`, or an operator `deposit`/`admin*`). These require `auth_scheme:"eip712"`. |
+| `Eip712NotAllowedForAction` | `auth_scheme:"eip712"` was sent for a non-target action; only legacy is accepted for those. |
+| `Eip712AgentEpochNotAllowed` | An `auth_scheme:"eip712"` request carried `agent_epoch`, which EIP-712 forbids. |
 | `query_view_unavailable` | The query view was not yet available when the write path needed market/asset metadata. Transient — retry shortly. |
-| `unknown_market` | The request referenced a market that is not in the current query view's market metadata. |
-| `unknown_asset` | The request referenced an asset that is not in the current query view's asset metadata. |
-| `invalid_market_id` | A market id was a valid `u64` JSON value but exceeded the protocol `u32` range. |
-| `invalid_asset_id` | An asset id was a valid `u64` JSON value but exceeded the protocol `u32` range. |
-| `invalid_dst_address` | `withdraw.dst_address` was not a 20-byte hex address. |
-| `invalid_dst_chain_id` | `withdraw.dst_chain_id` exceeded the protocol `u32` range. A **zero** chain id passes this check and is rejected later at admission as `InvalidWithdraw` (HTTP 200). |
-| `missing_cloid` | An action that requires a client id omitted `cloid`. |
-| `invalid_cloid` | A `cloid` was not a 16-byte hex value. |
-| `invalid_side` | `side` was not `bid`, `ask`, `buy`, or `sell`. |
-| `invalid_order_type` | `order_type` was not `limit` or `market`. |
-| `invalid_tif` | `tif` was not `gtc`, `ioc`, `fok`, or `alo`. |
-| `missing_oid_or_cloid` | A `cancel` or `modify` target omitted both `oid` and `cloid`. Does not apply to `cancelAll`, which carries no `oid`/`cloid`. |
-| `invalid_price` | `price` was numerically too large to parse as decimal conversion input. Malformed decimal strings are rejected before this response shape. |
-| `invalid_price_precision` | `price` had more fractional digits than the market's `price_decimals`. |
-| `invalid_price_overflow` | Decimal-to-atom conversion for `price` overflowed `u64`. |
-| `invalid_quantity` | `quantity` was numerically too large to parse as decimal conversion input. Malformed decimal strings are rejected before this response shape. |
-| `invalid_quantity_precision` | `quantity` had more fractional digits than the market's `base_quantity_decimals`. |
-| `invalid_quantity_overflow` | Decimal-to-atom conversion for `quantity` overflowed `u64`. |
-| `invalid_signature_hex` | `signature` was not hex or did not decode to exactly 65 bytes. |
-| `encode_error: <TxCodecError>` | The write path could not assemble canonical signed tx bytes, for example because a batch length exceeded codec limits. |
-| `empty_tx_bytes` | Defensive guard: canonical byte assembly produced an empty byte vector. This should not occur for normal JSON requests. |
-| `decode_error: <TxDecodeError>` | The write path assembled bytes but could not decode them or recover the authorization (single signature, or a multisig proof — empty/too-many/duplicate/unsorted recovered signers). For public JSON this is the usual shape for a malformed or unrecoverable signature. |
-| `RateLimited` | Over quota on either limiter: the per-IP budget (1 req/s per endpoint, enforced before parsing — no `tx_hash`) or the per-signer rate (1000/s over a 1-second window, enforced after canonicalization — carries `tx_hash`). HTTP `429`; includes `retry_after_ms`. |
+| `UnknownMarket` | The request referenced a market that is not in the current query view's market metadata. |
+| `UnknownAsset` | The request referenced an asset that is not in the current query view's asset metadata. |
+| `InvalidMarketId` | A market id was a valid `u64` JSON value but exceeded the protocol `u32` range. |
+| `InvalidAssetId` | An asset id was a valid `u64` JSON value but exceeded the protocol `u32` range. |
+| `InvalidDstAddress` | `withdraw.dst_address` was not a 20-byte hex address. |
+| `InvalidDstChainId` | `withdraw.dst_chain_id` exceeded the protocol `u32` range. A **zero** chain id passes this check and is rejected later at admission as `InvalidWithdraw` (HTTP 200). |
+| `MissingCloid` | An action that requires a client id omitted `cloid`. |
+| `InvalidCloid` | A `cloid` was not a 16-byte hex value. |
+| `InvalidSide` | `side` was not `bid`, `ask`, `buy`, or `sell`. |
+| `InvalidOrderType` | `order_type` was not `limit` or `market`. |
+| `InvalidTif` | `tif` was not `gtc`, `ioc`, `fok`, or `alo`. |
+| `MissingOidOrCloid` | A `cancel` or `modify` target omitted both `oid` and `cloid`. Does not apply to `cancelAll`, which carries no `oid`/`cloid`. |
+| `InvalidPrice` | `price` was numerically too large to parse as decimal conversion input. Malformed decimal strings are rejected before this response shape. |
+| `InvalidPricePrecision` | `price` had more fractional digits than the market's `price_decimals`. |
+| `InvalidPriceOverflow` | Decimal-to-atom conversion for `price` overflowed `u64`. |
+| `InvalidQuantity` | `quantity` was numerically too large to parse as decimal conversion input. Malformed decimal strings are rejected before this response shape. |
+| `InvalidQuantityPrecision` | `quantity` had more fractional digits than the market's `base_quantity_decimals`. |
+| `InvalidQuantityOverflow` | Decimal-to-atom conversion for `quantity` overflowed `u64`. |
+| `InvalidSignatureHex` | `signature` was not hex or did not decode to exactly 65 bytes. |
+| `Encode<Variant>` | The write path could not assemble canonical signed tx bytes, for example because a batch length exceeded codec limits. |
+| `EmptyTxBytes` | Defensive guard: canonical byte assembly produced an empty byte vector. This should not occur for normal JSON requests. |
+| `Decode<Variant>` | The write path assembled bytes but could not decode them or recover the authorization (single signature, or a multisig proof — empty/too-many/duplicate/unsorted recovered signers). For public JSON this is the usual shape for a malformed or unrecoverable signature. |
+| `RateLimited` | Over quota on either limiter: the per-IP budget (1 req/s per endpoint by default, enforced before parsing — no `tx_hash`) or the per-signer rate (1000/s over a 1-second window, enforced after canonicalization — carries `tx_hash`). HTTP `429`; includes `retry_after_ms`. |
 | `TooManyPending` | Too many synchronous `/trade` waits are already in flight on this instance. HTTP `503`, `submission_status: "rejected"`, `retry_after_ms: 50` — transient, retry immediately. Distinct from the same-named node-admission code below. |
 | `PlaceOrderSuspended` | Order placement is suspended while the write path is degraded. Admitted: `cancel`, `cancelAll`, and a `batch` whose **every** item is `cancel` / `cancelAll`. Refused: `order`, `modify`, any `batch` that mixes in a non-cancel item, and an empty `batch`. HTTP `503`, `retry_after_ms: 1000`. |
 | `ExpiredTx` | The envelope's `expires_after_ms` was already past at the gateway clock; fast-failed before the node hop. HTTP `200`, `submission_status: "rejected"`. |
-| `HandoffTimeout` / `HandoffBufferFull:{request_count\|bytes\|signer}` / `HandoffMultipleActive` | The submission could not be routed to a single writable node (leadership handoff / backpressure). HTTP `503`, `submission_status: "timeout"`, `retry_after_ms: 1000`. |
-| `node_unreachable: <tonic error>` | The submit path could not complete node admission. HTTP `504`, `submission_status: "timeout"`. |
+| `HandoffTimeout` / `HandoffBufferFullRequestCount` / `HandoffBufferFullBytes` / `HandoffBufferFullSigner` / `HandoffMultipleActive` | The submission could not be routed to a single writable node (leadership handoff / backpressure). HTTP `503`, `submission_status: "timeout"`, `retry_after_ms: 1000`. |
+| `NodeUnreachable` | The submit path could not complete node admission. HTTP `504`, `submission_status: "timeout"`. |
 
 Node admission pass-through errors:
 

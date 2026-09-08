@@ -205,7 +205,7 @@ Read the top level of a `/trade` response. None of these can tell you whether yo
 | `error_code(response)` | The rejection `error.code` string (CamelCase), or `None` |
 | `retry_after_ms(response)` | Back-off hint from `error.retry_after_ms`, or `None` |
 | `is_retryable(response)` | `True` only for `RateLimited` (never admitted, so safe to resend) |
-| `is_safe_to_resend(response)` | `True` for the `HandoffTimeout` / `HandoffMultipleActive` / `HandoffBufferFull:*` timeouts, which prove the transaction never reached a node |
+| `is_safe_to_resend(response)` | `True` for the `HandoffTimeout` / `HandoffMultipleActive` / `HandoffBufferFull*` timeouts, which prove the transaction never reached a node |
 | `next_action(response)` | One verdict string to branch on, folding all three families together (`None` for a non-trade response) |
 
 ### The order, inside the `response` envelope
