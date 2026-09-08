@@ -745,6 +745,27 @@ Not found:
 }
 ```
 
+A bare `found: false` means there is no such order inside the retained window. When you look up by `oid` and that `oid` was created *before* the window starts, the response says so explicitly instead — still **HTTP 200**, with an in-band `error` beside the usual fields:
+
+```json
+{
+  "found": false,
+  "query_height": 199793262,
+  "app_hash": "0x...",
+  "oid": 3181166949566721,
+  "error": {
+    "code": "HistoryWindowExceeded",
+    "requested": 189612326,
+    "oldest_available_height": 199783263,
+    "latest_available_height": 199793262,
+    "recent_query_window_blocks": 10000,
+    "message": "This node keeps detailed query data only for the most recent configured block window. The requested data is older than the local query window."
+  }
+}
+```
+
+Treat that as "too old to answer", not as "no such order"; `oldest_available_height` tells you where the window currently starts. The `user` + `market_id` + `cloid` form carries no height, so it cannot draw that distinction — an aged-out order comes back there as a plain `found: false`. For anything past the window, keep your own record of the order from when you placed it.
+
 A query that carries neither a parseable `oid` nor a complete `user` + `market_id` + `cloid` triple is rejected with **HTTP 400** and `InvalidOrderStatusQuery`. A malformed `market_id` or `cloid` is rejected the same way, as `InvalidMarketId` / `InvalidCloid`.
 
 ### batchOrderStatus
@@ -770,7 +791,7 @@ Resolves up to **20** `orderStatus` lookups in one request. Each element of `ord
 Errors land at two different levels, and the distinction matters when parsing:
 
 * **Whole request** — `orders` not an array is `InvalidOrderStatusBatch` (`"orders must be an array"`); more than 20 elements is `TooManyOrderStatusQueries`. Neither returns a `results` array.
-* **Per item** — a bad selector does not fail the batch. That element carries its own `error` object in place of a result (for example `InvalidOrderStatusQuery`), and the remaining elements still resolve. Always read each entry's `error` before its `found`.
+* **Per item** — a bad element does not fail the batch; the remaining elements still resolve. An element whose selector is unusable carries only an `error` object in place of a result (`InvalidOrderStatusQuery`, `InvalidMarketId`, `InvalidCloid`). An element whose selector is valid but whose order is older than the retained window carries `HistoryWindowExceeded` **alongside** the usual `found`, `query_height` and `app_hash`. Always read each entry's `error` before its `found`.
 
 The node tries to answer every entry at the same `query_height`, retrying the whole batch if a block lands mid-read, so in practice the batch is a consistent snapshot rather than 20 independent reads. It is not a guarantee: after a few attempts the node serves the split answer rather than erroring or waiting. **Read `query_height` per entry** if you are comparing entries against each other — do not assume one height for the response.
 

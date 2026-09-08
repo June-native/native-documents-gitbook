@@ -21,7 +21,7 @@ cannot place new orders until an operator unfreezes it. Size against your
 current headroom before sending; there is no self-service recovery.
 {% endhint %}
 
-A `frozen` account may only cancel. Everything else is rejected with `AccountFrozen` — not just new orders and modifies, but `withdraw`, `transfer`, `settle`, `repay`, `approveAgent` and `revokeAgent` too. A `batch` is only accepted if every item in it is a cancel. Most integrations use a **spot account**; without a protocol-granted credit line, an owner is a spot account and the credit-account reads below report no credit position.
+A `frozen` account may only cancel. Everything else is rejected with `AccountFrozen` — not just new orders and modifies, but `withdraw`, `transfer`, `activateFor`, `settle`, `repay`, `approveAgent` and `revokeAgent` too. A `batch` is only accepted if every item in it is a cancel.
 
 Most integrations use a **spot account**; without a protocol-granted credit line, an owner is a spot account and the credit-account reads below report no credit position.
 

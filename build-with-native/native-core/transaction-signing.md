@@ -77,7 +77,7 @@ Public action tags:
 | `cancelAll`                |          `26` | Cancel every open order for the effective owner in one market. No `cloid`.                                                    |
 | `batch`                    |          `18` | Batch item tags are `order=0`, `cancel by oid=1`, `modify by oid=2`, `modify by cloid=3`, `cancel by cloid=4`, `cancelAll=5`. |
 
-These seven are the only tags a client ever encodes. The tag space is not contiguous — some numbers in the same range are permanently reserved or retired and are never reassigned, so **do not infer a tag by counting from a neighbouring one**. Any tag outside the table is rejected with `DecodeCodecInvalidActionTag`, which names the tag rather than the frame, so a wrong number is cheap to diagnose. Owner-signed EIP-712 actions (`transfer`, `withdraw`, `settle`, `repay`, `activateFor`, `approveAgent`, `revokeAgent`) do not appear here because their clients sign typed data and never encode a tag at all.
+These are the only top-level tags a client encodes; a `batch` additionally encodes one item tag per item, from the separate numbering in the `batch` row above. The tag space is not contiguous — some numbers in the same range are permanently retired and are never reassigned, so **do not infer a tag by counting from a neighbouring one**. A wrong tag is not reported as a bad tag: it changes the digest, which recovers a different address, so the request is attributed to someone else and fails on that account's state instead. Owner-signed EIP-712 actions (`transfer`, `withdraw`, `settle`, `repay`, `activateFor`, `approveAgent`, `revokeAgent`) do not appear here because their clients sign typed data and never encode a tag at all.
 
 Order action bytes:
 
