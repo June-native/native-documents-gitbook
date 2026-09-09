@@ -53,7 +53,7 @@ else:
     filled = fill(resp)                           # {total_sz, avg_px, oid}, or None
 ```
 
-The `oid` and the fill ride back on the response, so the ordinary path costs **no** `/info` read. Reads are capped at one per second per client IP ([rate limits](../api-access.md#rate-limits-errors)), which is what makes that worth doing.
+The `oid` and the fill ride back on the response, so the ordinary path costs **no** `/info` read. Reads default to one per second per client IP (the rate is configurable per integration — see [API access](../api-access.md#rate-limits-errors)) ([rate limits](../api-access.md#rate-limits-errors)), which is what makes that worth doing.
 
 You still need a read to follow an order's later life, such as a resting bid that fills minutes after you placed it. Pick the wait that matches the order's time-in-force:
 
@@ -77,7 +77,7 @@ Reconcile in one situation only: **the response never told you what happened.** 
 Three things raise it:
 
 * a transport failure over HTTP
-* a **5xx** answer to a write sent over the WebSocket
+* a **5xx** answer to a write sent over the WebSocket — but not every 5xx: `PlaceOrderSuspended` and `TooManyPending` are 503s that never executed, and are as determinate as a 4xx. `Unavailable` is a 503 that was refused before the write left the API, so it is determinate too. Only `NodeUnreachable` is genuinely unknown
 * a connection that dies before the answer arrives
 
 A 4xx over the WebSocket raises `ClientError` instead. It cannot have executed.
@@ -114,7 +114,7 @@ else:
 
 `info.reconcile_by_cloid(user, market, cloid)` is the one-call recovery path. It returns `{state, undetermined, is_filled, filled_qty, status}`. It never reports "definitely never landed": order status cannot distinguish a not-yet-indexed order from one that never arrived, so an unconfirmed order stays `undetermined` rather than inviting the forbidden resubmit.
 
-A `submission_status` of `"timeout"` follows the same rule, **with one exception**. `is_safe_to_resend(resp)` is true for `HandoffTimeout`, `HandoffMultipleActive` and `HandoffBufferFull*`, which prove the transaction was never admitted by a node, so it cannot have executed: sleep `retry_after_ms(resp)` and resend the same `cloid`. Every other timeout, including the plain wait-budget one that carries no error code, is indeterminate — reconcile, never resend.
+A `submission_status` of `"timeout"` follows the same rule, **with one exception**. `is_safe_to_resend(resp)` is true for `Unavailable`, which proves the transaction was never admitted by a node, so it cannot have executed: sleep `retry_after_ms(resp)` and resend the same `cloid`. Every other timeout, including the plain wait-budget one that carries no error code, is indeterminate — reconcile, never resend.
 
 **Survive a restart.** An SDK-generated `cloid` is only known after the call returns; a crash after sending but before recording it cannot be reconciled. For crash safety, generate the `cloid` yourself and persist `{intent, cloid}` durably **before** you send:
 
@@ -182,7 +182,7 @@ The first family cannot see a failed order. The second exists only on an accepte
 | `USE_RESPONSE_OUTCOME` | accepted, the order worked | Nothing more. The `oid` and the fill are already on the response |
 | `ORDER_CLOSED_UNFILLED` | accepted, benign cancel | Nothing more. The order is over and nothing filled |
 | `FIX_AND_RESUBMIT` | accepted but the order failed, or a rejection other than `RateLimited` | Fix the input or the account state. There is nothing to reconcile; what you send next is a fresh order |
-| `BACKOFF_AND_RETRY` | `RateLimited`, or a `Handoff*` timeout — never reached a node | Sleep `retry_after_ms`, then resend the **same** `cloid` |
+| `BACKOFF_AND_RETRY` | `RateLimited`, or an `Unavailable` timeout — never reached a node | Sleep `retry_after_ms`, then resend the **same** `cloid` |
 | `RECONCILE_BY_CLOID` | a timeout that is not safe to resend | `reconcile_by_cloid`; **never** resubmit |
 | `READ_ORDER_STATUS` | accepted with no `response` envelope at all | Read `order_status` once. Only an API older than the release that reports outcomes inline answers this way |
 

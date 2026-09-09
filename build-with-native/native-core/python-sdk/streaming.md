@@ -6,7 +6,7 @@ description: Stream live market and account data with the SDK's WsClient, on one
 
 `WsClient` is the SDK's third class, alongside `Info` and `Exchange`. It carries nine push feeds over a single [WebSocket](../websocket.md) connection and delivers frames on a background thread, so nothing here asks you to write `async`.
 
-Reach for it when polling will not do. `/info` reads are capped at **one per second per client IP**, which cannot drive a quoting loop; the socket pushes instead of costing a read.
+Reach for it when polling will not do. `/info` reads default to **one per second per client IP** (configurable per integration), which cannot drive a quoting loop; the socket pushes instead of costing a read.
 
 ## 1. Connect
 

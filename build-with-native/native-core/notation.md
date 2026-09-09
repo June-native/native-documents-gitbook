@@ -15,7 +15,7 @@ Terms and field names shared by the [`POST /trade`](post-trade.md) and [`POST /i
 | `quantity`        | Human decimal **string**, base-asset size. Must be greater than zero.                                                                            |
 | notional          | `price × quantity`, denominated in the market's quote asset.                                                                                     |
 | minimum notional  | Per-quote-asset floor on order notional. An order below it is rejected with `MinTradeSpotNtl`. Read the floor from `POST /info` `quoteAssets` (`min_quantity`); a market order is checked against its protection price. |
-| `cloid`           | Client order id — your `0x`-prefixed 16-byte handle. Optional on `order`; it is the reconcile / idempotency key. Same width for every action.    |
+| `cloid`           | Client order id — your `0x`-prefixed 16-byte handle. Optional on `order`; it is a reconcile handle for [`txStatusByCloid`](post-info.md#txstatusbycloid), **not** an idempotency key — resending the same `cloid` does not deduplicate. Same width for every action.    |
 | `oid`             | Exchange order id — decimal integer string assigned by the matching engine when an order is placed. Provide `oid` **or** `cloid` to cancel/modify; if both are present, `oid` wins. |
 
 ### Time-in-force

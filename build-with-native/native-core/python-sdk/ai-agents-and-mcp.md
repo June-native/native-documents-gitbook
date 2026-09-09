@@ -21,7 +21,7 @@ An agent that places money-moving orders must hold to a few rules. The SDK retur
 
 - **Accepted is not placed.** `submission_status: "accepted"` means the **transaction** landed and executed. The order inside it may still have failed — `tick`, `lotsize`, `badalopx`, `insufficientspotbalance`, `mintradespotntl`, `missingorder` all arrive that way, on a leaf of the `response` envelope. `is_accepted` alone will book a failed order as a success. Check `is_order_failed(resp)`, or just take `next_action(resp)`. The `oid` and the fill are on the response too (`order_oid`, `fill`), so the ordinary path costs no read.
 - **Most failed orders cannot be reconciled.** They never entered the book, so polling returns `unknown` and reconciling returns `undetermined`, forever — which, paired with the never-resubmit rule, freezes the agent. See [what a failed order leaves behind](core-concepts.md#what-a-failed-order-leaves-behind). Read the leaf, record the failure, and treat the corrected order as a **new** order with a new `cloid`.
-- **Never resubmit an uncertain write.** `SubmissionUncertain` (carrying `.cloids` and `.nonce`) or `submission_status: "timeout"` means the order **may still be live**. Reconcile by `cloid` and act on the result; resubmitting risks a double-fill. Two things *are* safe to resend: a `RateLimited` rejection, which was never admitted, and a timeout where `is_safe_to_resend(resp)` is true (the `Handoff*` family, which never reached a node).
+- **Never resubmit an uncertain write.** `SubmissionUncertain` (carrying `.cloids` and `.nonce`) or `submission_status: "timeout"` means the order **may still be live**. Reconcile by `cloid` and act on the result; resubmitting risks a double-fill. Two things *are* safe to resend: a `RateLimited` rejection, which was never admitted, and a timeout where `is_safe_to_resend(resp)` is true (`Unavailable`, which never reached a node).
 - **Survive a restart.** Generate the `cloid` yourself with `Exchange.random_cloid()`, persist `{intent, cloid}` durably **before** calling `order(..., cloid=cloid)`, and on restart resolve every persisted cloid before placing anything new — `info.batch_order_status([...])` settles up to 20 in one read. This is the idempotency-key pattern: an agent that crashes after sending but before recording an SDK-generated cloid cannot reconcile and may double-fill.
 - **Numbers are strings.** Pass `sz` and `limit_px` as `str` or `Decimal`, never `float`. Size with `info.min_order_size(market, price)` and dry-run with `build_order(...)` (which signs and sends nothing) to avoid a precision or minimum-notional rejection. See [Decimals & Units](../decimals-units.md).
 
@@ -32,7 +32,7 @@ An agent that places money-moving orders must hold to a few rules. The SDK retur
 | `USE_RESPONSE_OUTCOME` | accepted, the order worked | Nothing more. Take the `oid` and fill off the response |
 | `ORDER_CLOSED_UNFILLED` | accepted, benign cancel | Nothing more. The order is over and nothing filled |
 | `FIX_AND_RESUBMIT` | accepted but the order failed, or a rejection other than `RateLimited` | Read the leaf code, fix the input or account state, send a **fresh** order. Nothing to reconcile |
-| `BACKOFF_AND_RETRY` | `RateLimited`, or a `Handoff*` timeout — never reached a node | Sleep `retry_after_ms`, then resend the **same** `cloid` |
+| `BACKOFF_AND_RETRY` | `RateLimited`, or an `Unavailable` timeout — never reached a node | Sleep `retry_after_ms`, then resend the **same** `cloid` |
 | `RECONCILE_BY_CLOID` | a timeout that is not safe to resend | `reconcile_by_cloid`; **never** resubmit |
 | `READ_ORDER_STATUS` | accepted with no `response` envelope | Read `order_status` once. Only an API older than the release that reports outcomes inline answers this way |
 
@@ -122,7 +122,7 @@ Every **write** result is normalized with the SDK's own helpers, so the assistan
 
 `ok` is decided by the order's own outcome, not by the transaction: when the `response` envelope is present, any error leaf means the placement did not work. A cancel result is narrower, `{ok, submission_status, error}` only.
 
-The never-resubmit contract is enforced by shape: a write whose outcome the transport could not determine comes back with `next_action = RECONCILE_BY_CLOID` and the `cloid`, and the model is pointed at `reconcile_order` — never told to resend. A gateway `timeout` body is the exception and is split by `is_safe_to_resend`: the three `Handoff*` codes report `BACKOFF_AND_RETRY`, every other timeout reports `RECONCILE_BY_CLOID`.
+The never-resubmit contract is enforced by shape: a write whose outcome the transport could not determine comes back with `next_action = RECONCILE_BY_CLOID` and the `cloid`, and the model is pointed at `reconcile_order` — never told to resend. A gateway `timeout` body is the exception and is split by `is_safe_to_resend`: `Unavailable` reports `BACKOFF_AND_RETRY`, every other timeout reports `RECONCILE_BY_CLOID`.
 
 These tools are thin wrappers over the same SDK calls (`get_order` ≈ `reconcile_by_cloid`, `get_min_order_size` ≈ `min_order_size`, `preview_order` ≈ `build_order`).
 
@@ -196,7 +196,7 @@ else:
     elif verdict == FIX_AND_RESUBMIT:
         ...                               # leaf_error_code(resp): fix input, send a NEW cloid
     elif verdict == BACKOFF_AND_RETRY:
-        ...                               # RateLimited or Handoff*: sleep, resend the SAME cloid
+        ...                               # RateLimited or Unavailable: sleep, resend the SAME cloid
     elif verdict == RECONCILE_BY_CLOID:
         reconcile(MARKET, cloid)          # indeterminate timeout — never resubmit
     elif verdict == READ_ORDER_STATUS:

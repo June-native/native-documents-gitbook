@@ -1,7 +1,7 @@
 # Transaction Signing
 
 {% hint style="info" %}
-This page specifies the byte-level methodology behind `/trade` signing, for building your own client in any language. The [Python SDK](python-sdk/README.md) signs the **trading** actions for you — `order`, `cancel`, `cancelAll`, `modify`, `batch` — so you need nothing from the legacy-payload sections below. It does not sign the owner-signed actions (`approveAgent`, `revokeAgent`, `withdraw`, `settle`, `repay`); for those, see [EIP-712 signing](#eip-712-signing-auth_scheme-eip712).
+This page specifies the byte-level methodology behind `/trade` signing, for building your own client in any language. The [Python SDK](python-sdk/README.md) signs the **trading** actions for you — `order`, `cancel`, `cancelAll`, `modify`, `batch` — so you need nothing from the legacy-payload sections below. It does not sign the owner-signed actions (`transfer`, `activateFor`, `withdraw`, `settle`, `repay`, `approveAgent`, `revokeAgent`); for those, see [EIP-712 signing](#eip-712-signing-auth_scheme-eip712).
 {% endhint %}
 
 `signature` is not a signature over the JSON text. The write path reconstructs the canonical unsigned transaction payload from `action`, `nonce`, `agent_epoch`, and `expires_after_ms`, then verifies the recoverable secp256k1 signature over that exact binary payload. For order and modify actions, public JSON `price` and `quantity` are display decimals; the signed binary action contains the raw atoms obtained from market `price_decimals` and `base_quantity_decimals`. The JSON action and signed binary action must describe the same action.
@@ -516,7 +516,7 @@ Rejected response (node-admission code, returned verbatim):
 }
 ```
 
-Request-shaping rejections usually have no `tx_hash` because canonical bytes were not assembled; admission and execution rejections include it. Rate-limit responses also include `error.retry_after_ms`. A `submission_status: "timeout"` means the outcome was not observed in time — either the wait budget elapsed (HTTP `200`, no `error`) or the submission could not be routed (`HandoffTimeout` / `HandoffBufferFull*` / `HandoffMultipleActive` at HTTP `503`, or `NodeUnreachable` at HTTP `504`). The two cases need opposite handling — see [Handle outcomes & timeouts](handle-timeouts.md#reconciling-a-timeout).
+Request-shaping rejections usually have no `tx_hash` because canonical bytes were not assembled; admission and execution rejections include it. Rate-limit responses also include `error.retry_after_ms`. A `submission_status: "timeout"` means the outcome was not observed in time — either the wait budget elapsed (HTTP `200`, no `error`) or the submission could not be routed (`Unavailable` at HTTP `503`, or `NodeUnreachable` at HTTP `504`). The two cases need opposite handling — see [Handle outcomes & timeouts](handle-timeouts.md#reconciling-a-timeout).
 
 Malformed or non-decodable JSON is handled by the API and returns the `TradeResponse` shape with `error.code = "InvalidJson"`. This includes invalid action type tags and invalid field types. Negative numeric strings and malformed decimal strings are also `InvalidJson` — they are rejected inside deserialization, before any field-specific check runs. Failures caught after decoding, such as a precision violation, return their specific code in the same response shape. All such responses include `x-trace-id`.
 
@@ -531,6 +531,8 @@ Supported public top-level action types:
 * `cancelAll`
 * `modify`
 * `batch`
+* `transfer` (owner single-signature, EIP-712 `auth_scheme:"eip712"`; see [transfer](post-trade.md#transfer))
+* `activateFor` (owner single-signature, EIP-712 `auth_scheme:"eip712"`; see [activateFor](post-trade.md#activatefor))
 * `withdraw` (user single-signature, EIP-712 `auth_scheme:"eip712"`; see [withdraw](post-trade.md#withdraw))
 * `settle` (user single-signature, EIP-712 `auth_scheme:"eip712"`)
 * `repay` (user single-signature, EIP-712 `auth_scheme:"eip712"`)

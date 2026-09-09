@@ -76,7 +76,7 @@ It answers `{"channel":"pong"}`. Your client library's built-in protocol-level p
 
 Assume the connection will drop. On reconnect, resubscribe and take the first snapshot packet as your new baseline — `l2Book`, `openOrders`, `spotState`, and `spotCreditState` always carry complete state, and `userFills` replays its recent history for you.
 
-Only `trades` and `orderUpdates` can leave a hole, because they are pure increments. Fill it from `POST /info`: [`userFills`](post-info.md#userfills) takes a `from_height` / `to_height` range within the recent query window, and [`orderStatus`](post-info.md#orderstatus) settles the fate of any single order by `oid` or `cloid`.
+`bbo`, `trades` and `orderUpdates` send no snapshot, so any of the three can leave a hole. `trades` and `orderUpdates` are pure increments; `bbo` simply stays silent until the top of book next moves, which on a quiet market can be minutes. Fill it from `POST /info`: [`userFills`](post-info.md#userfills) takes a `from_height` / `to_height` range within the recent query window, and [`orderStatus`](post-info.md#orderstatus) settles the fate of any single order by `oid` or `cloid`.
 
 A disconnect is not the only way to lose frames. When the server's broadcast falls behind it drops the event frames outright — `trades`, `userFills`, `orderUpdates` — and re-pushes only the snapshot channels.
 
@@ -118,7 +118,7 @@ You do not need a second transport to write. `post` carries [`POST /info`](post-
 The reply echoes your `id`. Any outcome `/trade` answers with HTTP 200 — accepted, rejected, and the wait-budget `timeout` — carries the same response `POST /trade` would have returned, `submission_status` and `response` envelope and all. Signing is unchanged — see [Transaction Signing](transaction-signing.md). One request at a time, and the same per-IP rate budget as HTTP applies.
 
 {% hint style="warning" %}
-Anything else is flattened to a plain status string with no `submission_status` and no `tx_hash`: a rate limit (429), a suspension or backpressure reject (`PlaceOrderSuspended` / `TooManyPending`, 503), and the routing timeouts (`Handoff*` at 503, `NodeUnreachable` at 504). A 4xx string never executed, and so did neither 503 reject — each of those carries a `retry_after_ms`. Only the routing timeouts are indeterminate: reconcile by `cloid` and do not resubmit under a fresh nonce. Submit over `POST /trade` when you need the full outcome.
+Anything else is flattened to a plain status string with no `submission_status` and no `tx_hash`: a rate limit (429), a suspension or backpressure reject (`PlaceOrderSuspended` / `TooManyPending`, 503), and the routing outcomes (`Unavailable` at 503, `NodeUnreachable` at 504). A 4xx string never executed, and so did neither 503 reject. The flattened string carries only the status and the code — the `retry_after_ms` that `POST /trade` returns for these is **not** available over the socket, so back off on your own schedule. Only the routing timeouts are indeterminate: reconcile by `cloid` and do not resubmit under a fresh nonce. Submit over `POST /trade` when you need the full outcome.
 {% endhint %}
 
 ## Next steps

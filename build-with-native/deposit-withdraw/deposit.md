@@ -12,6 +12,8 @@ Read [Deposit & Withdraw](README.md) first for the shared endpoints, discovery q
 
 An address that has never held a Native Core balance has no account yet, and its first deposit must pay a one-time activation fee. [`accountStatus`](../native-core/post-info.md#accountstatus) is the authoritative signal.
 
+The fee on this page is a **separate** charge from the one [`activateFor`](../native-core/post-trade.md#activatefor) takes: this one rides the deposit as `msg.value` in the source chain's gas token, that one is a fixed amount debited from an existing Native Core balance. They are two ways to reach the same result. If an account already exists — because someone called `activateFor` for the address, or because it was funded before — send `msg.value: 0`.
+
 ```bash
 curl -sS -X POST "$API_URL/info" \
   -H 'content-type: application/json' \

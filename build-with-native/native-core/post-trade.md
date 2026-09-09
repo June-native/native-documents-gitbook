@@ -27,11 +27,11 @@ Request envelope fields:
 
 | Field              | Required              | Description                                                                                                                                                                                                                                          |
 | ------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `action`           | yes                   | Action object. Public top-level types: `order`, `cancel`, `cancelAll`, `modify`, `batch`, `withdraw`, `settle`, `repay`, `approveAgent`, and `revokeAgent`. Internal operator/accounting writes are not part of this public contract. See the full public list below.         |
+| `action`           | yes                   | Action object. Public top-level types: `order`, `cancel`, `cancelAll`, `modify`, `batch`, `transfer`, `activateFor`, `withdraw`, `settle`, `repay`, `approveAgent`, and `revokeAgent`. Internal operator/accounting writes are not part of this public contract. See the full public list below.         |
 | `nonce`            | yes                   | Decimal string `u64` Unix millisecond timestamp nonce. Use current `Date.now()`/Unix ms; if sending multiple requests in the same millisecond for the same signer, increment locally so each signed nonce is unique and monotonically nondecreasing. |
 | `agent_epoch`      | no                    | Decimal string `u64`; required only for agent-signed requests. Omit for owner-signed requests.                                                                                                                                                       |
 | `expires_after_ms` | no                    | Decimal string `u64` Unix milliseconds. An envelope already past `expires_after_ms` at the gateway clock is fast-failed with `submission_status: "rejected"`, `error.code: "ExpiredTx"` (before the node hop); execution also enforces expiry against the committed block timestamp.                                                                                                                                                          |
-| `auth_scheme`      | no                    | `"legacy"` (default) or `"eip712"`. Public `withdraw`, `settle`, `repay`, `approveAgent`, and `revokeAgent` require `"eip712"`; public trading actions (`order`/`cancel`/`cancelAll`/`modify`/`batch`) require `"legacy"`. See [EIP-712 signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712).                        |
+| `auth_scheme`      | no                    | `"legacy"` (default) or `"eip712"`. Public `transfer`, `activateFor`, `withdraw`, `settle`, `repay`, `approveAgent`, and `revokeAgent` require `"eip712"`; public trading actions (`order`/`cancel`/`cancelAll`/`modify`/`batch`) require `"legacy"`. See [EIP-712 signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712).                        |
 | `signature`        | yes for public actions | `0x`-prefixed 65-byte recoverable secp256k1 signature. Legacy v1, or — when `auth_scheme="eip712"` — an EIP-712 v4 single signature. Mutually exclusive with `signatures`.                                                                          |
 | `signatures`       | no for public actions | Array of `0x`-prefixed 65-byte signatures for an internal multisig request. Public actions reject this field with `SignaturesNotAllowedForAction`; internal multisig submissions are not part of this public contract. Mutually exclusive with `signature`. |
 
@@ -95,7 +95,7 @@ Response envelope:
   "tx_hash": "0x…",                  // present once canonical bytes exist; omitted on a request-shaping reject
   "error": {                         // present only on a non-successful outcome
     "code": "<code>",
-    "retry_after_ms": 1000           // present only on RateLimited / PlaceOrderSuspended / TooManyPending / Handoff*
+    "retry_after_ms": 1000           // present only on RateLimited / PlaceOrderSuspended / TooManyPending / Unavailable
   },
   "response": { … }                  // present only on `accepted` — the per-order outcome, see below
 }
@@ -208,13 +208,12 @@ The `error.code` tells you, and the two cases need opposite handling:
 | Code | HTTP | Did it reach a node? | Do next |
 | --- | --- | --- | --- |
 | *(none)* — the wait budget elapsed | 200 | **Yes.** It was admitted and is executing. | Reconcile by `cloid`. **Never** resubmit under a new nonce. |
-| `HandoffBufferFullRequestCount` / `HandoffBufferFullBytes` / `HandoffBufferFullSigner` | 503 | **No.** Refused before any submission was attempted. | Resubmit. Nothing will be there to reconcile. |
-| `HandoffTimeout` / `HandoffMultipleActive` | 503 | **No.** No writable node accepted it. | Resubmit; reconcile first if a duplicate would be costly. |
+| `Unavailable` | 503 | **No.** Refused before the write left the API. | Resubmit the same signed bytes. Nothing will be there to reconcile. |
 | `NodeUnreachable` | 504 | **Unknown.** The connection broke mid-submission and the node may already hold it. | Reconcile by `cloid`. **Never** resubmit under a new nonce. |
 
 When in doubt, treat it as the 504 case and reconcile. The [outcomes playbook](handle-timeouts.md#reconciling-a-timeout) has the reasoning behind each row.
 
-Beyond per-action outcomes, the API can refuse a write for operational reasons: `RateLimited` (HTTP 429 — the per-IP budget, 1 request/second by default, or the per-signer 1000/second, with `error.retry_after_ms`), `TooManyPending` (HTTP 503 with `error.retry_after_ms: 50` — too many synchronous writes are already in flight; retry immediately, it is transient), `PlaceOrderSuspended` (HTTP 503 — while the write path is degraded, only `cancel`/`cancelAll` and an all-cancel `batch` are accepted so you can reduce exposure; `order`, `modify`, any `batch` that mixes in a non-cancel item, and an empty `batch` are refused), `ExpiredTx` (HTTP 200), and the routing codes `HandoffTimeout` / `HandoffBufferFullRequestCount` / `HandoffBufferFullBytes` / `HandoffBufferFullSigner` / `HandoffMultipleActive` (HTTP 503) and `NodeUnreachable` (HTTP 504), which come back as `submission_status: "timeout"`. A request body over 256 KiB is rejected with HTTP 413. See the full `/trade` error-code table in [Error responses](error-responses.md).
+Beyond per-action outcomes, the API can refuse a write for operational reasons: `RateLimited` (HTTP 429 — the per-IP budget, 1 request/second by default, or the per-signer 1000/second, with `error.retry_after_ms`), `TooManyPending` (HTTP 503 with `error.retry_after_ms: 50` — too many synchronous writes are already in flight; retry immediately, it is transient), `PlaceOrderSuspended` (HTTP 503 — while the write path is degraded, only `cancel`/`cancelAll` and an all-cancel `batch` are accepted so you can reduce exposure; `order`, `modify`, any `batch` that mixes in a non-cancel item, and an empty `batch` are refused), `ExpiredTx` (HTTP 200), and the routing codes `Unavailable` (HTTP 503) and `NodeUnreachable` (HTTP 504), which come back as `submission_status: "timeout"`. A request body over 256 KiB is rejected with HTTP 413. See the full `/trade` error-code table in [Error responses](error-responses.md).
 
 **Limits on resting orders.** You may hold **1000 open orders per market** per
 account; the 1001st is rejected with `accountopenorderlimit`. A single order may
@@ -251,7 +250,7 @@ Cancels one order by exchange order id or client order id. Provide `oid` or `clo
 
 ### cancelAll
 
-Cancels every open resting order for the effective owner (recovered signer or agent-resolved principal) in one market. The market must exist; an unknown market is rejected by execution as `MarketNotFound`. A market that exists but has no open orders for this owner is a successful no-op.
+Cancels every open resting order for the effective owner (recovered signer or agent-resolved principal) in one market. The market must exist. A pure cancel skips admission entirely, so an unknown market is not a top-level reject: the envelope still comes back `accepted` and the failure appears in the `response` leaf as `marketnotfound`. A market that exists but has no open orders for this owner is a successful no-op.
 
 Effects to confirm via reads:
 
