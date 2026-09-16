@@ -51,7 +51,7 @@ A bid commits the asset it would pay with, not the asset being acquired. The opp
 available_usd_atoms = credit_usd_atoms + sum of value(position)
 ```
 
-summed over every position the account holds. With a fresh mark, `value(net)` is
+summed over every position the account holds. With a **fresh** mark — one whose `updated_height` equals the `query_height` of the [`markPrices`](post-info.md#markprices) response it came in — `value(net)` is
 
 ```
 long  (net > 0)
@@ -63,21 +63,7 @@ short (net < 0)
 
 `credit_ltv` is an integer percentage, so the `* 100` divisor is part of the expression. **LTV applies to longs only**: a short is carried at full value, so a long and a short of equal notional do not offset. Both expressions floor, which rounds against the account on either side.
 
-### Stale and missing marks
-
-A mark is **fresh** when its `updated_height` equals the height the valuation runs at. In a [`markPrices`](post-info.md#markprices) response that height is the response's own `query_height`; at the order gate it is the block the order lands in. Both operands are in the same response, so the comparison requires no second query.
-
-Any earlier update is stale, and changes `value(net)`:
-
-| position | `value(net)` |
-| --- | --- |
-| **Long**, mark stale or missing | `0` |
-| **Short**, mark stale | as above, with `mark` replaced by `mark` times a protocol haircut of at least 1.0, rounded up |
-| **Short**, mark missing | undefined — the account cannot be valued, and the order is rejected |
-
-A stale mark can therefore only reduce headroom, never increase it. The haircut is a protocol schedule parameter keyed on block height; no query returns it, and it can change at a fork.
-
-This table covers positions the order does not trade. The assets of the market being traded are checked for a fresh mark before valuation, and the order is rejected with `OracleMarkPriceMissing` if either is stale.
+A stale or missing mark changes this. A long contributes `0`; a stale short is marked up by a protocol haircut before valuation; a short with no mark cannot be valued, and the order is rejected. A stale mark can therefore only reduce headroom, never increase it.
 
 ## Worked examples
 
