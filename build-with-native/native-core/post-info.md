@@ -390,7 +390,7 @@ Whether an account exists and its freeze state.
 
 For an owner with no credit line the response still returns every key, but `authorized` is `false` and `status`, `credit_usd_atoms`, `available_usd_atoms` and `last_known_available_usd_atoms` are all `null`. This is the common case, so type these four as nullable.
 
-`status` is `"active"`, `"frozen"`, or `null`. `credit_usd_atoms` and the available fields are in `usd_atoms` (`USD_SCALE = 10^8`). [Credit & Margin](credit-margin.md) gives the formula behind `available_usd_atoms`, including the per-asset LTV and how a stale mark changes it. `available_usd_atoms` is `null` when a nonzero **short** position lacks a mark at the latest query height, and the account therefore cannot be valued; a stale or missing mark on a long contributes `0` instead of nulling the figure. Accounts with no exposure can report their credit without marks. `last_known_available_usd_atoms` always uses the most recently committed marks regardless of staleness and is `null` only when a position asset has never had a mark. Negative fractional USD-atom position values are rounded down conservatively, matching the execution credit gate.
+`status` is `"active"`, `"frozen"`, or `null`. `credit_usd_atoms` and the available fields are in `usd_atoms` (`USD_SCALE = 10^8`). [Credit & Margin](credit-margin.md) gives the formula behind `available_usd_atoms`, including the per-asset LTV and how a stale mark changes it. `available_usd_atoms` is `null` when the account cannot be valued: when a nonzero **short** position lacks a mark at the latest query height, or when the valuation overflows; a stale or missing mark on a long contributes `0` instead of nulling the figure. Accounts with no exposure can report their credit without marks. `last_known_available_usd_atoms` always uses the most recently committed marks regardless of staleness and is `null` only when a position asset has never had a mark. Negative fractional USD-atom position values are rounded down conservatively, matching the execution credit gate.
 
 ### spotCreditPositions
 
@@ -419,7 +419,7 @@ For an owner with no credit line the response still returns every key, but `auth
 }
 ```
 
-A resting order commits a single leg: a resting ask only debits the base asset; a resting bid only debits the quote asset. The other leg appears as `actual_qty` only when a fill produces a real settlement delta. The amount committed differs by side — see [Credit & Margin](credit-margin.md#valuation-formula).
+A resting order commits a single leg: a resting ask only debits the base asset; a resting bid only debits the quote asset. The other leg appears as `actual_qty` only when a fill produces a real settlement delta. The amount committed differs by side — see [Credit & Margin](credit-margin.md#the-calculation).
 
 ### oracleStatus
 
@@ -467,7 +467,7 @@ When the oracle is unavailable, `oracle_status` is `{ "status": "unavailable", "
 }
 ```
 
-`usd_atoms` is the positive mark price scaled by `USD_SCALE = 10^8`. `updated_height` is the block in which that mark was last committed; a mark counts as **fresh** only when it equals the response's `query_height`, which is the comparison credit-account valuation uses — see [Credit & Margin](credit-margin.md#mark-freshness). `source_ts_ms` is the upstream provider's per-feed timestamp (Binance spot: worker wall clock at response-fully-read; OKX: per-ticker `ts`; Binance futures: per-symbol `time` from `/fapi/v2/ticker/price`; Llama: per-coin `timestamp` (seconds) × 1000; cross routes use `min(base, quote)` of the inputs).
+`usd_atoms` is the positive mark price scaled by `USD_SCALE = 10^8`. `updated_height` is the block in which that mark was last committed; a mark counts as **fresh** only when it equals the response's `query_height`, which is the comparison credit-account valuation uses — see [Credit & Margin](credit-margin.md#the-calculation). `source_ts_ms` is the upstream provider's per-feed timestamp (Binance spot: worker wall clock at response-fully-read; OKX: per-ticker `ts`; Binance futures: per-symbol `time` from `/fapi/v2/ticker/price`; Llama: per-coin `timestamp` (seconds) × 1000; cross routes use `min(base, quote)` of the inputs).
 
 ### openOrders
 

@@ -147,14 +147,8 @@ Four `POST /info` queries supply every term, each read against the **owner** add
 
 `credit_ltv` is the effective percentage and is the value the calculation takes. `credit_ltv_setting` is the raw per-asset override, `null` whenever none is configured; an unconfigured asset still has an effective `credit_ltv`, so `credit_ltv_setting: null` does not imply a zero LTV.
 
-The whole calculation is performed in integers: floating-point evaluation does not reproduce floor division at atom scale, and the gate is an exact integer comparison. `credit_usd_atoms` arrives as a JSON number while the two available fields arrive as strings, so a client parsing JSON natively receives two types for the same unit.
+The whole calculation is performed in integers: floating-point evaluation does not reproduce floor division at atom scale, and the gate is an exact integer comparison. `credit_usd_atoms` arrives as a JSON number while `available_usd_atoms` arrives as a string, so a client parsing JSON natively receives two types for the same unit.
 
 Evaluating a prospective order means subtracting its committed amount from the committed asset's `net` and recomputing. The order is admitted when the result is `>= 0`.
 
 A locally computed value is a snapshot: a mark that is fresh when read is stale one block later unless the oracle republishes. [`spotCreditState`](websocket.md#spotcreditstate) streams the same positions and credit line as an alternative to polling.
-
-## When the value is `null`
-
-`available_usd_atoms` is `null` when the account cannot be valued, which is not the same as zero: when the owner has no credit line — the common case, see [`spotCreditAccount`](post-info.md#spotcreditaccount) — when a short position has no mark, and when the valuation overflows. A stale or missing mark on a **long** does not produce `null`; that position contributes `0`.
-
-`last_known_available_usd_atoms` uses the most recently committed mark for every asset regardless of freshness, and is `null` only when a position asset has never had a mark. It is a monitoring value that stays stable while marks are stale. It is never the gate: only `available_usd_atoms` reflects the rules that admit an order.
