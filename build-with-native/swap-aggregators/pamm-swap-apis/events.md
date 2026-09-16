@@ -30,12 +30,6 @@ None of the fields are indexed — filter by pool address, then decode.
 
 Direct pAMM **does not** emit `RFQTrade`. A successful pAMM fill and an RFQ fill are mutually exclusive.
 
-## Events you can ignore on the direct path
-
-<table><thead><tr><th>Event</th><th>When it fires</th></tr></thead><tbody><tr><td><code>PAMMFallback(bytes16 quoteId, address engine, bytes4 reason)</code></td><td>RFQ tried pAMM and the engine reverted, then RFQ continued. <strong>Not</strong> emitted by <code>tradePAMM</code>.</td></tr><tr><td><code>RFQTrade</code></td><td>RFQ fill (<code>tradeRFQT</code>). Direct swaps never emit this.</td></tr></tbody></table>
-
-`PAMMFallback` topic0: `0x2a3c7ab9d4eaf2c960f0510c29e51e0455964d9e6a549ac28cee63c47f970146` (`quoteId` and `engine` are indexed).
-
 ## Config events (ops / indexing)
 
 ```solidity
