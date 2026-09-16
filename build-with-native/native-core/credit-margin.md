@@ -51,7 +51,7 @@ short (net < 0)
 
 `credit_ltv` is an integer percentage, so the `* 100` divisor is part of the formula. **LTV is applied to longs only**: a short is a liability carried at full value, and a long and a short of equal notional do not offset.
 
-`credit_ltv`, returned by [`assets`](post-info.md#assets), is the effective percentage and is used directly. `credit_ltv_setting` echoes the per-asset override and is `null` when none is configured. An asset at `credit_ltv: 0` contributes no collateral at any size, while still carrying full weight as a short.
+Take `credit_ltv` from [`assets`](post-info.md#assets) and use it as it comes — it is the effective percentage, already resolved for that asset. Do not substitute `credit_ltv_setting`: that is the raw per-asset override, `null` whenever none is set, and `null` there does **not** mean zero. An asset can have `credit_ltv_setting: null` and a `credit_ltv` of 100.
 
 Both expressions floor, which rounds against the account whether the position is long or short.
 
