@@ -15,10 +15,13 @@ Native Core has two kinds of trading account. Every owner is exactly one of them
 | State | `active` / `frozen` | `active` / `frozen` |
 
 {% hint style="danger" %}
-**A credit order that fails the risk check freezes the account.** The order is
-rejected with `insufficientspotcredit` **and the account is left frozen** — it
-cannot place new orders until an operator unfreezes it. Size against your
-current headroom before sending; there is no self-service recovery.
+**A credit order that fails the risk check at execution freezes the account.**
+It comes back as `insufficientspotcredit` **and the account is left frozen** —
+it cannot place new orders until an operator unfreezes it, and there is no
+self-service recovery. The same order rejected earlier, by the spot-credit
+precheck, returns `InsufficientSpotCredit` and leaves the account untouched.
+Size against current headroom before sending — see
+[Credit & Margin](credit-margin.md).
 {% endhint %}
 
 A `frozen` account may only cancel. Everything else is rejected with `AccountFrozen` — not just new orders and modifies, but `withdraw`, `transfer`, `activateFor`, `settle`, `repay`, `approveAgent` and `revokeAgent` too. A `batch` is only accepted if every item in it is a cancel.

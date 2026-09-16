@@ -11,7 +11,12 @@ description: >-
 This page applies to **credit accounts** only. A spot account is gated on its per-asset `available` balance; see [Account Types](account-types.md).
 
 {% hint style="danger" %}
-An order that would take `available_usd_atoms` below zero is rejected with `InsufficientSpotCredit` **and leaves the account frozen** until an operator unfreezes it; there is no self-service recovery. Because failing it costs a freeze, the gate is not usable as a validator — compute the post-order value locally and keep headroom. Other order rejections leave the account `active`.
+An order that would take `available_usd_atoms` below zero has two possible outcomes, and only one of them freezes the account:
+
+* **Caught by the spot-credit precheck**, before the transaction enters a block — rejected with `InsufficientSpotCredit`, and the account is **untouched**.
+* **Failed at execution**, inside a block — returned as the lowercase leaf [`insufficientspotcredit`](error-responses.md#execution-level-failures), and the account is **left frozen** until an operator unfreezes it. There is no self-service recovery.
+
+The precheck is a guard, not a guarantee: account state can move between the two points. Because the second outcome costs a freeze, the gate is not usable as a validator — compute the post-order value locally and keep headroom. A `modify` that fails the same way freezes the account identically; other order rejections, including `OracleMarkPriceMissing`, leave it `active`.
 {% endhint %}
 
 ## Valuation formula
