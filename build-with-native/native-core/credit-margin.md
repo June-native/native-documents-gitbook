@@ -6,12 +6,12 @@ description: >-
 
 # Credit & Margin
 
-`available_usd_atoms` is a credit account's headroom. An order is admitted only if the value is still `>= 0` once the order is applied. This page gives the arithmetic behind it, so a client can reproduce the number before signing.
+`available_usd_atoms` is a credit account's headroom. An order is admitted only if the value is still `>= 0` once the order is applied. This page gives the arithmetic behind it.
 
-This page applies to **credit accounts** only. A spot account is gated on its per-asset `available` balance; see [Account Types](account-types.md).
+This page applies to **credit accounts** only. A spot account is gated on its per-asset `available` balance instead — see [Account Types](account-types.md).
 
 {% hint style="danger" %}
-Compute this value before sending an order, rather than discovering it by sending one: an order that fails the gate **at execution** leaves the account frozen until an operator unfreezes it. See [Account Types](account-types.md) for that outcome and what it blocks.
+Reproduce this value locally before signing, rather than discovering it by sending an order: one that fails the gate **at execution** leaves the account frozen until an operator unfreezes it.
 {% endhint %}
 
 ## Valuation formula
