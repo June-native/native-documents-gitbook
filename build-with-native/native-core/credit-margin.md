@@ -55,23 +55,21 @@ short (net < 0)
 
 Both expressions floor, which rounds against the account whether the position is long or short.
 
-## Mark freshness
+### Stale and missing marks
 
-A mark is **fresh** only when its `updated_height` equals the height the valuation runs at; any earlier update is stale. The applicable height differs by context: in a [`markPrices`](post-info.md#markprices) response it is that response's `query_height`, and at the order gate it is the block the order lands in. Both operands appear in the same `markPrices` response, so the comparison requires no second query.
+The formula above applies to a **fresh** mark: one whose `updated_height` equals the height the valuation runs at. In a [`markPrices`](post-info.md#markprices) response that height is the response's own `query_height`; at the order gate it is the block the order lands in. Both operands are in the same response, so the comparison requires no second query.
 
-The valuation of a stale mark depends on the action:
+Any earlier update is stale, and changes `value(net)`:
 
-| position | placing an order | `settle` / `repay` |
-| --- | --- | --- |
-| **Long**, mark stale or missing | contributes `0` | rejected |
-| **Short**, mark stale | valued at a marked-up price | rejected |
-| **Short**, mark missing | cannot be valued — rejected | rejected |
+| position | `value(net)` |
+| --- | --- |
+| **Long**, mark stale or missing | `0` |
+| **Short**, mark stale | as above, with `mark` replaced by `mark` times a protocol haircut of at least 1.0, rounded up |
+| **Short**, mark missing | undefined — the account cannot be valued, and the order is rejected |
 
-A stale mark elsewhere in the account therefore does not block trading, but it can only reduce headroom, never increase it. `settle` and `repay` value every position strictly, so the same stale mark that trading tolerates blocks both of them.
+A stale mark can therefore only reduce headroom, never increase it. The haircut is a protocol schedule parameter keyed on block height; no query returns it, and it can change at a fork.
 
-For a stale short, the mark is multiplied by a protocol haircut of at least 1.0 and rounded up, so the short is over-stated rather than under-stated. The haircut is a protocol schedule parameter keyed on block height; no query returns it, and it can change at a fork. Its effect scales linearly with the position's full value: on a short worth $38,000, each 0.1 of haircut removes $3,800 of headroom.
-
-A separate check precedes valuation: both assets of the market being traded must have a mark updated in the current block, or the order is rejected with `OracleMarkPriceMissing`.
+The table covers positions the order does not trade. The assets of the market being traded are checked for a fresh mark before any valuation runs, and the order is rejected with `OracleMarkPriceMissing` if either is stale.
 
 ## Worked example
 
