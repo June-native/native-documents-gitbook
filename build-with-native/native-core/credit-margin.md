@@ -50,7 +50,11 @@ in that asset's raw balance atoms, not display units. Conversion between the two
 
 ### Positions are signed
 
-`net` is a signed quantity: positive is a long, negative is a short. **The sign is not discarded, and the magnitude is never taken on its own.** It decides three separate things:
+`net` is a signed per-asset balance: positive means the account holds that asset, which counts as collateral; negative means the account owes it, which counts as a liability. This page calls the two cases long and short.
+
+A fill moves two assets in opposite directions, because the account receives one and pays the other. A credit account buying ETH with USDC raises `net` for ETH and lowers it for USDC, so holding a positive `net` in one asset and a negative `net` in another is an ordinary state rather than an unusual one.
+
+**The sign is not discarded, and the magnitude is never taken on its own.** It decides three separate things:
 
 * whether LTV applies, since only a positive `net` is haircut;
 * whether the position adds to or subtracts from the credit line, through ordinary signed addition;
