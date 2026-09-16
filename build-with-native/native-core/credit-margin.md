@@ -1,45 +1,66 @@
 ---
 description: >-
-  How Native Core computes a credit account's available_usd_atoms — the
-  valuation formula, per-asset LTV, and mark freshness.
+  The margin calculation for a Native Core credit account — how
+  available_usd_atoms is derived from positions, marks, and per-asset LTV.
 ---
 
 # Credit & Margin
 
-`available_usd_atoms` is a credit account's headroom. An order is admitted only if the value is still `>= 0` once the order is applied. This page specifies how it is computed.
+A credit account trades against a USD credit line rather than a per-asset balance. Its margin headroom is `available_usd_atoms`, and an order is admitted only if that value is still `>= 0` once the order is applied.
 
-It applies to **credit accounts** only. A spot account is gated on its per-asset `available` balance instead; see [Account Types](account-types.md).
+This page specifies the calculation completely enough to reproduce it. It applies to **credit accounts** only; a spot account is gated on its per-asset `available` balance instead, described in [Account Types](account-types.md).
 
 {% hint style="danger" %}
 An order that fails this gate at execution leaves the account frozen until an operator unfreezes it. Clients therefore compute the value locally before signing, rather than establishing it by submitting an order.
 {% endhint %}
 
-## Valuation formula
+## Inputs
+
+Four `POST /info` queries supply every term, each read against the **owner** address.
+
+| query | field | meaning |
+| --- | --- | --- |
+| [`spotCreditAccount`](post-info.md#spotcreditaccount) | `credit_usd_atoms` | the credit line, in `usd_atoms`, as a JSON number |
+| | `available_usd_atoms` | the protocol's own result, as a JSON string, for comparison |
+| [`spotCreditPositions`](post-info.md#spotcreditpositions) | `pending_exposure_qty` | size committed by resting orders, signed raw atoms |
+| | `actual_qty` | settled position, signed raw atoms |
+| [`markPrices`](post-info.md#markprices) | `usd_atoms` | mark price scaled by `USD_SCALE = 10^8` |
+| | `updated_height` | the block in which that mark was committed |
+| | `query_height` | response-level; the height freshness is tested against |
+| [`assets`](post-info.md#assets) | `credit_ltv` | effective loan-to-value percentage, an integer |
+| | `balance_decimals` | atom scale of that asset's balances |
+
+`credit_ltv` is the effective percentage for the asset and is the value the calculation takes. `credit_ltv_setting` is the raw per-asset override and is `null` whenever none is configured; an unconfigured asset still has an effective `credit_ltv`, which the protocol resolves and `assets` reports, so `credit_ltv_setting: null` does not imply a zero LTV.
+
+Every term is an integer, and the whole calculation is performed in integers. Floating-point evaluation does not reproduce floor division at atom scale, and the gate is an exact integer comparison. `credit_usd_atoms` arrives as a JSON number while `available_usd_atoms` and `last_known_available_usd_atoms` arrive as strings, so a client parsing JSON natively receives two types for the same unit.
+
+## The calculation
 
 ```
 available_usd_atoms = credit_usd_atoms + sum of value(position)
 ```
 
-over every position the account holds. Each position's net size is
+summed over every position the account holds. Each position's net size is
 
 ```
 net = pending_exposure_qty + actual_qty
 ```
 
-Both fields are returned by [`spotCreditPositions`](post-info.md#spotcreditpositions) as **raw signed atom strings**, not display amounts. Conversion uses the asset's `balance_decimals`; see [Decimals & Units](decimals-units.md).
+in that asset's raw balance atoms, not display units. Conversion between the two uses `balance_decimals`; see [Decimals & Units](decimals-units.md).
 
-`pending_exposure_qty` is size a resting order has committed but not yet filled. It counts against the credit line on the same terms as filled size, and converts into `actual_qty` as the order fills, so the sum counts each unit of size once.
+### Positions are signed
 
-A resting order commits **one** asset, and always as a debit:
+`net` is a signed quantity: positive is a long, negative is a short. **The sign is not discarded, and the magnitude is never taken on its own.** It decides three separate things:
 
-| side | asset debited | amount |
-| --- | --- | --- |
-| `ask` | the market's **base** asset | the resting quantity, in base balance atoms |
-| `bid` | the market's **quote** asset | the resting quantity's notional (`price × quantity`) |
+* whether LTV applies, since only a positive `net` is haircut;
+* whether the position adds to or subtracts from the credit line, through ordinary signed addition;
+* the direction of rounding, because the division floors, which moves a negative value away from zero.
 
-A bid therefore commits the quote asset, not the asset being acquired. The opposite leg appears in `actual_qty` only once a fill produces a settlement delta.
+Valuing a short from `|net|` and subtracting the result produces a different number: truncation toward zero rounds the liability **down**, understating it.
 
-With a fresh mark, `value(net)` is
+### Per-position value
+
+With a fresh mark:
 
 ```
 long  (net > 0)
@@ -49,15 +70,20 @@ short (net < 0)
   floor( net * mark / 10^balance_decimals )
 ```
 
-`credit_ltv` is an integer percentage, so the `* 100` divisor is part of the formula. **LTV is applied to longs only**: a short is a liability carried at full value, and a long and a short of equal notional do not offset.
+`credit_ltv` is an integer percentage, so the `* 100` divisor is part of the expression. **LTV applies to longs only**: a short is carried at full value, so a long and a short of equal notional do not offset. Both expressions floor, which rounds against the account on either side.
 
-`credit_ltv`, returned by [`assets`](post-info.md#assets), is the effective percentage for that asset and is the value the formula takes. `credit_ltv_setting` is the raw per-asset override and is `null` whenever none is configured. An unconfigured asset still has an effective `credit_ltv`, which the protocol resolves and `assets` reports, so `credit_ltv_setting: null` does not imply a zero LTV.
+`pending_exposure_qty` is size a resting order has committed but not yet filled. It counts against the credit line on the same terms as filled size, and converts into `actual_qty` as the order fills, so the sum counts each unit of size once. A resting order commits **one** asset, always as a debit:
 
-Both expressions floor, which rounds against the account whether the position is long or short.
+| side | asset debited | amount |
+| --- | --- | --- |
+| `ask` | the market's **base** asset | the resting quantity, in base balance atoms |
+| `bid` | the market's **quote** asset | the resting quantity's notional (`price × quantity`) |
+
+A bid therefore commits the quote asset, not the asset being acquired. The opposite leg appears in `actual_qty` only once a fill produces a settlement delta.
 
 ### Stale and missing marks
 
-The formula above applies to a **fresh** mark: one whose `updated_height` equals the height the valuation runs at. In a [`markPrices`](post-info.md#markprices) response that height is the response's own `query_height`; at the order gate it is the block the order lands in. Both operands are in the same response, so the comparison requires no second query.
+The expressions above apply to a **fresh** mark: one whose `updated_height` equals the height the valuation runs at. In a [`markPrices`](post-info.md#markprices) response that height is the response's own `query_height`; at the order gate it is the block the order lands in. Both operands are in the same response, so the comparison requires no second query.
 
 Any earlier update is stale, and changes `value(net)`:
 
@@ -100,20 +126,11 @@ available_usd_atoms                   13925000000000
 
 In display terms: $100,000.00 of credit, plus $47,500.00 and $29,750.00 of collateral after LTV, less $38,000.00 for the short, giving **$139,250.00** of headroom.
 
-The BTC row shows the long/short asymmetry: at `credit_ltv: 85` the same 0.5 BTC held long would contribute $32,300, while held short it costs the full $38,000.
+The BTC row carries a negative `net`, so its value is negative and enters the sum as a subtraction. It also shows the long/short asymmetry: at `credit_ltv: 85` the same 0.5 BTC held long would contribute $32,300, while held short it costs the full $38,000.
 
 If the BTC mark goes stale, the short is revalued upward by the haircut and headroom falls with no change in position. An account operating close to its limit can therefore fail the gate, and be frozen, as a result of oracle staleness alone.
 
-## Reproducing the value
-
-| query | fields |
-| --- | --- |
-| [`spotCreditAccount`](post-info.md#spotcreditaccount) | `credit_usd_atoms`; `available_usd_atoms` for comparison against the locally computed result |
-| [`spotCreditPositions`](post-info.md#spotcreditpositions) | `pending_exposure_qty`, `actual_qty` per asset |
-| [`markPrices`](post-info.md#markprices) | `usd_atoms` and `updated_height` per asset, plus the response's `query_height` |
-| [`assets`](post-info.md#assets) | `credit_ltv`, `balance_decimals` per asset |
-
-The arithmetic must be performed in integers. Floating-point evaluation does not reproduce floor division at atom scale, and the gate is an exact integer comparison. `credit_usd_atoms` is returned as a JSON number while `available_usd_atoms` and `last_known_available_usd_atoms` are strings, so a client that parses JSON natively receives two different types for the same unit.
+## Evaluating an order in advance
 
 Evaluating a prospective order means subtracting its committed amount from the debited asset's `net` and recomputing — for an `ask`, the quantity in base balance atoms; for a `bid`, the quote notional. The order is admitted when the result is `>= 0`.
 
