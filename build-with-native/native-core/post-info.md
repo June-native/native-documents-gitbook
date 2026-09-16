@@ -419,7 +419,7 @@ For an owner with no credit line the response still returns every key, but `auth
 }
 ```
 
-Stage 6 single-leg semantics: a resting ask only debits the base asset; a resting bid only debits the quote asset. The other leg appears as `actual_qty` only when a fill produces a real settlement delta.
+A resting order commits a single leg: a resting ask only debits the base asset; a resting bid only debits the quote asset. The other leg appears as `actual_qty` only when a fill produces a real settlement delta. The amount committed differs by side — see [Credit & Margin](credit-margin.md#valuation-formula).
 
 ### oracleStatus
 
