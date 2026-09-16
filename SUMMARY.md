@@ -70,6 +70,7 @@
   * [Concepts](build-with-native/native-core/concepts.md)
     * [Notation](build-with-native/native-core/notation.md)
     * [Account Types](build-with-native/native-core/account-types.md)
+    * [Credit & Margin](build-with-native/native-core/credit-margin.md)
     * [Decimals & Units](build-with-native/native-core/decimals-units.md)
     * [Nonces & API Wallets](build-with-native/native-core/nonces-and-api-wallets.md)
   * [Python SDK](build-with-native/native-core/python-sdk/README.md)

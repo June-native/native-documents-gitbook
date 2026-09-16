@@ -11,7 +11,7 @@ Native Core has two kinds of trading account. Every owner is exactly one of them
 | Provisioning | Created automatically on **first deposit**, or by someone else calling [`activateFor`](post-trade.md#activatefor) for your address — the default account. | **Provisioned by the protocol**; not self-service. |
 | Collateral | Per-asset `available` balance. | A USD credit line. |
 | Short positions | Not supported — trading is limited to held balance. | Supported — positions are signed (`actual_qty` may be negative). |
-| Order-time risk gate | Sufficient `available` balance. | `available_usd_atoms >= 0` against the credit line. |
+| Order-time risk gate | Sufficient `available` balance. | `available_usd_atoms >= 0` against the credit line — see [Credit & Margin](credit-margin.md) for how that number is computed. |
 | State | `active` / `frozen` | `active` / `frozen` |
 
 {% hint style="danger" %}

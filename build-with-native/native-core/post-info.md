@@ -390,7 +390,7 @@ Whether an account exists and its freeze state.
 
 For an owner with no credit line the response still returns every key, but `authorized` is `false` and `status`, `credit_usd_atoms`, `available_usd_atoms` and `last_known_available_usd_atoms` are all `null`. This is the common case, so type these four as nullable.
 
-`status` is `"active"`, `"frozen"`, or `null`. `credit_usd_atoms` and the available fields are in `usd_atoms` (`USD_SCALE = 10^8`). `available_usd_atoms` is `null` when any nonzero position asset lacks a mark at the latest query height; accounts with no exposure can report their credit without marks. `last_known_available_usd_atoms` always uses the most recently committed marks regardless of staleness and is `null` only when a position asset has never had a mark. Negative fractional USD-atom position values are rounded down conservatively, matching the execution credit gate.
+`status` is `"active"`, `"frozen"`, or `null`. `credit_usd_atoms` and the available fields are in `usd_atoms` (`USD_SCALE = 10^8`). [Credit & Margin](credit-margin.md) gives the formula behind `available_usd_atoms`, including the per-asset LTV and how a stale mark changes it. `available_usd_atoms` is `null` when any nonzero position asset lacks a mark at the latest query height; accounts with no exposure can report their credit without marks. `last_known_available_usd_atoms` always uses the most recently committed marks regardless of staleness and is `null` only when a position asset has never had a mark. Negative fractional USD-atom position values are rounded down conservatively, matching the execution credit gate.
 
 ### spotCreditPositions
 
