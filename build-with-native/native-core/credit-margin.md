@@ -28,7 +28,16 @@ net = pending_exposure_qty + actual_qty
 
 Both fields come from [`spotCreditPositions`](post-info.md#spotcreditpositions) as **raw signed atom strings** — not display amounts. Convert with the asset's `balance_decimals`; see [Decimals & Units](decimals-units.md). A position whose `net` is zero contributes nothing and needs no mark at all.
 
-`pending_exposure_qty` is size committed by a resting order but not yet filled. It consumes the credit line from the moment the order rests: cancelling the order releases it, and a fill converts it into `actual_qty`. Headroom computed from filled positions alone is therefore an over-estimate. Resting orders are single-leg — a resting ask debits the base asset only, a resting bid debits the quote asset only.
+`pending_exposure_qty` is the amount a resting order has committed but not yet filled. It consumes the credit line from the moment the order rests: cancelling the order releases it, and a fill converts it into `actual_qty`. Headroom computed from filled positions alone is therefore an over-estimate. Only the part that rests counts: an `ioc` or `fok` that never rests creates no pending exposure, and an order that partially fills on entry commits only the remainder.
+
+A resting order commits **one** asset, and always as a debit:
+
+| side | asset debited | amount |
+| --- | --- | --- |
+| `ask` | the market's **base** asset | the resting quantity, in base balance atoms |
+| `bid` | the market's **quote** asset | the resting quantity's notional (`price × quantity`) |
+
+A bid therefore does not reduce `net` on the asset being bought; it reduces `net` on the quote asset it would pay with, by the notional rather than the quantity. The opposite leg appears in `actual_qty` only once a fill produces a settlement delta.
 
 With a fresh mark, `value(net)` is
 
@@ -108,7 +117,7 @@ If the BTC mark goes stale, the short is revalued upward by the haircut and head
 
 The arithmetic must be performed in integers. Floating-point evaluation does not reproduce floor division at atom scale, and the gate is an exact integer comparison. Note that `credit_usd_atoms` is returned as a JSON number while `available_usd_atoms` and `last_known_available_usd_atoms` are strings; a client that parses JSON natively gets two different types for the same unit.
 
-To evaluate an order before submitting it, apply its size to the debited asset's `net` — base for an ask, quote for a bid — and recompute. The order is admitted when the result is `>= 0`.
+To evaluate an order before submitting it, subtract its committed amount from the debited asset's `net` — for an `ask`, the quantity in base balance atoms; for a `bid`, the quote notional — and recompute. The order is admitted when the result is `>= 0`.
 
 A locally computed value can go stale before the order lands. The query evaluates freshness at the last published block; the gate evaluates it at the block the order lands in. A mark that is fresh when read is stale one block later unless the oracle republishes, so leave headroom rather than sizing to the boundary. [`spotCreditState`](websocket.md#spotcreditstate) streams the same positions and credit line for integrations that would rather not poll.
 
