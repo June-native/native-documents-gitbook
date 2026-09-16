@@ -51,8 +51,11 @@ Both fields come from [`spotCreditPositions`](post-info.md#spotcreditpositions) 
 With a fresh mark, `value(net)` is
 
 ```
-long  (net > 0)   floor( net * mark * credit_ltv / (10^balance_decimals * 100) )
-short (net < 0)   floor( net * mark / 10^balance_decimals )
+long  (net > 0)
+  floor( net * mark * credit_ltv / (10^balance_decimals * 100) )
+
+short (net < 0)
+  floor( net * mark / 10^balance_decimals )
 ```
 
 `credit_ltv` is an integer percentage, so the `* 100` divisor is part of the formula. **LTV is applied to longs only**: a short is a liability carried at full value, and a long and a short of equal notional do not offset.
@@ -96,16 +99,19 @@ A credit account with a $100,000 line holds two longs and a short. All three ass
 | BTC | -50000000 | 7600000000000 | 85 |
 
 ```
-credit_usd_atoms                                   10000000000000    $100,000.00
-USDC   floor(5000000000000 * 100000000 * 95
-             / (100000000 * 100))                   4750000000000     +$47,500.00
-ETH    floor(1000000000 * 350000000000 * 85
-             / (100000000 * 100))                   2975000000000     +$29,750.00
-BTC    floor(-50000000 * 7600000000000
-             / 100000000)                          -3800000000000     -$38,000.00
-                                                   --------------------------------
-available_usd_atoms                                13925000000000    $139,250.00
+credit_usd_atoms                      10000000000000
+
+USDC  floor(5000000000000 * 100000000 * 95
+            / (100000000 * 100))       4750000000000
+ETH   floor(1000000000 * 350000000000 * 85
+            / (100000000 * 100))       2975000000000
+BTC   floor(-50000000 * 7600000000000
+            / 100000000)              -3800000000000
+                                      --------------
+available_usd_atoms                   13925000000000
 ```
+
+That is $100,000.00 of credit, plus $47,500.00 and $29,750.00 of haircut collateral, less $38,000.00 of liability: **$139,250.00** of headroom.
 
 The BTC row shows the long/short asymmetry: at `credit_ltv: 85` the same 0.5 BTC held long would contribute $32,300, while held short it costs the full $38,000.
 
