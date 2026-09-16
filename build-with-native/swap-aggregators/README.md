@@ -8,6 +8,12 @@ Click on the cards below for:
 [firmquote-swap-apis](firmquote-swap-apis/)
 {% endcontent-ref %}
 
+#### Native Relay — Mode pAMM, Same Chain
+
+{% content-ref url="pamm-swap-apis/" %}
+[pamm-swap-apis](pamm-swap-apis/)
+{% endcontent-ref %}
+
 #### Native Relay — Mode RFQ, Cross Chain
 
 (Coming soon)

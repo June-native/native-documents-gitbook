@@ -13,6 +13,7 @@ It lets existing distribution partners tap into the deep Native Core liquidity *
 Relay meets each partner where they already operate. See [Integration Modes](../concepts/integration-modes.md) for the full breakdown.
 
 * **RFQ mode:** Lowest-friction path for existing DEX aggregators.
+* **pAMM mode:** Fully onchain quotes and swaps. No offchain API and no RFQ signature.
 * **Intent mode:** Used for meta-aggregators, intent platforms, solvers, and cross-chain UIs.
 
 #### Who It's For
@@ -29,7 +30,7 @@ The same firm-quote, backward-compatible integration partners already use — wh
 
 ### Build with Native Relay
 
-Existing RFQ swap APIs for aggregators and integrators are documented under Swap Aggregators.
+RFQ and pAMM swap paths for aggregators and integrators are documented under Swap Aggregators.
 
 {% content-ref url="../build-with-native/swap-aggregators/" %}
 [swap-aggregators](../build-with-native/swap-aggregators/)
