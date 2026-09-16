@@ -51,7 +51,7 @@ short (net < 0)
 
 `credit_ltv` is an integer percentage, so the `* 100` divisor is part of the formula. **LTV is applied to longs only**: a short is a liability carried at full value, and a long and a short of equal notional do not offset.
 
-`credit_ltv`, returned by [`assets`](post-info.md#assets), is the effective percentage for that asset and is the value the formula takes. `credit_ltv_setting` is the raw per-asset override and is `null` whenever none is configured; `null` there does not imply a zero LTV, and an asset may carry `credit_ltv_setting: null` with an effective `credit_ltv` of 100.
+`credit_ltv`, returned by [`assets`](post-info.md#assets), is the effective percentage for that asset and is the value the formula takes. `credit_ltv_setting` is the raw per-asset override and is `null` whenever none is configured. An unconfigured asset still has an effective `credit_ltv`, which the protocol resolves and `assets` reports, so `credit_ltv_setting: null` does not imply a zero LTV.
 
 Both expressions floor, which rounds against the account whether the position is long or short.
 
@@ -67,7 +67,7 @@ The valuation of a stale mark depends on the action:
 | **Short**, mark stale | valued at a marked-up price | rejected |
 | **Short**, mark missing | cannot be valued — rejected | rejected |
 
-A stale mark elsewhere in the account therefore does not block trading, but it can only reduce headroom, never increase it. `settle` and `repay` value every position strictly, so an account that can still trade may already be unable to settle.
+A stale mark elsewhere in the account therefore does not block trading, but it can only reduce headroom, never increase it. `settle` and `repay` value every position strictly, so the same stale mark that trading tolerates blocks both of them.
 
 For a stale short, the mark is multiplied by a protocol haircut of at least 1.0 and rounded up, so the short is over-stated rather than under-stated. The haircut is a protocol schedule parameter keyed on block height; no query returns it, and it can change at a fork. Its effect scales linearly with the position's full value: on a short worth $38,000, each 0.1 of haircut removes $3,800 of headroom.
 
