@@ -16,7 +16,7 @@ An order that would take `available_usd_atoms` below zero has two possible outco
 * **Caught by the spot-credit precheck**, before the transaction enters a block — rejected with `InsufficientSpotCredit`, and the account is **untouched**.
 * **Failed at execution**, inside a block — returned as the lowercase leaf [`insufficientspotcredit`](error-responses.md#execution-level-failures), and the account is **left frozen** until an operator unfreezes it. There is no self-service recovery.
 
-The precheck is a guard, not a guarantee: account state can move between the two points. Because the second outcome costs a freeze, the gate is not usable as a validator — compute the post-order value locally and keep headroom. A `modify` that fails the same way freezes the account identically; other order rejections, including `OracleMarkPriceMissing`, leave it `active`.
+The precheck is a guard, not a guarantee: account state can move between the two points. Do not use the gate to test whether an order fits: compute the post-order value locally and keep headroom. A `modify` that fails the same way freezes the account identically; other order rejections, including `OracleMarkPriceMissing`, leave it `active`.
 {% endhint %}
 
 ## Valuation formula
@@ -33,7 +33,7 @@ net = pending_exposure_qty + actual_qty
 
 Both fields come from [`spotCreditPositions`](post-info.md#spotcreditpositions) as **raw signed atom strings** — not display amounts. Convert with the asset's `balance_decimals`; see [Decimals & Units](decimals-units.md).
 
-`pending_exposure_qty` is the amount a resting order has committed but not yet filled. It consumes the credit line from the moment the order rests: cancelling the order releases it, and a fill converts it into `actual_qty`. Headroom computed from filled positions alone is therefore an over-estimate. Only the part that rests counts: an `ioc` or `fok` that never rests creates no pending exposure, and an order that partially fills on entry commits only the remainder.
+`pending_exposure_qty` is the amount a resting order has committed but not yet filled. It consumes the credit line from the moment the order rests: cancelling the order releases it, and a fill converts it into `actual_qty`. Headroom computed from filled positions alone is therefore an over-estimate. Only resting size counts: an `ioc` or `fok` creates no pending exposure, and an order that partially fills on entry commits only its remainder.
 
 A resting order commits **one** asset, and always as a debit:
 
@@ -42,7 +42,7 @@ A resting order commits **one** asset, and always as a debit:
 | `ask` | the market's **base** asset | the resting quantity, in base balance atoms |
 | `bid` | the market's **quote** asset | the resting quantity's notional (`price × quantity`) |
 
-A bid therefore does not reduce `net` on the asset being bought; it reduces `net` on the quote asset it would pay with, by the notional rather than the quantity. The opposite leg appears in `actual_qty` only once a fill produces a settlement delta.
+A bid therefore commits the quote asset it would pay with, not the asset being bought. The other leg appears in `actual_qty` only once a fill produces a settlement delta.
 
 With a fresh mark, `value(net)` is
 
@@ -58,13 +58,13 @@ short (net < 0)
 
 `credit_ltv`, returned by [`assets`](post-info.md#assets), is the effective percentage and is used directly. `credit_ltv_setting` echoes the per-asset override and is `null` when none is configured. An asset at `credit_ltv: 0` contributes no collateral at any size, while still carrying full weight as a short.
 
-Long valuation floors. The stale-short haircut below rounds up. Both round against the account, so the sum is never optimistic.
+Both expressions floor, which rounds against the account whether the position is long or short.
 
 ## Mark freshness
 
-A mark is **fresh** only when its `updated_height` equals the height the valuation runs at. Any earlier update is stale. Mark values and `updated_height` are returned by [`markPrices`](post-info.md#markprices), which also returns the `query_height` to compare against.
+A mark is **fresh** only when its `updated_height` equals the height the valuation runs at; any earlier update is stale. That height depends on who is asking: reading [`markPrices`](post-info.md#markprices) it is the response's own `query_height`, and for the order gate it is the block the order lands in. Both fields are on the same response, so the comparison needs no second query.
 
-A stale mark does not value the same way for every action:
+How a stale mark is valued depends on the action:
 
 | position | placing an order | `settle` / `repay` |
 | --- | --- | --- |
@@ -72,11 +72,11 @@ A stale mark does not value the same way for every action:
 | **Short**, mark stale | valued at a marked-up price | rejected |
 | **Short**, mark missing | cannot be valued — rejected | rejected |
 
-So a stale mark elsewhere in the account does not block trading, but it is not free: a long whose mark is stale contributes no collateral, while a short whose mark is stale still counts at full size, marked up. `settle` and `repay` value every position strictly, so an account that can trade may still be unable to settle.
+A stale mark elsewhere in the account therefore does not block trading, but it is not free: it can only reduce headroom, never increase it. `settle` and `repay` value every position strictly, so an account that can still trade may already be unable to settle.
 
 For a stale short, the mark is multiplied by a protocol haircut of at least 1.0 and rounded up, so the short is over-stated rather than under-stated. The haircut is a protocol schedule parameter keyed on block height; it is not returned by any query and can change at a fork. Its effect scales linearly with the position's full value — on a short worth $38,000, each 0.1 of haircut removes $3,800 of headroom.
 
-One check runs *before* valuation and is not part of it: both assets of the market being traded must have a mark updated in the current block, or the order is rejected with `OracleMarkPriceMissing`. That rejection leaves the account `active`.
+Separately, and before any valuation: both assets of the market being traded must have a mark updated in the current block, or the order is rejected with `OracleMarkPriceMissing`.
 
 ## Worked example
 
@@ -105,7 +105,7 @@ BTC   floor(-50000000 * 7600000000000
 available_usd_atoms                   13925000000000
 ```
 
-That is $100,000.00 of credit, plus $47,500.00 and $29,750.00 of haircut collateral, less $38,000.00 for the short: **$139,250.00** of headroom.
+That is $100,000.00 of credit, plus $47,500.00 and $29,750.00 of collateral after LTV, less $38,000.00 for the short: **$139,250.00** of headroom.
 
 The BTC row shows the long/short asymmetry: at `credit_ltv: 85` the same 0.5 BTC held long would contribute $32,300, while held short it costs the full $38,000.
 
@@ -124,7 +124,7 @@ The arithmetic must be performed in integers. Floating-point evaluation does not
 
 To evaluate an order before submitting it, subtract its committed amount from the debited asset's `net` — for an `ask`, the quantity in base balance atoms; for a `bid`, the quote notional — and recompute. The order is admitted when the result is `>= 0`.
 
-A locally computed value can go stale before the order lands. The query evaluates freshness at the last published block; the gate evaluates it at the block the order lands in. A mark that is fresh when read is stale one block later unless the oracle republishes, so leave headroom rather than sizing to the boundary. [`spotCreditState`](websocket.md#spotcreditstate) streams the same positions and credit line for integrations that would rather not poll.
+A locally computed value is a snapshot: a mark that is fresh when read is stale one block later unless the oracle republishes. [`spotCreditState`](websocket.md#spotcreditstate) streams the same positions and credit line for integrations that would rather not poll.
 
 ## When the value is `null`
 
