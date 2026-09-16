@@ -28,7 +28,7 @@ net = pending_exposure_qty + actual_qty
 
 Both fields come from [`spotCreditPositions`](post-info.md#spotcreditpositions) as **raw signed atom strings** — not display amounts. Convert with the asset's `balance_decimals`; see [Decimals & Units](decimals-units.md).
 
-`pending_exposure_qty` is the amount a resting order has committed but not yet filled. It consumes the credit line from the moment the order rests: cancelling the order releases it, and a fill converts it into `actual_qty`. Headroom computed from filled positions alone is therefore an over-estimate. Only resting size counts: an `ioc` or `fok` creates no pending exposure, and an order that partially fills on entry commits only its remainder.
+`pending_exposure_qty` is size a resting order has committed but not yet filled. It counts against the credit line exactly as filled size does, and converts into `actual_qty` as the order fills, so the two never double-count.
 
 A resting order commits **one** asset, and always as a debit:
 
