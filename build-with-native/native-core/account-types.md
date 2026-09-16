@@ -19,7 +19,9 @@ Native Core has two kinds of trading account. Every owner is exactly one of them
 It comes back as `insufficientspotcredit` **and the account is left frozen** —
 it cannot place new orders until an operator unfreezes it, and there is no
 self-service recovery. The same order rejected earlier, by the spot-credit
-precheck, returns `InsufficientSpotCredit` and leaves the account untouched.
+precheck, returns `InsufficientSpotCredit` and leaves the account untouched. A
+`modify` that fails the same check freezes the account identically; other order
+rejections, including `OracleMarkPriceMissing`, leave it `active`.
 Size against current headroom before sending — see
 [Credit & Margin](credit-margin.md).
 {% endhint %}
