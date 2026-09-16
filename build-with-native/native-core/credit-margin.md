@@ -26,7 +26,7 @@ over every position the account holds. Each position's net size is
 net = pending_exposure_qty + actual_qty
 ```
 
-Both fields come from [`spotCreditPositions`](post-info.md#spotcreditpositions) as **raw signed atom strings** — not display amounts. Convert with the asset's `balance_decimals`; see [Decimals & Units](decimals-units.md). A position whose `net` is zero contributes nothing and needs no mark at all, so flattening a position also removes its mark dependency.
+Both fields come from [`spotCreditPositions`](post-info.md#spotcreditpositions) as **raw signed atom strings** — not display amounts. Convert with the asset's `balance_decimals`; see [Decimals & Units](decimals-units.md). A position whose `net` is zero contributes nothing and needs no mark at all.
 
 `pending_exposure_qty` is size committed by a resting order but not yet filled. It consumes the credit line from the moment the order rests: cancelling the order releases it, and a fill converts it into `actual_qty`. Headroom computed from filled positions alone is therefore an over-estimate. Resting orders are single-leg — a resting ask debits the base asset only, a resting bid debits the quote asset only.
 
@@ -55,12 +55,12 @@ A stale mark does not value the same way for every action:
 | position | placing an order | `settle` / `repay` |
 | --- | --- | --- |
 | **Long**, mark stale or missing | contributes `0` | rejected |
-| **Short**, mark stale | marked-up liability | rejected |
+| **Short**, mark stale | valued at a marked-up price | rejected |
 | **Short**, mark missing | cannot be valued — rejected | rejected |
 
-So a stale mark elsewhere in the account does not block trading, but it is not free: an unpriceable long contributes no collateral, while an unpriceable short still carries its full liability, marked up. `settle` and `repay` value every position strictly, so an account that can trade may still be unable to settle.
+So a stale mark elsewhere in the account does not block trading, but it is not free: a long whose mark is stale contributes no collateral, while a short whose mark is stale still counts at full size, marked up. `settle` and `repay` value every position strictly, so an account that can trade may still be unable to settle.
 
-For a stale short, the mark is multiplied by a protocol haircut of at least 1.0 and rounded up, so the liability is over-stated rather than under-stated. The haircut is a protocol schedule parameter keyed on block height; it is not returned by any query and can change at a fork. Its effect scales linearly with the position's full value — on a short worth $38,000, each 0.1 of haircut removes $3,800 of headroom.
+For a stale short, the mark is multiplied by a protocol haircut of at least 1.0 and rounded up, so the short is over-stated rather than under-stated. The haircut is a protocol schedule parameter keyed on block height; it is not returned by any query and can change at a fork. Its effect scales linearly with the position's full value — on a short worth $38,000, each 0.1 of haircut removes $3,800 of headroom.
 
 One check runs *before* valuation and is not part of it: both assets of the market being traded must have a mark updated in the current block, or the order is rejected with `OracleMarkPriceMissing`. That rejection leaves the account `active`.
 
@@ -91,7 +91,7 @@ BTC   floor(-50000000 * 7600000000000
 available_usd_atoms                   13925000000000
 ```
 
-That is $100,000.00 of credit, plus $47,500.00 and $29,750.00 of haircut collateral, less $38,000.00 of liability: **$139,250.00** of headroom.
+That is $100,000.00 of credit, plus $47,500.00 and $29,750.00 of haircut collateral, less $38,000.00 for the short: **$139,250.00** of headroom.
 
 The BTC row shows the long/short asymmetry: at `credit_ltv: 85` the same 0.5 BTC held long would contribute $32,300, while held short it costs the full $38,000.
 
@@ -110,7 +110,7 @@ The arithmetic must be performed in integers. Floating-point evaluation does not
 
 To evaluate an order before submitting it, apply its size to the debited asset's `net` — base for an ask, quote for a bid — and recompute. The order is admitted when the result is `>= 0`.
 
-A locally computed value is a projection, not a guarantee. The query evaluates freshness at the last published block; the gate evaluates it at the block the order lands in. A mark that is fresh when read is stale one block later unless the oracle republishes, so leave headroom rather than sizing to the boundary. [`spotCreditState`](websocket.md#spotcreditstate) streams the same positions and credit line for integrations that would rather not poll.
+A locally computed value can go stale before the order lands. The query evaluates freshness at the last published block; the gate evaluates it at the block the order lands in. A mark that is fresh when read is stale one block later unless the oracle republishes, so leave headroom rather than sizing to the boundary. [`spotCreditState`](websocket.md#spotcreditstate) streams the same positions and credit line for integrations that would rather not poll.
 
 ## When the value is `null`
 
