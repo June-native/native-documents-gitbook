@@ -14,6 +14,10 @@ The shared models the endpoints assume. Skim once, refer back as needed.
 [account-types.md](account-types.md)
 {% endcontent-ref %}
 
+{% content-ref url="credit-margin.md" %}
+[credit-margin.md](credit-margin.md)
+{% endcontent-ref %}
+
 {% content-ref url="decimals-units.md" %}
 [decimals-units.md](decimals-units.md)
 {% endcontent-ref %}
