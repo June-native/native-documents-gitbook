@@ -129,7 +129,7 @@ The BTC row shows the long/short asymmetry. At `credit_ltv: 85` the same `0.5` B
 
 If the BTC mark goes stale, the short is revalued upward by the haircut and headroom falls with no change in position. An account operating close to its limit can therefore fail the gate, and be frozen, as a result of oracle staleness alone.
 
-## Reading the inputs
+## Inputs
 
 Four `POST /info` queries supply every term, each read against the **owner** address.
 
@@ -144,11 +144,3 @@ Four `POST /info` queries supply every term, each read against the **owner** add
 | | `query_height` | response-level; the height freshness is tested against |
 | [`assets`](post-info.md#assets) | `credit_ltv` | effective loan-to-value percentage, an integer |
 | | `balance_decimals` | atom scale of that asset's balances |
-
-`credit_ltv` is the effective percentage and is the value the calculation takes. `credit_ltv_setting` is the raw per-asset override, `null` whenever none is configured; an unconfigured asset still has an effective `credit_ltv`, so `credit_ltv_setting: null` does not imply a zero LTV.
-
-The whole calculation is performed in integers: floating-point evaluation does not reproduce floor division at atom scale, and the gate is an exact integer comparison. `credit_usd_atoms` arrives as a JSON number while `available_usd_atoms` arrives as a string, so a client parsing JSON natively receives two types for the same unit.
-
-Evaluating a prospective order means subtracting its committed amount from the committed asset's `net` and recomputing. The order is admitted when the result is `>= 0`.
-
-A locally computed value is a snapshot: a mark that is fresh when read is stale one block later unless the oracle republishes. [`spotCreditState`](websocket.md#spotcreditstate) streams the same positions and credit line as an alternative to polling.
