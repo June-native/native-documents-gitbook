@@ -1,0 +1,5 @@
+# Error Handling
+
+`tradePAMM` and `getQuote` revert on failure. There is no HTTP error envelope on this path.
+
+<table><thead><tr><th width="292">Error</th><th>Meaning</th></tr></thead><tbody><tr><td><code>DirectSwapDisabled</code></td><td>Flag is off. Quote may still succeed.</td></tr><tr><td><code>InvalidEngine</code></td><td>No engine for this pair.</td></tr><tr><td><code>InvalidNativePool</code></td><td>Pool not whitelisted on this router.</td></tr><tr><td><code>PriceExpired</code></td><td>Hot price TTL elapsed. Re-quote and retry.</td></tr><tr><td><code>InsufficientDepth</code></td><td>Size larger than remaining ladder/curve.</td></tr><tr><td><code>BelowMinimumTradeSize</code></td><td>Under <code>minBaseInputRaw</code> / <code>minQuoteInputRaw</code>.</td></tr><tr><td><code>NotEnoughAmountOut</code></td><td>Fill below <code>amountOutMinimum</code>. Widen slippage or reduce size.</td></tr><tr><td><code>QuoteExpired</code></td><td><code>deadlineTimestamp</code> passed.</td></tr><tr><td><code>InvalidAmount</code> / <code>UnexpectedMsgValue</code></td><td>Native <code>msg.value</code> mismatch.</td></tr></tbody></table>

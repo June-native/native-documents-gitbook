@@ -1,8 +1,14 @@
 # Guide
 
-The Native Relay API connects you with Native Core's industry-grade liquidity and pricing, via a familiar RFQ format, powered by Native Relay — Mode RFQ.
+Native Relay connects you with Native Core liquidity on public networks in two same-chain modes:
 
-## Set up a Swap using Native Relay APIs
+<table><thead><tr><th width="160">Mode</th><th>How you quote</th><th>When to use it</th></tr></thead><tbody><tr><td><strong>RFQ</strong></td><td>Offchain firm-quote API, then submit signed calldata to Native Router</td><td>Existing DEX aggregators, wallets, and solvers. Supports RFQ fallback and a higher swap success rate.</td></tr><tr><td><strong>pAMM</strong></td><td>Fully onchain <code>getQuote</code> + <code>tradePAMM</code>. No API key, no RFQ signature.</td><td>Integrators that want an AMM-style onchain path with no offchain quoting.</td></tr></tbody></table>
+
+{% hint style="info" %}
+pAMM is single-hop only and has no RFQ fallback on the direct path. Use RFQ if you need hybrid fallback. Full pAMM reference: [pamm-swap-apis](pamm-swap-apis/ "mention")
+{% endhint %}
+
+## Set up a Swap using Native Relay RFQ APIs
 
 ### 1. Get an API key
 
@@ -218,3 +224,71 @@ async function main() {
 
 main();
 ```
+
+## Set up a Swap using Native Relay pAMM
+
+pAMM does not use the Swap API. Quote and execution are both onchain on Native Router V6. No API key and no RFQ signature.
+
+Refer to [pamm-swap-apis](pamm-swap-apis/ "mention") for addresses, events, and reverts. Deployed V6 contracts: [addresses.md](../../resources/addresses/README.md "mention")
+
+### 1. Confirm the pair and engine
+
+`directSwapEnabled` is the live flag. Quotes still work when it is false; swaps revert with `DirectSwapDisabled`. Always read the flag onchain before sending a swap.
+
+On BNB Chain, QQQB–USDT is enabled for test. Other listed pairs may quote while direct swap is still disabled. Confirm yourself:
+
+```typescript
+const engine = await pool.getEngine(tokenA, tokenB); // zero = not listed
+const pairKey = await pool.getPairKey(tokenA, tokenB);
+const enabled = await pool.directSwapEnabled(pairKey);
+const boundPool = await engine.rfqPool(); // must equal the NativeRFQPool you use
+```
+
+Also require `router.isNativePools(pool) == true`.
+
+### 2. Get an onchain quote
+
+Call `PropAMMEngine.getQuote`. Amounts are raw token units. For native gas token (ETH/BNB), pass the **wrapped** address — never `address(0)` on the engine.
+
+```typescript
+const base = await engine.baseAsset();
+const quote = await engine.quoteAsset();
+
+// Sell 1 wrapped base → how much quote out?
+const amountOut = await engine.getQuote(base, quote, 10n ** 18n);
+const amountOutMinimum = amountOut * 9950n / 10000n; // start at 50 bps
+```
+
+Refresh the quote close to send. Engine price is short-TTL.
+
+### 3. Approve, then call `tradePAMM`
+
+Do **not** call `Engine.swap()`; only the bound pool may call it. Users always go through the router.
+
+Sell ERC-20: approve the router, then `msg.value = 0`. Sell native: `sellerToken = address(0)` and `msg.value = sellerTokenAmount`.
+
+```typescript
+import { ZeroAddress } from "ethers";
+
+const latest = await provider.getBlock("latest");
+
+await (await sellerTokenContract.approve(routerAddress, sellerTokenAmount)).wait();
+
+const tx = await router.tradePAMM(
+  {
+    pool: poolAddress,
+    recipient,
+    sellerToken,               // address(0) if selling native
+    buyerToken,                // address(0) if buying native
+    sellerTokenAmount,
+    amountOutMinimum,
+    deadlineTimestamp: BigInt(latest.timestamp) + 1200n, // 20 minutes
+  },
+  { value: sellerToken === ZeroAddress ? sellerTokenAmount : 0n },
+);
+await tx.wait();
+```
+
+`tradePAMM` returns nothing. Read actual out from the pool `PAMMTrade` event. See [events.md](pamm-swap-apis/events.md "mention").
+
+Staging UI (BNB Chain): [https://native-pamm-staging.vercel.app/](https://native-pamm-staging.vercel.app/)
