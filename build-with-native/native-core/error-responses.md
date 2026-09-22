@@ -157,10 +157,10 @@ Errors returned before the transaction is included in a block:
 | --- | --- |
 | `QueryLagBackpressure` | The node is briefly behind and not accepting writes. Wait a moment and retry the same signed request. |
 | `DuplicateTxHash` | The same transaction hash is already pending in ingress. |
-| `DuplicateAuthorityNonce` | The same authority/nonce pair is already pending in ingress (authority is the recovered signer for single-sig, or the policy authority for multisig). |
+| `DuplicateAuthorityNonce` | The same authority/nonce pair is already pending in ingress (authority is the recovered signer for single-sig, the `auth_account` under an [account multisig](account-multisig.md), or the policy authority for an internal scoped multisig). |
 | `MalformedTx` | The node could not decode canonical transaction bytes. Public JSON normally fails earlier if bytes cannot be built. |
 | `BadSignature` | The node could not recover a signer from the canonical transaction signature. Public JSON normally fails earlier during signer recovery. |
-| `AuthorityHintMismatch` | The decoded authority does not match the submit-path `authority_hint` (recovered signer for single-sig, derived policy authority for multisig). The hint did not match the canonical transaction. |
+| `AuthorityHintMismatch` | The decoded authority does not match the submit-path `authority_hint` (recovered signer for single-sig, `auth_account` under an [account multisig](account-multisig.md), derived policy authority for an internal scoped multisig). The hint did not match the canonical transaction. |
 | `WrongChainId` | The signed payload's chain id did not match the node's configured chain id. |
 | `TooManyPending` | Global pending capacity or per-owner pending capacity was reached at the node. (The API also emits this code itself, at HTTP `503` with `retry_after_ms: 50`, when its own synchronous-write concurrency is saturated — see the gateway table above.) |
 | `InvalidIngressConfig` | The node ingress configuration was invalid. |
