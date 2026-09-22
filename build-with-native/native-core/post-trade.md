@@ -33,13 +33,13 @@ Request envelope fields:
 | `expires_after_ms` | no                    | Decimal string `u64` Unix milliseconds. An envelope already past `expires_after_ms` at the gateway clock is fast-failed with `submission_status: "rejected"`, `error.code: "ExpiredTx"` (before the node hop); execution also enforces expiry against the committed block timestamp.                                                                                                                                                          |
 | `auth_scheme`      | no                    | `"legacy"` (default) or `"eip712"`. Public `transfer`, `activateFor`, `withdraw`, `settle`, `repay`, `approveAgent`, `revokeAgent`, and `setAccountMultisig` require `"eip712"`; public trading actions (`order`/`cancel`/`cancelAll`/`modify`/`batch`) require `"legacy"`. Every account-auth request requires it too (`AccountAuthRequiresEip712`). See [EIP-712 signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712).                        |
 | `signature`        | yes unless account-auth | `0x`-prefixed 65-byte recoverable secp256k1 signature. Legacy v1, or — when `auth_scheme="eip712"` — an EIP-712 v4 single signature. Omitted on an [account multisig](account-multisig.md) request, which carries `signatures` instead. Mutually exclusive with `signatures`.                                                                          |
-| `signatures`       | no                    | Array of `0x`-prefixed 65-byte signatures. Sent **with** `auth_account` and `policy_epoch` to submit an [account multisig](account-multisig.md) quorum request; without `auth_account` it is rejected with `SignaturesNotAllowedForAction`. Mutually exclusive with `signature`. |
+| `signatures`       | no                    | Array of `0x`-prefixed 65-byte signatures. Sent **with** `auth_account` and `policy_epoch` to submit an [account multisig](account-multisig.md) quorum request. Without `auth_account` it is an internal multisig submission, which is not part of this public contract and is rejected for public actions with `SignaturesNotAllowedForAction`. Mutually exclusive with `signature`. |
 | `auth_account`     | no                    | Owner address the quorum acts for, on an [account multisig](account-multisig.md) request. Must be sent with `policy_epoch` and `auth_scheme:"eip712"`, and only for the actions a quorum can sign. |
 | `policy_epoch`     | no                    | Decimal string `u64` from the `accountMultisig` read; required whenever `auth_account` is present. A stale value is rejected with `AccountMultisigEpochMismatch`. |
 
 The envelope is **strict**: exactly one of `signature` or `signatures` must be present (neither or both → `AmbiguousAuthFields`), and any field not in the table above is rejected as `InvalidJson`. Numeric fields (`nonce`, `agent_epoch`, `expires_after_ms`) accept a decimal string **or** an unsigned JSON integer, with the string form preferred above 2^53. Only `action`, `nonce`, `agent_epoch`, and `expires_after_ms` are folded into the signed payload — plus `auth_account` and `policy_epoch` on an [account multisig](account-multisig.md) request, which are signed by every approval. `auth_scheme`, `signature`, and `signatures` are transport fields that select and carry the proof (see [Transaction Signing](transaction-signing.md)).
 
-Public actions are single-signature unless the account has an [account multisig](account-multisig.md) configured: sending `signatures` without `auth_account` is rejected with `SignaturesNotAllowedForAction`. The transaction **authority** used for nonce/rate-limit and `txStatusByCloid` is the recovered signer — or, on an account multisig request, the `auth_account` the quorum acts for.
+Public actions are single-signature, except the eight an [account multisig](account-multisig.md) covers (`transfer` / `activateFor` / `withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent` / `setAccountMultisig`) when one is Active. Trading actions can never be quorum-signed. Sending `signatures` without `auth_account` is rejected with `SignaturesNotAllowedForAction`. The transaction **authority** used for nonce/rate-limit and `txStatusByCloid` is the recovered signer — except on an [account multisig](account-multisig.md) request, where it is the `auth_account` the quorum acts for, not any of the signing keys.
 
 Nonce validation is authority-scoped. Execution accepts nonces within the committed block timestamp window (`block_timestamp_ms - 2 days` through `block_timestamp_ms + 1 day`), rejects duplicates, and retains the latest 100 consumed nonces per authority. When the retained window is full, a new nonce must be greater than the current minimum retained nonce.
 
@@ -444,7 +444,7 @@ Rejections: the signer must already be registered (`AccountNotFound`) and must b
 
 ### withdraw
 
-User single-signature withdrawal (tag 32). On success it debits `amount` from the signer owner's **available** balance. The asset's `withdraw_fee_atoms` is **recorded** (in the event and `/info withdraws`) but **not** deducted; `amount` must be strictly greater than the fee and at least the configured `min_withdraw_atoms` for `(dst_chain_id, asset_id)`. `amount` and `withdraw_nonce` are raw atoms/values. Must use `signature`; `signatures` is rejected (`SignaturesNotAllowedForAction`). New requests must include a fixed 16-byte hex `cloid` used only for `txStatusByCloid`; it is not an idempotency key.
+User single-signature withdrawal (tag 32). On success it debits `amount` from the signer owner's **available** balance. The asset's `withdraw_fee_atoms` is **recorded** (in the event and `/info withdraws`) but **not** deducted; `amount` must be strictly greater than the fee and at least the configured `min_withdraw_atoms` for `(dst_chain_id, asset_id)`. `amount` and `withdraw_nonce` are raw atoms/values. Uses `signature`, or — when the account has an [account multisig](account-multisig.md) Active — `signatures` with `auth_account` and `policy_epoch`. `signatures` sent without `auth_account` is rejected (`SignaturesNotAllowedForAction`). New requests must include a fixed 16-byte hex `cloid` used only for `txStatusByCloid`; it is not an idempotency key.
 
 Requires `auth_scheme:"eip712"`. See [EIP-712 signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712).
 
@@ -479,7 +479,7 @@ Parse errors include `MissingCloid` and `InvalidCloid`. Older records written be
 `settle` and `repay` move value between the two account types. A `SpotCreditAccount` is the **credit account**; a balance-mode / cash account is the default **spot account**. See [Account Types](account-types.md).
 {% endhint %}
 
-SpotCreditAccount de-risking (tag 33). The signer must be an **Active** `SpotCreditAccount` (the margin owner). It moves `amount` of `asset_id` out of the signer's long margin position (`actual_qty > 0`) into `cash_account`'s **available** balance, requiring the signer's post-position `available_usd >= 0`. `cash_account` may be **any existing balance-mode account** (it must not be a SpotCreditAccount). `asset_id`/`amount` are raw atoms. `cloid` is a **required** 16-byte hex client operation id. Must use `signature`; `signatures` is rejected (`SignaturesNotAllowedForAction`).
+SpotCreditAccount de-risking (tag 33). The signer must be an **Active** `SpotCreditAccount` (the margin owner). It moves `amount` of `asset_id` out of the signer's long margin position (`actual_qty > 0`) into `cash_account`'s **available** balance, requiring the signer's post-position `available_usd >= 0`. `cash_account` may be **any existing balance-mode account** (it must not be a SpotCreditAccount). `asset_id`/`amount` are raw atoms. `cloid` is a **required** 16-byte hex client operation id. Uses `signature`, or — when the account has an [account multisig](account-multisig.md) Active — `signatures` with `auth_account` and `policy_epoch`. `signatures` sent without `auth_account` is rejected (`SignaturesNotAllowedForAction`).
 
 Requires `auth_scheme:"eip712"`. See [EIP-712 signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712).
 
@@ -504,7 +504,7 @@ These same settle errors can come back before block inclusion when the current c
 
 ### repay
 
-SpotCreditAccount de-risking (tag 34). The signer must be a **balance-mode** cash account. It spends `amount` of `asset_id` from the signer's available balance to reduce `margin_account`'s short (`actual_qty < 0`) toward zero. `margin_account` may be **any existing SpotCreditAccount**, Active **or Frozen** (repay does not unfreeze). There is **no** `available_usd` check and **no** oracle dependency — repay strictly de-risks. `asset_id`/`amount` are raw atoms; `cloid` is required. Must use `signature`; `signatures` is rejected.
+SpotCreditAccount de-risking (tag 34). The signer must be a **balance-mode** cash account. It spends `amount` of `asset_id` from the signer's available balance to reduce `margin_account`'s short (`actual_qty < 0`) toward zero. `margin_account` may be **any existing SpotCreditAccount**, Active **or Frozen** (repay does not unfreeze). There is **no** `available_usd` check and **no** oracle dependency — repay strictly de-risks. `asset_id`/`amount` are raw atoms; `cloid` is required. Uses `signature`, or a quorum under an [account multisig](account-multisig.md).
 
 Requires `auth_scheme:"eip712"`. See [EIP-712 signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712).
 
@@ -527,11 +527,11 @@ Parse errors: `MissingCloid`, `InvalidCloid`, `InvalidMarginAccount`, `InvalidAs
 
 These same repay errors can come back before block inclusion when the current committed state already proves the repay invalid. Execution remains authoritative for any transaction accepted into ingress.
 
-Settle/repay carry **no** business nonce and provide **no** idempotency: the `cloid` is used only for `txStatusByCloid` lookups within the recent query window (see [txStatusByCloid](post-info.md#txstatusbycloid)). The envelope `nonce` is the only replay protection — the same `cloid` resubmitted under a new envelope `nonce` is a distinct transaction. The lookup is keyed on the **recovered signer** (settle → margin owner; repay → cash owner); a counterparty cannot find the tx by `cloid`.
+Settle/repay carry **no** business nonce and provide **no** idempotency: the `cloid` is used only for `txStatusByCloid` lookups within the recent query window (see [txStatusByCloid](post-info.md#txstatusbycloid)). The envelope `nonce` is the only replay protection — the same `cloid` resubmitted under a new envelope `nonce` is a distinct transaction. The lookup is keyed on the **recovered signer** (settle → margin owner; repay → cash owner), or on the `auth_account` under an [account multisig](account-multisig.md); a counterparty cannot find the tx by `cloid`.
 
 ### approveAgent
 
-Approves an agent (API-wallet) signing key on one of the owner's agent slots. **Owner-signed**: sign with the main wallet under `auth_scheme:"eip712"` — an API-wallet key cannot sign it. Carries no `agent_epoch`, takes exactly one `signature`, and cannot appear inside a `batch`. After approval, subsequent agent-signed writes reference the slot's current epoch via `agent_epoch` (read it from [userAgents](post-info.md#useragents)).
+Approves an agent (API-wallet) signing key on one of the owner's agent slots. **Owner-signed**: sign with the main wallet under `auth_scheme:"eip712"` — an API-wallet key cannot sign it. Carries no `agent_epoch`, takes one `signature` (or a quorum under an [account multisig](account-multisig.md)), and cannot appear inside a `batch`. After approval, subsequent agent-signed writes reference the slot's current epoch via `agent_epoch` (read it from [userAgents](post-info.md#useragents)).
 
 | Field      | Required | Values                                                        |
 | ---------- | -------- | ------------------------------------------------------------- |
@@ -556,7 +556,7 @@ Parse errors: `InvalidAgentSlot` (slot outside `0`–`3`), `InvalidAgent` (not a
 
 ### revokeAgent
 
-Clears the agent approval on one owner slot. **Owner-signed** under `auth_scheme:"eip712"`, same constraints as `approveAgent` (no `agent_epoch`, single signature, not batchable). After revocation, writes signed by that key are rejected with `UnknownAgent`.
+Clears the agent approval on one owner slot. **Owner-signed** under `auth_scheme:"eip712"`, same constraints as `approveAgent` (no `agent_epoch`, one signature or a quorum, not batchable). After revocation, writes signed by that key are rejected with `UnknownAgent`.
 
 | Field     | Required | Values                    |
 | --------- | -------- | ------------------------- |

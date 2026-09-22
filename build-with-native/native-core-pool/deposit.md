@@ -149,7 +149,7 @@ const message = {
 const signature = await wallet.signTypedData({ domain, types, primaryType: 'Transfer', message })
 ```
 
-The domain carries **no `chainId`**, so a wallet signs it while connected to any EVM chain. The chain is bound inside the message as `nativeChainId`. `authKind` is `1` and `authScope` is `0`; a transfer has no multi-signature or agent-key path.
+The domain carries **no `chainId`**, so a wallet signs it while connected to any EVM chain. The chain is bound inside the message as `nativeChainId`. `authKind` is `1` and `authScope` is `0`; a transfer has no agent-key path. If the account has an [account multisig](../native-core/account-multisig.md) Active, sign the v5 variant instead (`authKind` `2`, domain `version:"2"`).
 
 ```bash
 curl -sS -X POST "https://api.native.org/trade" \

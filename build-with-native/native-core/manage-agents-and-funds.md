@@ -34,11 +34,11 @@ Only relevant if the protocol granted you a [credit account](account-types.md).
 * [`settle`](post-trade.md#settle) — move a long position out of the credit account into a spot account's `available` balance.
 * [`repay`](post-trade.md#repay) — spend a spot account's balance to cover a credit account's short.
 
-Both are owner EIP-712, single-signature, and carry a required `cloid` used only for `txStatusByCloid` lookups.
+Both are owner EIP-712 — or quorum-signed under an [account multisig](account-multisig.md) — and carry a required `cloid` used only for `txStatusByCloid` lookups.
 
 ## Signing
 
-These use the **EIP-712 v4** scheme (MetaMask-compatible), not the legacy binary payload. The exact field list for each action is in [Per-action typed-data fields](transaction-signing.md#per-action-typed-data-fields); note the typed-data names differ from the JSON ones (`slot_id` is `slotId`, `agent` is `agentAddress`).
+These use the **EIP-712 v4** scheme (MetaMask-compatible), not the legacy binary payload. Under an [account multisig](account-multisig.md) they use the **v5** variant instead — different domain version and common fields, same action tail. The exact field list for each action is in [Per-action typed-data fields](transaction-signing.md#per-action-typed-data-fields); note the typed-data names differ from the JSON ones (`slot_id` is `slotId`, `agent` is `agentAddress`).
 
 ## Next steps
 

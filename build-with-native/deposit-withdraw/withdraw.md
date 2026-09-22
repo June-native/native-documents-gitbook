@@ -55,7 +55,7 @@ curl -sS https://api-ui.native.org/api/v3/accounting \
 
 ## 2. Sign and submit
 
-`withdraw` is an owner action: sign it with your main wallet under `auth_scheme: "eip712"`, never with an API wallet. The field reference is [`withdraw`](../native-core/post-trade.md#withdraw); the scheme is [EIP-712 signing](../native-core/transaction-signing.md#eip-712-signing-auth_scheme-eip712).
+`withdraw` is an owner action: sign it with your main wallet under `auth_scheme: "eip712"`, never with an API wallet. If the account has an [account multisig](../native-core/account-multisig.md) Active, it is quorum-signed under the **v5** variant instead — the envelope carries `auth_account` + `policy_epoch` + `signatures`, and the v4 typed data below does not apply. The field reference is [`withdraw`](../native-core/post-trade.md#withdraw); the scheme is [EIP-712 signing](../native-core/transaction-signing.md#eip-712-signing-auth_scheme-eip712).
 
 Use the current Unix millisecond timestamp for both `withdraw_nonce` and the envelope `nonce`, incrementing locally if two withdrawals for the same account land in the same millisecond.
 
@@ -160,7 +160,7 @@ Branch on `submission_status`, never on the HTTP status — `/trade` returns the
 
 The decision playbook is [Handle outcomes & timeouts](../native-core/handle-timeouts.md); the code catalog is [Error Responses](../native-core/error-responses.md).
 
-The authority is the recovered signer, so the debited account is whoever signed. `dst_address` is only the EVM payout target — watch it on the destination chain.
+The authority is the recovered signer, so the debited account is whoever signed — unless the account has an [account multisig](../native-core/account-multisig.md) Active, in which case the authority (and the debited account) is the `auth_account`, never one of the quorum signers. `dst_address` is only the EVM payout target — watch it on the destination chain.
 
 ## 3. Confirm the Native debit
 

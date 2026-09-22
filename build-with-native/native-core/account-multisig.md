@@ -8,10 +8,6 @@ An **account multisig** puts a signer quorum in front of your account's owner-si
 
 It does **not** cover trading. Trading actions continue to be signed by a single [API wallet](nonces-and-api-wallets.md#api-wallets) key.
 
-{% hint style="info" %}
-Not to be confused with [`multisigPolicy`](post-info.md#multisigpolicy), which is the protocol's own operator/accounting policy and is scoped by role, not by account. This page is about the quorum **you** configure over **your** account.
-{% endhint %}
-
 {% hint style="danger" %}
 **Read this before enabling a multisig.** Two things change, and neither can be undone:
 
@@ -105,7 +101,7 @@ Creates the account's first configuration, or replaces the current one. The acti
 | `creation_fee` | object | **Only** on a first-ever creation. Omit it when replacing an existing configuration. |
 | `cloid` | string | **Required.** 16-byte hex. Used only for `txStatusByCloid`; it is not an idempotency key. |
 
-Field names are snake\_case and the payload is **strict** — an unrecognised field fails the request rather than being ignored. `asset_id` and `amount` are **decimal strings**, not JSON numbers, and `amount` is in raw atoms with no display decimals (see [Decimals & Units](decimals-units.md)).
+Field names are snake\_case and the payload is **strict** — an unrecognised field fails the request rather than being ignored. `asset_id` and `amount` are **decimal strings**, not JSON numbers, and `amount` is in raw atoms with no display decimals.
 
 ### Creation fee
 
@@ -177,7 +173,7 @@ Once a configuration is Active, the covered actions are submitted with an **acco
 | `signatures` | Array of 65-byte hex signatures, at least `threshold` of them, each from a distinct configured signer. **Order matters** — see below. |
 | `agent_epoch` | **Must be absent.** Account-auth and agent-auth are mutually exclusive. |
 
-Every signature covers the same [quorum-signed digest](#eip-712-typed-data), so the signers can sign independently and in any sequence — but the **array you submit must be ordered so that the recovered addresses ascend**. Collect the approvals in any order, then sort them by recovered signer address before submitting. An out-of-order array is rejected with `DecodeSignaturesNotSorted` even when every signature is individually valid, and the same signer appearing twice is rejected with `DecodeDuplicateRecoveredSigner` rather than counting as two approvals.
+Every signature covers the same [quorum-signed digest](#eip-712-typed-data), so the signers can sign independently and in any sequence — but the **array you submit must be ordered so that the recovered addresses ascend**. Collect the approvals in any order, then sort them by recovered signer address before submitting. An out-of-order array is rejected with `DecodeMultisigProofSignaturesNotSorted` even when every signature is individually valid, and the same signer appearing twice is rejected with `DecodeMultisigProofDuplicateRecoveredSigner` rather than counting as two approvals.
 
 ## EIP-712 typed data
 
@@ -206,7 +202,7 @@ Within that tail the fee is **flattened**, not nested. `feeMode` is the discrimi
 
 ## Errors
 
-Every code below is a fixed `CamelCase` string returned verbatim as `error.code`. Match on the exact string; the codes are grouped here by how far the request got, because that determines what you do next. For the general error model across `/trade`, see [Error Responses](error-responses.md).
+Every code below is a fixed `CamelCase` string returned verbatim as `error.code`. Match on the exact string; the codes are grouped here by how far the request got, because that determines what you do next.
 
 **Request-level** — the request is malformed and never reaches execution. `submission_status` is `rejected` and no `tx_hash` is returned:
 
@@ -220,10 +216,10 @@ Every code below is a fixed `CamelCase` string returned verbatim as `error.code`
 | `AccountAuthNotAllowedForAction` | Account-auth used with an action a quorum cannot sign — a trading action, most often. |
 | `AccountAuthNotSupported` | Account multisig is not available on the network you addressed. |
 | `InvalidSigner` / `InvalidPayer` / `InvalidSponsorSignature` | Malformed hex, or a wrong length, in `signers`, `payer`, or the sponsor signature. |
-| `DecodeSignaturesNotSorted` | `signatures` is not ordered by ascending recovered signer address. |
-| `DecodeDuplicateRecoveredSigner` | The same signer appears twice in `signatures`. |
+| `DecodeMultisigProofSignaturesNotSorted` | `signatures` is not ordered by ascending recovered signer address. |
+| `DecodeMultisigProofDuplicateRecoveredSigner` | The same signer appears twice in `signatures`. |
 | `InvalidSignaturesLen` | `signatures` is empty, or holds more than 32 entries. |
-| `DecodeMultisigRecoveryFailed` | A signature in the array does not recover to any address. |
+| `DecodeMultisigProofRecoveryFailed` | A signature in the array does not recover to any address. |
 
 **Execution-level** — the request was accepted and then rejected on chain. These split at the **nonce boundary**, and the side decides whether you can retry with the same nonce.
 
@@ -254,10 +250,3 @@ Every code below is a fixed `CamelCase` string returned verbatim as `error.code`
 | `AccountMultisigActiveLimitExceeded` | The network's cap of 10,000 active configurations is reached. |
 | `AccountMultisigLifecycleLimitExceeded` | The network's cap of 100,000 lifecycle entries is reached. |
 | `AccountMultisigEpochOverflow` | The global policy epoch counter overflowed. Not expected in normal operation. |
-
-## See also
-
-* [POST /trade](post-trade.md) — the envelope every request here is submitted in.
-* [Transaction Signing](transaction-signing.md) — the v4 scheme this page's v5 variant is defined against.
-* [Nonces & API Wallets](nonces-and-api-wallets.md) — the API wallet you must approve before enabling a multisig.
-* [Error Responses](error-responses.md) — how `error.code` layers work across `/trade`.
