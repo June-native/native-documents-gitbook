@@ -139,7 +139,7 @@ Nine push channels cover books, trades, mids, fills, order updates, and balances
 
 ## Authentication & signing
 
-Every `/trade` write is a **client-signed transaction**. The API reconstructs a canonical unsigned binary payload from `action`, `nonce`, `agent_epoch`, and `expires_after_ms`, then verifies the recoverable secp256k1 signature over that exact payload (an [account multisig](account-multisig.md) frame also folds `auth_account` and `policy_epoch` into the payload, and must omit `agent_epoch`) — the transaction **authority** is the recovered signer, and the owner address is never sent. An [account multisig](account-multisig.md) request is the one exception: it carries `auth_account` in the envelope, and that is the authority.
+Every `/trade` write is a **client-signed transaction**. The API reconstructs a canonical unsigned binary payload from `action`, `nonce`, `agent_epoch`, and `expires_after_ms`, then verifies the recoverable secp256k1 signature over that exact payload (a quorum frame also folds `auth_account` and `policy_epoch` into the payload, and must omit `agent_epoch`) — the transaction **authority** is the recovered signer, and the owner address is never sent. An [account multisig](account-multisig.md) request is the one exception: it carries `auth_account` in the envelope, and that is the authority.
 
 * **Trading actions** (`order`, `cancel`, `cancelAll`, `modify`, `batch`) use the default legacy binary scheme (`auth_scheme: "legacy"`) and are signed by the **API wallet** key.
 * **Owner `/trade` actions** (`withdraw` / `settle` / `repay`) are **EIP-712** (`auth_scheme: "eip712"`) and are signed by your **main wallet** — not with the API wallet, and not part of a bot's hot path.
