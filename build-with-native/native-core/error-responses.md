@@ -199,7 +199,7 @@ Node-admission codes are returned **verbatim** (CamelCase). A failure at executi
 
 ### Account multisig codes
 
-The `AccountMultisig*` / `AuthAccount*` / `DecodeMultisigProof*` family is catalogued on [Account Multisig](account-multisig.md#errors) rather than repeated here, because those codes split on a boundary the table above does not carry: whether the **nonce was already consumed**, which is what decides if you may resubmit the same request unchanged or must re-sign with a fresh nonce.
+The `AccountMultisig*` / `AccountAuth*` / `AuthAccountRequiresPolicyEpoch` / `DecodeMultisigProof*` family is catalogued on [Account Multisig](account-multisig.md#errors) rather than repeated here, because those codes split on a boundary the table above does not carry: whether the **nonce was already consumed**, which is what decides if you may resubmit the same request unchanged or must re-sign with a fresh nonce.
 
 ## See also
 

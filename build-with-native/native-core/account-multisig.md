@@ -220,6 +220,9 @@ Every code below is a fixed `CamelCase` string returned verbatim as `error.code`
 | `DecodeMultisigProofDuplicateRecoveredSigner` | The same signer appears twice in `signatures`. |
 | `InvalidSignaturesLen` | `signatures` is empty, or holds more than 32 entries. |
 | `DecodeMultisigProofRecoveryFailed` | A signature in the array does not recover to any address. |
+| `LegacySignatureNotAccepted` | Submitted without `auth_scheme:"eip712"` — this action accepts no other scheme. |
+| `InvalidAuthAccount` | `auth_account` is not a well-formed address. |
+| `AmbiguousAuthFields` | Both `signature` and `signatures` were sent, or neither — a quorum request carries only `signatures`. |
 
 **Execution-level** — the request was accepted and then rejected on chain. These split at the **nonce boundary**, and the side decides whether you can retry with the same nonce.
 
@@ -234,7 +237,7 @@ Every code below is a fixed `CamelCase` string returned verbatim as `error.code`
 | `AccountMultisigRequired` | The account's lifecycle requires a quorum, but a single owner signature was sent. |
 | `UnauthorizedMultisig` | Fewer than `threshold` valid signatures, or a signature from an address outside the set. |
 | `InvalidAccountMultisigConfig` | Structural problem — empty, unsorted, duplicated, zero address, threshold out of range, or the set includes the account's own key. |
-| `FeatureDisabled` | Submitted without `auth_scheme:"eip712"` — this action accepts no other scheme. |
+| `FeatureDisabled` | The network is below the account-multisig activation height, so account-auth frames are not yet accepted. |
 
 *After the nonce is consumed* — the nonce is spent. Fix the cause and resubmit with a **fresh** nonce:
 

@@ -399,7 +399,7 @@ A `cancelAll` item is itself multi-result, so it nests one level further, with b
 
 ### transfer
 
-Moves an asset between two Native accounts (tag 10). **Owner-signed**: sign with the main wallet — `transfer` is not in the agent-signable set, so an API wallet cannot sign it. `asset_id`/`amount` are raw atoms. `cloid` is a **required** 16-byte hex client operation id.
+Moves an asset between two Native accounts (tag 10). **Owner-signed**: sign with the main wallet — `transfer` is not in the agent-signable set, so an API wallet cannot sign it. Under an [account multisig](account-multisig.md) it is quorum-signed instead. `asset_id`/`amount` are raw atoms. `cloid` is a **required** 16-byte hex client operation id.
 
 Both sides must be ordinary balance-mode accounts that already exist. The transfer is rejected if the **sender** is a `SpotCreditAccount` or the **recipient** is one (`ActionNotAllowedForSpotCreditAccount`), if `to` is unregistered (`AccountNotFound`) — this action never creates an account, use [`activateFor`](#activatefor) for that — if `to` equals the signer (`TransferToSelf`), or if `to` is the zero address or `amount` is `0` (`InvalidTransfer`). Only `available` balance moves — quantity locked by resting orders cannot be transferred, and a shortfall is `InsufficientSpotBalance`.
 

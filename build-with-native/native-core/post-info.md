@@ -802,7 +802,7 @@ A query that carries neither a parseable `oid` nor a complete `user` + `market_i
 
 ### txStatusByCloid
 
-Transaction status by `cloid` uses the transaction authority as the `user` namespace and does not require a market id. For `withdraw`, `settle`, and `repay`, `user` is the recovered signer authority — or, when the action was submitted under an [account multisig](account-multisig.md), the `auth_account`.
+Transaction status by `cloid` uses the transaction authority as the `user` namespace and does not require a market id. For `transfer`, `activateFor`, `withdraw`, `settle`, `repay`, and `setAccountMultisig`, `user` is the recovered signer authority — or, when the action was submitted under an [account multisig](account-multisig.md), the `auth_account`.
 
 ```json
 {

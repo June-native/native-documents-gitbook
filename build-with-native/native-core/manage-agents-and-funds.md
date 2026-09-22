@@ -17,7 +17,7 @@ If the account has an [account multisig](account-multisig.md) Active, every acti
 * [`approveAgent`](post-trade.md#approveagent) — authorize an agent key in a slot (`0`–`3`). This is what creates an API wallet; the web app returns the connection bundle.
 * [`revokeAgent`](post-trade.md#revokeagent) — retire a slot. The old agent's `agent_epoch` stops validating.
 
-Both are owner EIP-712 signatures, not batchable, and carry no `agent_epoch`.
+Both are owner EIP-712 signatures — or quorum-signed under an [account multisig](account-multisig.md) — not batchable, and carry no `agent_epoch`.
 
 **Do this before enabling an [account multisig](account-multisig.md).** Once one is Active the owner key can no longer sign trading actions, so an account with no approved API wallet cannot trade — and `approveAgent` itself then needs the quorum.
 
