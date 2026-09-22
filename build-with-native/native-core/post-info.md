@@ -150,6 +150,8 @@ Returns the configured deposit source contracts sorted by `src_chain_id`. No par
 
 Returns the dynamic non-admin multisig policy for one `scope`. Only the `ACCOUNTING` scope (`2`) is queryable; any other value returns HTTP 400 `InvalidMultisigScope`.
 
+This is the protocol's own policy, scoped by role. For the quorum an account owner configures over their **own** account, see [`accountMultisig`](#accountmultisig).
+
 ```json
 { "type": "multisigPolicy", "scope": "2" }
 ```
@@ -357,6 +359,36 @@ Whether an account exists and its freeze state.
 ```
 
 `found` is `true` once the account exists (it is created on its first deposit). `status` is `"active"` or `"frozen"`, and is `null` when `found` is `false`. `account_index` is the protocol's internal account index, `null` before the account exists.
+
+### accountMultisig
+
+The [account multisig](account-multisig.md) quorum configured over an account's owner-signed actions, if any.
+
+```json
+{
+  "type": "accountMultisig",
+  "user": "0x0000000000000000000000000000000000000001"
+}
+```
+
+```json
+{
+  "query_height": 198543355,
+  "app_hash": "0x...",
+  "owner": "0x0000000000000000000000000000000000000001",
+  "found": true,
+  "account_index": 93,
+  "enabled": true,
+  "role": null,
+  "threshold": 2,
+  "signers": ["0x...", "0x...", "0x..."],
+  "policy_epoch": "7"
+}
+```
+
+`found` reports whether the **account** exists, not whether it has a multisig row — read `enabled` to decide that. `role` is non-null only for protocol-operated accounts; for an ordinary account it is always `null`. `policy_epoch` is the value every quorum-signed request must carry, and it advances on each configuration change, so re-read it after any `setAccountMultisig`.
+
+This is per-account and configured by the account owner. It is a different thing from [`multisigPolicy`](#multisigpolicy) above, which is the protocol's own operator/accounting policy and is scoped by role.
 
 ### spotCreditAccount
 

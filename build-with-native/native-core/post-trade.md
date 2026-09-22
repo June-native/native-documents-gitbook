@@ -27,17 +27,19 @@ Request envelope fields:
 
 | Field              | Required              | Description                                                                                                                                                                                                                                          |
 | ------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `action`           | yes                   | Action object. Public top-level types: `order`, `cancel`, `cancelAll`, `modify`, `batch`, `transfer`, `activateFor`, `withdraw`, `settle`, `repay`, `approveAgent`, and `revokeAgent`. Internal operator/accounting writes are not part of this public contract. See the full public list below.         |
+| `action`           | yes                   | Action object. Public top-level types: `order`, `cancel`, `cancelAll`, `modify`, `batch`, `transfer`, `activateFor`, `withdraw`, `settle`, `repay`, `approveAgent`, `revokeAgent`, and `setAccountMultisig` (see [Account Multisig](account-multisig.md)). Internal operator/accounting writes are not part of this public contract. See the full public list below.         |
 | `nonce`            | yes                   | Decimal string `u64` Unix millisecond timestamp nonce. Use current `Date.now()`/Unix ms; if sending multiple requests in the same millisecond for the same signer, increment locally so each signed nonce is unique and monotonically nondecreasing. |
-| `agent_epoch`      | no                    | Decimal string `u64`; required only for agent-signed requests. Omit for owner-signed requests.                                                                                                                                                       |
+| `agent_epoch`      | no                    | Decimal string `u64`; required only for agent-signed requests. Omit for owner-signed requests. Mutually exclusive with `auth_account` — sending both is rejected with `AgentEpochNotAllowedWithAuthAccount`.                                                                                                                                                      |
 | `expires_after_ms` | no                    | Decimal string `u64` Unix milliseconds. An envelope already past `expires_after_ms` at the gateway clock is fast-failed with `submission_status: "rejected"`, `error.code: "ExpiredTx"` (before the node hop); execution also enforces expiry against the committed block timestamp.                                                                                                                                                          |
-| `auth_scheme`      | no                    | `"legacy"` (default) or `"eip712"`. Public `transfer`, `activateFor`, `withdraw`, `settle`, `repay`, `approveAgent`, and `revokeAgent` require `"eip712"`; public trading actions (`order`/`cancel`/`cancelAll`/`modify`/`batch`) require `"legacy"`. See [EIP-712 signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712).                        |
-| `signature`        | yes for public actions | `0x`-prefixed 65-byte recoverable secp256k1 signature. Legacy v1, or — when `auth_scheme="eip712"` — an EIP-712 v4 single signature. Mutually exclusive with `signatures`.                                                                          |
-| `signatures`       | no for public actions | Array of `0x`-prefixed 65-byte signatures for an internal multisig request. Public actions reject this field with `SignaturesNotAllowedForAction`; internal multisig submissions are not part of this public contract. Mutually exclusive with `signature`. |
+| `auth_scheme`      | no                    | `"legacy"` (default) or `"eip712"`. Public `transfer`, `activateFor`, `withdraw`, `settle`, `repay`, `approveAgent`, `revokeAgent`, and `setAccountMultisig` require `"eip712"`; public trading actions (`order`/`cancel`/`cancelAll`/`modify`/`batch`) require `"legacy"`. Every account-auth request requires it too (`AccountAuthRequiresEip712`). See [EIP-712 signing](transaction-signing.md#eip-712-signing-auth_scheme-eip712).                        |
+| `signature`        | yes unless account-auth | `0x`-prefixed 65-byte recoverable secp256k1 signature. Legacy v1, or — when `auth_scheme="eip712"` — an EIP-712 v4 single signature. Omitted on an [account multisig](account-multisig.md) request, which carries `signatures` instead. Mutually exclusive with `signatures`.                                                                          |
+| `signatures`       | no                    | Array of `0x`-prefixed 65-byte signatures. Sent **with** `auth_account` and `policy_epoch` to submit an [account multisig](account-multisig.md) quorum request; without `auth_account` it is rejected with `SignaturesNotAllowedForAction`. Mutually exclusive with `signature`. |
+| `auth_account`     | no                    | Owner address the quorum acts for, on an [account multisig](account-multisig.md) request. Must be sent with `policy_epoch` and `auth_scheme:"eip712"`, and only for the actions a quorum can sign. |
+| `policy_epoch`     | no                    | Decimal string `u64` from the `accountMultisig` read; required whenever `auth_account` is present. A stale value is rejected with `AccountMultisigEpochMismatch`. |
 
-The envelope is **strict**: exactly one of `signature` or `signatures` must be present (neither or both → `AmbiguousAuthFields`), and any field not in the table above is rejected as `InvalidJson`. Numeric fields (`nonce`, `agent_epoch`, `expires_after_ms`) accept a decimal string **or** an unsigned JSON integer, with the string form preferred above 2^53. Only `action`, `nonce`, `agent_epoch`, and `expires_after_ms` are folded into the signed payload; `auth_scheme`, `signature`, and `signatures` are transport fields that select and carry the proof (see [Transaction Signing](transaction-signing.md)).
+The envelope is **strict**: exactly one of `signature` or `signatures` must be present (neither or both → `AmbiguousAuthFields`), and any field not in the table above is rejected as `InvalidJson`. Numeric fields (`nonce`, `agent_epoch`, `expires_after_ms`) accept a decimal string **or** an unsigned JSON integer, with the string form preferred above 2^53. Only `action`, `nonce`, `agent_epoch`, and `expires_after_ms` are folded into the signed payload — plus `auth_account` and `policy_epoch` on an [account multisig](account-multisig.md) request, which are signed by every approval. `auth_scheme`, `signature`, and `signatures` are transport fields that select and carry the proof (see [Transaction Signing](transaction-signing.md)).
 
-Public actions are single-signature; sending `signatures` with a public action is rejected with `SignaturesNotAllowedForAction`. The transaction **authority** used for nonce/rate-limit and `txStatusByCloid` is the recovered signer.
+Public actions are single-signature unless the account has an [account multisig](account-multisig.md) configured: sending `signatures` without `auth_account` is rejected with `SignaturesNotAllowedForAction`. The transaction **authority** used for nonce/rate-limit and `txStatusByCloid` is the recovered signer — or, on an account multisig request, the `auth_account` the quorum acts for.
 
 Nonce validation is authority-scoped. Execution accepts nonces within the committed block timestamp window (`block_timestamp_ms - 2 days` through `block_timestamp_ms + 1 day`), rejects duplicates, and retains the latest 100 consumed nonces per authority. When the retained window is full, a new nonce must be greater than the current minimum retained nonce.
 
@@ -574,3 +576,18 @@ Clears the agent approval on one owner slot. **Owner-signed** under `auth_scheme
 ```
 
 Parse errors: `InvalidAgentSlot`. Same EIP-712 gating as `approveAgent`.
+
+### setAccountMultisig
+
+Creates or replaces the account's own signer quorum. **Owner-signed** under `auth_scheme:"eip712"` for a first-ever creation; once a configuration is Active, a replacement is itself quorum-signed.
+
+| Field          | Required | Values |
+| -------------- | -------- | ------ |
+| `type`         | yes      | `"setAccountMultisig"` |
+| `threshold`    | yes      | Approvals required, `1` … `signers.length`. |
+| `signers`      | yes      | 1–32 addresses, unique, non-zero, **sorted ascending**, and never the account's own key. |
+| `creation_fee` | first creation only | 1,000 USDC or USDT, `selfPaid` or `sponsored`. Omit when replacing. |
+| `cloid`        | yes      | 16-byte hex, for `txStatusByCloid` only. |
+
+Enabling a quorum **permanently** stops the owner key from signing trading actions, and a configuration can never be removed. The full contract — setup order, the creation fee, sponsorship, the quorum-signed envelope, and the complete error list — is on [Account Multisig](account-multisig.md). Read it before submitting this action.
+
