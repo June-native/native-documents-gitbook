@@ -65,6 +65,7 @@
     * [POST /info](build-with-native/native-core/post-info.md)
     * [POST /trade](build-with-native/native-core/post-trade.md)
     * [Transaction Signing](build-with-native/native-core/transaction-signing.md)
+    * [Account Multisig](build-with-native/native-core/account-multisig.md)
     * [Error Responses](build-with-native/native-core/error-responses.md)
     * [WebSocket](build-with-native/native-core/websocket.md)
   * [Concepts](build-with-native/native-core/concepts.md)

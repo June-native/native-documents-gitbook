@@ -115,7 +115,7 @@ Request-shaping and gateway errors:
 | `InvalidJson` | The request body was not valid JSON. |
 | `MissingAuthFields` | Required envelope fields were omitted. |
 | `AmbiguousAuthFields` | Both `signature` and `signatures` were present, or neither. |
-| `SignaturesNotAllowedForAction` | `signatures` (multisig) was sent for an action whose type does not accept a multisig proof. |
+| `SignaturesNotAllowedForAction` | `signatures` was sent without `auth_account` — the usual shape of a forgotten `auth_account` on an [account multisig](account-multisig.md) request — or for an action whose type does not accept a multisig proof. |
 | `InvalidSignaturesLen` | The `signatures` array was empty or exceeded 32 entries. |
 | `SignaturesRequiredForAction` | A single `signature` was sent for a multisig-only action (e.g. `deposit`/ACCOUNTING, or an admin action under an active admin multisig policy). |
 | `InsufficientSignatures` | Fewer `signatures` than the required admin multisig threshold. |
@@ -157,10 +157,10 @@ Errors returned before the transaction is included in a block:
 | --- | --- |
 | `QueryLagBackpressure` | The node is briefly behind and not accepting writes. Wait a moment and retry the same signed request. |
 | `DuplicateTxHash` | The same transaction hash is already pending in ingress. |
-| `DuplicateAuthorityNonce` | The same authority/nonce pair is already pending in ingress (authority is the recovered signer for single-sig, or the policy authority for multisig). |
+| `DuplicateAuthorityNonce` | The same authority/nonce pair is already pending in ingress (authority is the recovered signer for single-sig, the `auth_account` under an [account multisig](account-multisig.md), or the policy authority for an internal scoped multisig). |
 | `MalformedTx` | The node could not decode canonical transaction bytes. Public JSON normally fails earlier if bytes cannot be built. |
 | `BadSignature` | The node could not recover a signer from the canonical transaction signature. Public JSON normally fails earlier during signer recovery. |
-| `AuthorityHintMismatch` | The decoded authority does not match the submit-path `authority_hint` (recovered signer for single-sig, derived policy authority for multisig). The hint did not match the canonical transaction. |
+| `AuthorityHintMismatch` | The decoded authority does not match the submit-path `authority_hint` (recovered signer for single-sig, `auth_account` under an [account multisig](account-multisig.md), derived policy authority for an internal scoped multisig). The hint did not match the canonical transaction. |
 | `WrongChainId` | The signed payload's chain id did not match the node's configured chain id. |
 | `TooManyPending` | Global pending capacity or per-owner pending capacity was reached at the node. (The API also emits this code itself, at HTTP `503` with `retry_after_ms: 50`, when its own synchronous-write concurrency is saturated — see the gateway table above.) |
 | `InvalidIngressConfig` | The node ingress configuration was invalid. |
@@ -196,6 +196,10 @@ Errors returned before the transaction is included in a block:
 | `V3SignatureSuperseded` | The signature used the superseded **v3** EIP-712 scheme for a `withdraw` / `settle` / `repay`; only the **v4** scheme is accepted at submit — re-sign with v4. |
 
 Node-admission codes are returned **verbatim** (CamelCase). A failure at execution comes back synchronously with a **lowercase** execution code (e.g. `tick`) — see [Execution-level failures](#execution-level-failures) above.
+
+### Account multisig codes
+
+The `AccountMultisig*` / `AccountAuth*` / `AuthAccountRequiresPolicyEpoch` / `DecodeMultisigProof*` family is catalogued on [Account Multisig](account-multisig.md#errors) rather than repeated here, because those codes split on a boundary the table above does not carry: whether the **nonce was already consumed**, which is what decides if you may resubmit the same request unchanged or must re-sign with a fresh nonce.
 
 ## See also
 

@@ -358,6 +358,34 @@ Whether an account exists and its freeze state.
 
 `found` is `true` once the account exists (it is created on its first deposit). `status` is `"active"` or `"frozen"`, and is `null` when `found` is `false`. `account_index` is the protocol's internal account index, `null` before the account exists.
 
+### accountMultisig
+
+The [account multisig](account-multisig.md) quorum configured over an account's owner-signed actions, if any.
+
+```json
+{
+  "type": "accountMultisig",
+  "user": "0x0000000000000000000000000000000000000001"
+}
+```
+
+```json
+{
+  "query_height": 198543355,
+  "app_hash": "0x...",
+  "owner": "0x0000000000000000000000000000000000000001",
+  "found": true,
+  "account_index": 93,
+  "enabled": true,
+  "role": null,
+  "threshold": 2,
+  "signers": ["0x...", "0x...", "0x..."],
+  "policy_epoch": "7"
+}
+```
+
+`found` reports whether the **account** exists, not whether it has a multisig row — read `enabled` to decide that. `role` is non-null only for protocol-operated accounts; for an ordinary account it is always `null`. `policy_epoch` is the value every quorum-signed request must carry, and it advances on each configuration change, so re-read it after any `setAccountMultisig`.
+
 ### spotCreditAccount
 
 {% hint style="info" %}
@@ -774,7 +802,7 @@ A query that carries neither a parseable `oid` nor a complete `user` + `market_i
 
 ### txStatusByCloid
 
-Transaction status by `cloid` uses the transaction authority as the `user` namespace and does not require a market id. For `withdraw`, `settle`, and `repay`, `user` is the recovered signer authority.
+Transaction status by `cloid` uses the transaction authority as the `user` namespace and does not require a market id. For `transfer`, `activateFor`, `withdraw`, `settle`, `repay`, and `setAccountMultisig`, `user` is the recovered signer authority — or, when the action was submitted under an [account multisig](account-multisig.md), the `auth_account`.
 
 ```json
 {
@@ -816,4 +844,4 @@ Failed retained tx responses use the lower-case committed execution error code a
 
 If a failed retained tx has no single committed error code in its payload, `status` remains `"failed"`.
 
-The public `settle`/`repay` actions also surface here, with `action_type` `"settle"` / `"repay"`. Their `user` namespace is the **recovered signer** (settle → margin owner; repay → cash owner), so a counterparty named in the action body cannot find the tx. This window is the only `cloid`-keyed lookup for settle/repay: there is no idempotency, only recent-window visibility bounded by `max_recent_txs`. The same `cloid` resubmitted under a new envelope `nonce` is a separate tx; a lookup returns the latest retained one, and once a tx ages out of the window the response is `found: false`. A failed settle/repay is retained the same way and reports `status` `"invalidsettle"` / `"invalidrepay"` (or another lower-case committed error code).
+The public `settle`/`repay` actions also surface here, with `action_type` `"settle"` / `"repay"`. Their `user` namespace is the **recovered signer** (settle → margin owner; repay → cash owner) — or the `auth_account` under an [account multisig](account-multisig.md) — so a counterparty named in the action body cannot find the tx. This window is the only `cloid`-keyed lookup for settle/repay: there is no idempotency, only recent-window visibility bounded by `max_recent_txs`. The same `cloid` resubmitted under a new envelope `nonce` is a separate tx; a lookup returns the latest retained one, and once a tx ages out of the window the response is `found: false`. A failed settle/repay is retained the same way and reports `status` `"invalidsettle"` / `"invalidrepay"` (or another lower-case committed error code).

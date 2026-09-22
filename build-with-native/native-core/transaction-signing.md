@@ -33,11 +33,13 @@ The legacy scheme above applies to trading actions. Authorization-sensitive acti
 
 ### EIP-712 signing (auth_scheme: "eip712")
 
-Public `transfer`, `activateFor`, `withdraw`, `settle`, `repay`, `approveAgent`, and `revokeAgent` must be submitted with `auth_scheme: "eip712"`. (The full cutover set also covers `deposit` and the operator `admin*` writes, which are not part of this public trading contract.) This is a **direct cutover**: the moment the new binary is live, legacy signatures over these actions are rejected (`LegacySignatureNotAccepted`), and there is no config switch, height activation, or grace window — clients must switch at deploy. Conversely, `auth_scheme="eip712"` on any non-target action (`order`/`cancel`/`cancelAll`/`modify`/`batch`) is rejected (`Eip712NotAllowedForAction`), and an EIP-712 request may not carry `agent_epoch` (`Eip712AgentEpochNotAllowed`).
+Public `transfer`, `activateFor`, `withdraw`, `settle`, `repay`, `approveAgent`, `revokeAgent`, and `setAccountMultisig` must be submitted with `auth_scheme: "eip712"`. (The full cutover set also covers `deposit` and the operator `admin*` writes, which are not part of this public trading contract.) This is a **direct cutover**: the moment the new binary is live, legacy signatures over these actions are rejected (`LegacySignatureNotAccepted`), and there is no config switch, height activation, or grace window — clients must switch at deploy. Conversely, `auth_scheme="eip712"` on any non-target action (`order`/`cancel`/`cancelAll`/`modify`/`batch`) is rejected (`Eip712NotAllowedForAction`), and an EIP-712 request may not carry `agent_epoch` (`Eip712AgentEpochNotAllowed`).
 
-The signature covers an EIP-712 typed-data digest, not a binary payload. Clients sign the **v4** scheme, which is MetaMask-compatible: the domain is `EIP712Domain{name:"Native Core", version:"1", verifyingContract:0x0000…0000}` — **no `chainId`** — so a wallet can sign while connected to any EVM chain. The Native chain id is instead a signed message field, `nativeChainId`, so replay separation across environments is preserved. Each target action has its own primary type whose fields mirror the action, prefixed by the common fields `uint256 nativeChainId, uint256 authKind, uint256 authScope, uint256 nonce, bool expiresAfterMsPresent, uint256 expiresAfterMs`. `nativeChainId` is the Native Core chain id; `authKind` is `1` (single) and `authScope` is `0` for these public user actions. Amounts are signed as canonical atoms; addresses as `address`; an optional `cloid` as `bool cloidPresent` + `bytes16 cloid`. The presence flags keep an absent value distinct from an explicit `0`. The transaction **authority** is the recovered signer, exactly as for legacy single-signature actions.
+The signature covers an EIP-712 typed-data digest, not a binary payload. Clients sign the **v4** scheme, which is MetaMask-compatible: the domain is `EIP712Domain{name:"Native Core", version:"1", verifyingContract:0x0000…0000}` — **no `chainId`** — so a wallet can sign while connected to any EVM chain. The Native chain id is instead a signed message field, `nativeChainId`, so replay separation across environments is preserved. Each target action has its own primary type whose fields mirror the action, prefixed by the common fields `uint256 nativeChainId, uint256 authKind, uint256 authScope, uint256 nonce, bool expiresAfterMsPresent, uint256 expiresAfterMs`. `nativeChainId` is the Native Core chain id; under this v4 scheme `authKind` is `1` (single) and `authScope` is `0` for these public user actions (under v5 `authKind` is `2` and `authScope` is removed entirely, not given a different value). Amounts are signed as canonical atoms; addresses as `address`; an optional `cloid` as `bool cloidPresent` + `bytes16 cloid`. The presence flags keep an absent value distinct from an explicit `0`. The transaction **authority** is the recovered signer, exactly as for legacy single-signature actions; under v5 it is the `auth_account` instead.
 
 A superseded **v3** EIP-712 scheme (domain included `chainId`; no `nativeChainId` field) is retained only for historical decode/replay and is **not accepted at submit**. Because `/trade` carries no codec-version field, a request whose signature was produced under the old v3 scheme is assembled as v4 and recovers a different address, so it fails with a signature/authority error — re-sign with the v4 scheme.
+
+A **v5** variant of the v4 scheme exists for accounts that have configured an [account multisig](account-multisig.md): the domain `version` becomes `"2"`, `authScope` is replaced by `address authAccount, uint256 policyEpoch`, and `authKind` is `2`. It applies to the envelope's common fields only — every action tail below is unchanged under it. Which of the two you sign follows the envelope, not the action: a request carrying `auth_account` is v5, everything else is v4. One exception sits outside the envelope — the sponsor's `AccountMultisigSponsor` message is always signed under the v5 domain, even though the sponsored creation that carries it is owner-signed v4. See [Account Multisig](account-multisig.md#eip-712-typed-data).
 
 #### Per-action typed-data fields
 
@@ -52,8 +54,9 @@ Every primary type below is the six common fields verbatim, then the action's ow
 | `Repay`        | `uint256 assetId`, `uint256 amount`, `address marginAccount`, `bytes16 cloid`                                                    |
 | `ApproveAgent` | `uint256 slotId`, `address agentAddress`                                                                                          |
 | `RevokeAgent`  | `uint256 slotId`                                                                                                                  |
+| `SetAccountMultisig` | `uint256 threshold`, `address[] signers`, `uint256 feeMode`, `uint256 feeAssetId`, `uint256 feeAmountAtoms`, `address feePayer`, `uint256 feePayerPolicyEpoch`, `bytes16 cloid` — the creation fee is **flattened**, not nested; see [Account Multisig](account-multisig.md#eip-712-typed-data) |
 
-`cloid` is handled three different ways and the difference is load-bearing: `Transfer` and `Withdraw` carry it as optional (`cloidPresent` + `cloid`), `ActivateFor`, `Settle` and `Repay` carry it as a bare required `bytes16` with no presence flag, and the two agent actions have no `cloid` field at all. Adding or dropping the flag changes the type string, which changes the digest, which recovers a different address. The JSON payload requires `cloid` on all five actions that have the field, so the presence flag is not a licence to omit it.
+`cloid` is handled three different ways and the difference is load-bearing: `Transfer` and `Withdraw` carry it as optional (`cloidPresent` + `cloid`), `ActivateFor`, `Settle`, `Repay` and `SetAccountMultisig` carry it as a bare required `bytes16` with no presence flag, and the two agent actions have no `cloid` field at all. Adding or dropping the flag changes the type string, which changes the digest, which recovers a different address. The JSON payload requires `cloid` on all six actions that have the field, so the presence flag is not a licence to omit it.
 
 Written out, `ApproveAgent` is:
 
@@ -531,12 +534,13 @@ Supported public top-level action types:
 * `cancelAll`
 * `modify`
 * `batch`
-* `transfer` (owner single-signature, EIP-712 `auth_scheme:"eip712"`; see [transfer](post-trade.md#transfer))
-* `activateFor` (owner single-signature, EIP-712 `auth_scheme:"eip712"`; see [activateFor](post-trade.md#activatefor))
-* `withdraw` (user single-signature, EIP-712 `auth_scheme:"eip712"`; see [withdraw](post-trade.md#withdraw))
-* `settle` (user single-signature, EIP-712 `auth_scheme:"eip712"`)
-* `repay` (user single-signature, EIP-712 `auth_scheme:"eip712"`)
-* `approveAgent` (owner single-signature, EIP-712 `auth_scheme:"eip712"`; see [approveAgent](post-trade.md#approveagent))
-* `revokeAgent` (owner single-signature, EIP-712 `auth_scheme:"eip712"`)
+* `transfer` (owner single-signature, or quorum-signed under an account multisig; EIP-712 `auth_scheme:"eip712"`; see [transfer](post-trade.md#transfer))
+* `activateFor` (owner single-signature, or quorum-signed under an account multisig; EIP-712 `auth_scheme:"eip712"`; see [activateFor](post-trade.md#activatefor))
+* `withdraw` (user single-signature, or quorum-signed under an account multisig; EIP-712 `auth_scheme:"eip712"`; see [withdraw](post-trade.md#withdraw))
+* `settle` (user single-signature, or quorum-signed under an account multisig; EIP-712 `auth_scheme:"eip712"`)
+* `repay` (user single-signature, or quorum-signed under an account multisig; EIP-712 `auth_scheme:"eip712"`)
+* `approveAgent` (owner single-signature, or quorum-signed under an account multisig; EIP-712 `auth_scheme:"eip712"`; see [approveAgent](post-trade.md#approveagent))
+* `revokeAgent` (owner single-signature, or quorum-signed under an account multisig; EIP-712 `auth_scheme:"eip712"`)
+* `setAccountMultisig` (owner single-signature for a first creation, quorum-signed for a replacement; EIP-712 `auth_scheme:"eip712"` only — see [Account Multisig](account-multisig.md))
 
 Operator/accounting writes (`deposit`, `adminSetAccountingWithdrawTokens`, `admin*`, `setMultisigPolicy`, `addAsset`, `openMarket`, …) are also accepted by the API but require operator/admin authority and are not part of this public trading contract.

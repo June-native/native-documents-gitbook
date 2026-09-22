@@ -62,7 +62,7 @@ The result goes in `user_signature`.
 
 ## 4. Sign the Core withdrawal
 
-The Native Core `withdraw` action, signed under the [EIP-712 v4 scheme](../native-core/transaction-signing.md#eip-712-signing-auth_scheme-eip712) — domain `{name:"Native Core", version:"1", verifyingContract:0x0000…0000}`, no `chainId`, `authKind` `1`, `authScope` `0`.
+The Native Core `withdraw` action, signed under the [EIP-712 v4 scheme](../native-core/transaction-signing.md#eip-712-signing-auth_scheme-eip712) — domain `{name:"Native Core", version:"1", verifyingContract:0x0000…0000}`, no `chainId`, `authKind` `1`, `authScope` `0`. An account with an [account multisig](../native-core/account-multisig.md) Active signs the v5 variant instead: the domain `version` becomes `"2"`, `authKind` becomes `2`, and `authScope` is replaced by `authAccount` + `policyEpoch`. The domain's name, its zero `verifyingContract`, and the absence of `chainId` are unchanged.
 
 Send it as `core_withdraw`:
 
