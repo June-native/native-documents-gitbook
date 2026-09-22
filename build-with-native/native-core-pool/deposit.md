@@ -134,8 +134,8 @@ const types = {
 const nonce = BigInt(Date.now())
 const message = {
   nativeChainId: 696969n,        // the Native chain id, not an EVM chain id
-  authKind: 1n,
-  authScope: 0n,
+  authKind: 1n,                  // 2n under an account multisig, with authScope
+  authScope: 0n,                 // replaced by authAccount + policyEpoch
   nonce,
   expiresAfterMsPresent: false,
   expiresAfterMs: 0n,

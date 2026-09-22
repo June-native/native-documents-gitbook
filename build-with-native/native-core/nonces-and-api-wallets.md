@@ -16,13 +16,13 @@ Writes are authorized by an **API wallet**: a protocol-level *agent* key scoped 
 
 You create one by generating an agent keypair locally and authorizing it with a single owner-signed `approveAgent` — sign it with your **main wallet** directly against the API, or let the **[Native web app](https://app.native.org/markets/ETH-USDT?agentWallets=agents)** do it and hand you a one-time **connection bundle** with the agent key. Deposit from your main wallet to create the trading account first. See [API Access](api-access.md#access-model-api-wallets) for the full flow and the bundle shape; revoke or rotate the agent any time.
 
-Anything that moves value or manages agents is **owner-signed** and outside the API wallet's reach: `transfer`, `activateFor`, `withdraw`, `settle`, `repay`, `setAccountMultisig`, and the agent-lifecycle `approveAgent` / `revokeAgent` are signed by your **main wallet** under `auth_scheme:"eip712"` — or, once an [account multisig](account-multisig.md) is Active, by the configured quorum instead. These *are* real `/trade` action types — the API accepts them directly — but the API-wallet (agent) key cannot sign them; sign them with your **main wallet**, directly against the API or through the web app. The API wallet's allowlist is exactly `order`, `cancel`, `cancelAll`, `modify`, and `batch`.
+Anything that moves value or manages agents is outside the API wallet's reach — **owner-signed**, or quorum-signed once an [account multisig](account-multisig.md) is Active: `transfer`, `activateFor`, `withdraw`, `settle`, `repay`, `setAccountMultisig`, and the agent-lifecycle `approveAgent` / `revokeAgent` are signed by your **main wallet** under `auth_scheme:"eip712"` — or, once an [account multisig](account-multisig.md) is Active, by the configured quorum instead. These *are* real `/trade` action types — the API accepts them directly — but the API-wallet (agent) key cannot sign them; sign them with your **main wallet**, directly against the API or through the web app. The API wallet's allowlist is exactly `order`, `cancel`, `cancelAll`, `modify`, and `batch`.
 
 | Concept | Web app label | Signs | Can move funds? |
 | --- | --- | --- | --- |
 | **Agent** — API wallet | *API wallet* | `order` · `cancel` · `cancelAll` · `modify` · `batch` (legacy) | No |
 | **Owner** — trading account | *Account* | `transfer` · `activateFor` · `withdraw` · `settle` · `repay` · `approveAgent` · `revokeAgent` · `setAccountMultisig` (EIP-712) | Yes |
-| **Quorum** — [account multisig](account-multisig.md) | *Account* | the same owner actions, once a configuration is Active | Yes |
+| **Quorum** — [account multisig](account-multisig.md) | — (not a web-app concept) | the same owner actions, once a configuration is Active | Yes |
 
 The API-wallet setup and connection-bundle shape are on the API access page. If you integrate with the Python SDK, its quickstart walks the same web-app setup click-by-click.
 
