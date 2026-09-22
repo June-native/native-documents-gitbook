@@ -56,6 +56,8 @@ Two public [`POST /trade`](post-trade.md) actions bridge the two:
 * [`settle`](post-trade.md#settle) — a credit account moves a long position out into a spot account's `available` balance.
 * [`repay`](post-trade.md#repay) — a spot account spends its `available` balance to reduce a credit account's short.
 
+Either kind of account can put a signer quorum in front of its owner-signed actions — see [Account Multisig](account-multisig.md).
+
 {% content-ref url="post-info.md" %}
 [post-info.md](post-info.md)
 {% endcontent-ref %}
