@@ -1,13 +1,16 @@
 ---
-description: Build Liquidity Smarter with Native.
 hidden: true
 noIndex: true
 ---
 
 # Welcome
 
-Deprecated, please visit:
+This welcome page has been deprecated, please refer to:
 
 {% content-ref url="../" %}
 [..](../)
+{% endcontent-ref %}
+
+{% content-ref url="../resources/contact.md" %}
+[contact.md](../resources/contact.md)
 {% endcontent-ref %}
