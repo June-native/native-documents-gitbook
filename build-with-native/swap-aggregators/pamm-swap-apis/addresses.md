@@ -10,7 +10,7 @@ Always read `directSwapEnabled` onchain before sending a swap. The pair table be
 
 <table><thead><tr><th width="257">Contract</th><th>Address</th></tr></thead><tbody><tr><td>NativeRouter</td><td>0x1fDED89D98CBeADd96a109D28689c2638025dad3</td></tr><tr><td>NativeRFQPool</td><td>0x8Ac1009D5f13660CE7089901E51459142ad50793</td></tr><tr><td>WBNB</td><td>0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c</td></tr></tbody></table>
 
-<table><thead><tr><th>Pair</th><th>Engine</th><th>Direct swap</th><th>Notes</th></tr></thead><tbody><tr><td>QQQB – USDT</td><td>0xa02223bBc5F60D8FD0F42E2b5ab1FC3C37be7652</td><td>Enabled</td><td>Live for test.</td></tr><tr><td>WBNB – USDT</td><td>0x62c3E84789ef7aB1CB4b27eAb45649441880FCB6</td><td>Disabled</td><td></td></tr><tr><td>USDC – USDT</td><td>0x06a9F8e8967076BbcEF5facc25FA3767Cab7bebf</td><td>Disabled</td><td></td></tr></tbody></table>
+<table><thead><tr><th>Pair</th><th>Engine</th><th>Direct swap</th><th>Notes</th></tr></thead><tbody><tr><td>QQQB – USDT</td><td>0xa02223bBc5F60D8FD0F42E2b5ab1FC3C37be7652</td><td>Enabled</td><td>Live for test.</td></tr><tr><td>WBNB – USDT</td><td>0x1d22bd156eE77135afdfB7cbb10C7B8029572699</td><td>Disabled</td><td></td></tr><tr><td>USDC – USDT</td><td>0x06a9F8e8967076BbcEF5facc25FA3767Cab7bebf</td><td>Disabled</td><td></td></tr></tbody></table>
 
 ## Other V6 chains
 
