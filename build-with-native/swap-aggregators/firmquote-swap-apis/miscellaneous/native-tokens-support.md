@@ -20,9 +20,17 @@ By default, native token trading pairs will NOT appear in /orderbook return. If 
 If you wish to receive native token trading pairs in orderbook endpoint, please add one of the following parameters in the request:
 
 * `showNative=0xE` for `0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE`
-* `showNawtive=0x0` for `0x0000000000000000000000000000000000000000`
+* `showNative=0x0` for `0x0000000000000000000000000000000000000000`
 
-Native token trading pairs will be appended to orderbook represented by the address you prefer.
+Native token trading pairs will be appended to orderbook represented by the address you prefer. Only `0x0` and `0xE` are accepted values.
+
+### Wrap / Unwrap
+
+If you quote native to its wrapped token (for example ETH->WETH) or the reverse, `/firm-quote` returns `toWrap: true` or `toUnwrap: true` with empty `orders`, no `txRequest`, and `amountIn == amountOut`. Call WETH9 `deposit` / `withdraw` directly. `/indicative-quote` returns `price: 1` for these.
+
+### Solana
+
+On Solana, native SOL may be used as `token_in`, but not as `token_out` (error `171079`); use wrapped SOL instead.
 
 ### Onchain Execution
 

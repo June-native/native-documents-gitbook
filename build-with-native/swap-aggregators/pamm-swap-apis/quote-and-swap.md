@@ -17,7 +17,8 @@ function getQuote(
 * Amounts are **raw token units** (respect decimals).
 * Output is **after engine fees**. The call does not consume depth.
 * For native gas token (ETH/BNB), pass the **wrapped** address to `getQuote`. Never pass `address(0)` on the engine.
-* Reverts when price is expired, depth is insufficient, size is below `minBaseInputRaw` / `minQuoteInputRaw`, or the direction is not this engine's base/quote pair.
+* Reverts when price is expired, depth is insufficient, size is below `minBaseInputRaw` / `minQuoteInputRaw`, or the direction is not this engine's `baseAsset()` / `quoteAsset()` pair (`UnsupportedPair`).
+* A successful quote is necessary but not sufficient. `getQuote` also enforces the pair's position limit and treasury cash, and it works even when `directSwapEnabled` is false. It does not guarantee the swap will execute.
 
 ```typescript
 const base = await engine.baseAsset();
@@ -27,7 +28,7 @@ const quote = await engine.quoteAsset();
 const amountOut = await engine.getQuote(base, quote, 10n ** 18n);
 ```
 
-Refresh the quote close to send. Engine price is short-TTL; a stale quote often becomes `PriceExpired` or `NotEnoughAmountOut` onchain.
+Refresh the quote close to send. Engine price is short-TTL; a stale quote often becomes `PriceExpired` or `PriceOutsideAllowedRange` onchain.
 
 Suggested slippage: start at **50 bps** (`amountOutMinimum = amountOut * 9950 / 10000`). Tighten once you see fill quality.
 

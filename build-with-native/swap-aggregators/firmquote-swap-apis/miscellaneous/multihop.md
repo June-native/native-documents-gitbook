@@ -1,6 +1,6 @@
 # Multihop
 
-Native Relay API and Router support multihop between all trading pairs in `/orderbook` return, making swapping with Native liquidity more versatile.
+Native Relay API and Router support multihop for pairs that have no direct market, making swapping with Native liquidity more versatile.
 
 To enable, add `allow_multihop=true` when requesting `/indicative-quote` or `/firm-quote`.
 
@@ -61,7 +61,7 @@ Example orderbooks:
 
 ```bash
 ## Get Indicative Quote for WBTC->USDC
-curl "https://v2.api.native.org/swap-api-v2/v1/indicative-quote?from_address=0xbf381E1cBfdb0D02F3800010e490130D3dC73118&src_chain=ethereum&dst_chain=ethereum&token_in=0x2260fac5e5542a773aa44fbcfedf7c193bc2c599&token_out=0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48&slippage=0.5&amount=0.00001&allow_multihop=true" \
+curl "https://v2.api.native.org/swap-api-v2/v1/indicative-quote?from_address=0xbf381E1cBfdb0D02F3800010e490130D3dC73118&src_chain=ethereum&dst_chain=ethereum&token_in=0x2260fac5e5542a773aa44fbcfedf7c193bc2c599&token_out=0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48&amount=0.00001&allow_multihop=true" \
      -H "apiKey: $YOUR_KEY_HERE"
 ```
 
@@ -80,7 +80,7 @@ To track which function the swap tx is calling, use version 4 or above and check
 {% endhint %}
 
 {% hint style="info" %}
-Multihop currently supports only major tokens as the intermediate. Limited to:
+Multihop routes through **USDT only**, with a maximum of 2 legs. A direct pair is always preferred; a USDT hop is only tried when no direct pair exists.
 
-USDT, USDC, WBNB, WETH, WBTC
+Related errors: `171058` (multihop cannot use multiple market makers) and `171073` (`exact_type=ExactOut` is not supported with multihop).
 {% endhint %}

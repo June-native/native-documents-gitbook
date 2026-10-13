@@ -1,7 +1,7 @@
 # AMM Fallback
 
 {% hint style="info" %}
-Only supported in version 4 and above
+The Native Router `externalSwap` calldata is only generated with `version=4`. For other versions the response `txRequest` contains the external AMM transaction directly, with `function` empty and `source` of `[0]`.
 {% endhint %}
 
 Native Core liquidity provides remarkable depth and competitiveness for major assets like WETH and WBTC.&#x20;
@@ -15,9 +15,21 @@ To enable this feature for your API key, contact Native team members through an 
 To use this feature:
 
 * Make sure your API key is whitelisted for AMM fallback.
-* Use `version=4` when calling `/firm-quote`.
+* Use `version=4` when calling `/firm-quote`. Note that version 4 will be deprecated soon; use `version=6` for everything else.
 
-`/indicative-quote` and `/firm-quote` will automatically utilise AMM liquidity if the quoted pair is not available from Native's own liquidity. No adjustment is needed. All returned fields will work as expected.
+`/indicative-quote` and `/firm-quote` will automatically utilise AMM liquidity if the quoted pair is not available from Native's own liquidity. No adjustment is needed to the request.
+
+Fallback is only attempted when all of the following hold:
+
+* your API key is whitelisted for AMM fallback;
+* `from_address` equals `to_address`; and
+* `src_chain` equals `dst_chain`.
+
+It is triggered when there is no pair (`171011`), the orderbook is empty or unavailable, the amount exceeds the available depth (`101010`), or the token is not found (`171015`).
+
+{% hint style="info" %}
+On the fallback path the widget fee is zero and the `fee` parameter is ignored. `is_black_address` is not populated.
+{% endhint %}
 
 {% hint style="warning" %}
 Please note that in liquidity fallback, the contract function that gets called is different. Normally, it should be `tradeRFQT`, but in AMM fallback, it will be `externalSwap`.
@@ -27,9 +39,12 @@ To track which function the swap tx is calling, check `txRequest.function`.
 
 ### Get Tradable Token
 
-AMM fallback enables trading for thousands of tokens; therefore, it is impractical to show individual trading pairs in the `/orderbook` endpoint. Instead, we offer a new endpoint to keep track of all the supported tokens.
+AMM fallback enables trading for thousands of tokens; therefore, it is impractical to show individual trading pairs in the `/orderbook` endpoint. Instead, we offer a new endpoint to keep track of the tradable tokens.
 
-Call `/widget-tokens?chains={chainName}` with your API key.
+Call `/widget-tokens?chains={chainName}` (comma-separate multiple chains, or use `chain=` for one) with your API key. The response is an object keyed by chain name. Unknown chain names are silently ignored.
+
+* `isSupported: true` means the token is available from Native core liquidity; `false` means it is only available through AMM fallback.
+* `isStablecoin`, `isFeatured` and `desc` are not reliable and should not be used.
 
 Example:
 

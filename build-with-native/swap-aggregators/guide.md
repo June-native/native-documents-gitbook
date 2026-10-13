@@ -19,7 +19,7 @@ To start testing, please fill out the [form](https://forms.gle/12LaH1JQyhZqBHqw9
 The latest prices for each pair Native quotes on a specified chain are published in an orderbook.
 
 {% hint style="info" %}
-Our RFQ orderbook is updated every second with the latest prices from Native Core.
+Our RFQ orderbook is refreshed several times per second from Native Core. Books that are no longer valid are dropped from the response, so always quote against the latest `/orderbook` result.
 {% endhint %}
 
 Here's how to retrieve the orderbook:
@@ -67,10 +67,16 @@ Refer to [get-orderbook.md](firmquote-swap-apis/get-orderbook.md "mention") for 
             ]
         ]
     }
-}
+]
 ```
 
+Each level is `[base_quantity, price]` and is **not** cumulative. Prices already include your API key's fee. `minimum_in_base` is expressed in wei of the base token; requests below it fail with error `171055`.
+
 ### 3. Get a firm quote
+
+{% hint style="warning" %}
+Always pass `version=6` (the latest router version) on `/firm-quote`. If `version` is omitted, version 4 is used purely for backwards compatibility, and version 4 will be deprecated soon.
+{% endhint %}
 
 Next, obtain a quote with a price that Native is committed to. If the quote is favorable, you can execute it by submitting the associated call data to the Native Router on-chain.
 
@@ -78,7 +84,7 @@ Next, obtain a quote with a price that Native is committed to. If the quote is f
 var request = require('request');
 var options = {
   'method': 'GET',
-  'url': 'https://v2.api.native.org/swap-api-v2/v1/firm-quote?chain=ethereum&address=0x46b2deae6eff3011008ea27ea36b7c27255ddfa9&amount=1&token_in=0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2&token_out=0xdac17f958d2ee523a2206206994597c13d831ec7',
+  'url': 'https://v2.api.native.org/swap-api-v2/v1/firm-quote?src_chain=ethereum&from_address=0x46b2deae6eff3011008ea27ea36b7c27255ddfa9&amount=1&token_in=0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2&token_out=0xdac17f958d2ee523a2206206994597c13d831ec7&version=6',
   'headers': {
     'apikey': 'your-api-key'
   }
@@ -130,18 +136,22 @@ request(options, function (error, response) {
   "amountIn": "1234567890123457000000",
   "amountOut": "672916829375120000",
   "amountOutBeforeFee": "672916829375120000",
-  "fallbackSwapDataArray": null,
-  "tokenTransferFeeOnPercent": 0,
+  "fallbackSwapDataArray": null, // deprecated, always null
+  "tokenTransferFeeOnPercent": 0, // deprecated, always 0
   "txRequest": {
     "target": "0xb2d1F342D2049684Fb2f8c4eF320633415598333",
     "calldata": "0xaf7065390000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005984c239c08834dbcf80d4fd741b4ed47ffe3d0200000000000000000000000026a5652812905cc994009902c4b4dff950f96775000000000000000000000000bf381e1cbfdb0d02f3800010e490130d3dc7311800000000000000000000000055d398326f99059ff775485246999027b31979550000000000000000000000002170ed0880ac9a755fd29b2688956bd959f933f8000000000000000000000000000000000000000000000042ed123b0bd82372400000000000000000000000000000000000000000000000000956ae4a824942800000000000000000000000000000000000000000000000000000000068158fde00000000000000000000000000000000000000000000000016d28ae5ffeb2cbb5250641e3fabe76a2026b456cbd34b670000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000220000000000000000000000000fa7f2f2ce037fc87846fd118e944db50c31875eb0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000024000000000000000000000000000000000000000000000000000000000000002c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000041baeac6970c8da7d2351eeee125ae155dcc1b4f977274f4eadaa3f818595b671003fa4df95d4c370ee170177fb9447cdcc74193019d842c38061fdc33ea8a4b2c1c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-    "value": "0"
+    "value": "0",
+    "function": "tradeRFQT"
   },
   "source": [
     1
   ],
   "errorMessage": "",
-  "router_version": "v1.0.0",
+  "quoteSource": [
+    1
+  ],
+  "router_version": "6",
   "toWrap": false,
   "toUnwrap": false,
   "amountInOffset": 36,
@@ -168,13 +178,12 @@ const apiKey = 'your-api-key'
 const baseUrl = 'https://v2.api.native.org/swap-api-v2/v1/';
 
 const provider = 'https://eth.llamarpc.com';
-const routerAddress = '0x5C0aBf0F651613696A5c57efafC6ab59A460B32d'; // Refer to Contract Address section -> NativeRouter (Proxy) for the address
 
 const walletAddress = ''; // Your address
 const privateKey = ''; // Your private key for the address above
 
 // Swap input
-const chain = 'ethereum'; // 1, 56
+const chain = 'ethereum'; // chain name, e.g. ethereum, bsc (not a numeric chain id)
 const tokenIn = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'; // ETH
 const tokenOut = '0xdAC17F958D2ee523a2206206994597C13D831ec7'; // USDT
 const amount = 1; // in ether, not in wei
@@ -187,21 +196,27 @@ type FirmQuoteResult = {
     feeRate: number
   },
   widgetFeeSignature: string,
-  calldata: string,
+  txRequest: {
+    target: string,
+    calldata: string,
+    value: string,
+    function?: string
+  } | null, // null when toWrap / toUnwrap is true
+  toWrap: boolean,
+  toUnwrap: boolean,
   amountIn: string,
-  amountOut: string,
-  fallbackData: string
+  amountOut: string
 }
 
 async function callFirmQuote(): Promise<FirmQuoteResult> {
   const endpoint = 'firm-quote?';
   const headers: any = {
-    api_key: apiKey,
+    apikey: apiKey, // header name is case-insensitive
   };
 
   const response = await axios
     .get(
-      `${baseUrl}${endpoint}chain=${chain}&token_in=${tokenIn}&token_out=${tokenOut}&amount=${amount}&address=${walletAddress}`,
+      `${baseUrl}${endpoint}src_chain=${chain}&token_in=${tokenIn}&token_out=${tokenOut}&amount=${amount}&from_address=${walletAddress}&version=6`,
       {
         headers,
       }
@@ -213,7 +228,14 @@ async function callFirmQuote(): Promise<FirmQuoteResult> {
 async function callRouterToSwap(firmQuoteResult: FirmQuoteResult) {
   const jsonRpcProvider = new ethers.JsonRpcProvider(provider);
   const signer = new ethers.Wallet(privateKey, jsonRpcProvider);
-  const tx = await signer.sendTransaction({to: routerAddress, data: firmQuoteResult.calldata});
+  const { txRequest } = firmQuoteResult;
+  if (!txRequest) throw new Error('No tx to send (wrap/unwrap or error)');
+  // Always use the target returned by the API; the router differs by `version`.
+  const tx = await signer.sendTransaction({
+    to: txRequest.target,
+    data: txRequest.calldata,
+    value: txRequest.value,
+  });
   await tx.wait()
 }
 
@@ -233,7 +255,7 @@ Refer to [pamm-swap-apis](pamm-swap-apis/ "mention") for addresses, events, and 
 
 ### 1. Confirm the pair and engine
 
-`directSwapEnabled` is the live flag. Quotes still work when it is false; swaps revert with `DirectSwapDisabled`. Always read the flag onchain before sending a swap.
+`directSwapEnabled` is the live flag. Quotes can still work when it is false, provided the pair has an engine; swaps revert with `DirectSwapDisabled`. Always read the flag onchain before sending a swap.
 
 On BNB Chain, QQQB–USDT is enabled for test. Other listed pairs may quote while direct swap is still disabled. Confirm yourself:
 

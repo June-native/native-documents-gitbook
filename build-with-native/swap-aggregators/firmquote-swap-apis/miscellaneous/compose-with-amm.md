@@ -30,6 +30,10 @@ To locate the parameters in calldata, you may decode the call using the Native R
 
 They indicate the offset position (in bytes) of the `actualSellerAmount` and `actualMinOutputAmount` parameters within the returned calldata.
 
+{% hint style="warning" %}
+The offsets are fixed at `36` and `68` and are only valid for a single-leg `tradeRFQT` call. For multihop (`multicall` / `multicall0`) or AMM fallback (`externalSwap`) responses, the outer calldata is different, so decode the call with the Native Router ABI instead. For multi-order responses, `txRequest.function` reads `multicall`, while the v3-v5 router ABI function is named `multicall0`.
+{% endhint %}
+
 ### Examples
 
 #### Swap Tx Examples

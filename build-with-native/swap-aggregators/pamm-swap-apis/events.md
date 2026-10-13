@@ -28,7 +28,17 @@ Topic0:
 
 None of the fields are indexed — filter by pool address, then decode.
 
-Direct pAMM **does not** emit `RFQTrade`. A successful pAMM fill and an RFQ fill are mutually exclusive.
+For native legs, `sellerToken` / `buyerToken` hold the wrapped token (WETH/WBNB), never `address(0)`.
+
+Direct pAMM **does not** emit `RFQTrade`. For a given trade, a pAMM fill and an RFQ fill are mutually exclusive.
+
+## `PAMMFallback` — RFQ path only
+
+```solidity
+event PAMMFallback(bytes16 indexed quoteId, address indexed engine, bytes4 reason);
+```
+
+Emitted on the RFQ path when the pAMM engine attempt reverts. The trade is then settled as an `RFQTrade`. Direct `tradePAMM` swaps never emit it. Compute topic0 as the keccak256 of `PAMMFallback(bytes16,address,bytes4)`.
 
 ## Config events (ops / indexing)
 
@@ -37,4 +47,4 @@ event EngineUpdated(bytes32 indexed pairKey, address indexed engine, address ind
 event DirectSwapEnabledUpdated(bytes32 indexed pairKey, bool enabled);
 ```
 
-Use `DirectSwapEnabledUpdated` to cache the live flag instead of polling every block.
+`DirectSwapEnabledUpdated` is emitted only when the flag value changes, while `EngineUpdated` is always emitted. Cache the flag from `DirectSwapEnabledUpdated`, and re-read `directSwapEnabled` onchain whenever `EngineUpdated` fires.

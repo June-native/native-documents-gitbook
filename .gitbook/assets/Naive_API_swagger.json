@@ -38,9 +38,9 @@
                     },
                     {
                         "name": "dst_chain",
-                        "required": true,
+                        "required": false,
                         "in": "query",
-                        "description": "Blockchain name, eg: ethereum, arbitrum, ...",
+                        "description": "Blockchain name, eg: ethereum, arbitrum, ... Optional, defaults to src_chain.",
                         "schema":
                         {
                             "enum":
@@ -105,17 +105,6 @@
                         "schema":
                         {
                             "default": 0,
-                            "type": "number"
-                        }
-                    },
-                    {
-                        "name": "timeout_millis",
-                        "required": false,
-                        "in": "query",
-                        "description": "Timeout in milliseconds",
-                        "schema":
-                        {
-                            "default": 2000,
                             "type": "number"
                         }
                     },
@@ -217,10 +206,10 @@
                     },
                     {
                         "name": "dst_chain",
-                        "required": true,
+                        "required": false,
                         "in": "query",
                         "example": "bsc",
-                        "description": "Blockchain name, eg: ethereum, bsc, ... (refer to network name reference)",
+                        "description": "Blockchain name, eg: ethereum, bsc, ... (refer to network name reference). Optional, defaults to src_chain.",
                         "schema":
                         {
                             "enum":
@@ -289,7 +278,7 @@
                         "required": false,
                         "in": "query",
                         "example": 60,
-                        "description": "The expiry time of the quote, in seconds. Recommend 60 for all networks to avoid quoting errors.",
+                        "description": "The expiry time of the quote, in seconds. If omitted, the API key / pair default applies. Maximum 60 (error 171018).",
                         "schema":
                         {
                             "default": 60,
@@ -301,21 +290,10 @@
                         "required": false,
                         "in": "query",
                         "example": 5,
-                        "description": "Number in percent. For example, passing the value 5 means 5%, 0.1 means 0.1% slippage tolerance. Recommend keeping default 0.5",
+                        "description": "Number in percent. For example, passing the value 5 means 5%, 0.1 means 0.1% slippage tolerance. If omitted, a pair-specific default from Native risk settings applies. Recommend passing 0.5 explicitly.",
                         "schema":
                         {
-                            "default": 0.5,
-                            "type": "number"
-                        }
-                    },
-                    {
-                        "name": "timeout_millis",
-                        "required": false,
-                        "in": "query",
-                        "description": "Timeout in milliseconds for the API request, useful in latency-sensitive applications.",
-                        "schema":
-                        {
-                            "default": 2000,
+                            "example": 0.5,
                             "type": "number"
                         }
                     },
@@ -324,10 +302,10 @@
                         "required": false,
                         "in": "query",
                         "example": 6,
-                        "description": "The swap router version. Use 6 (latest).",
+                        "description": "The swap router version. Use 6 (latest). If omitted, version 4 is used for backwards compatibility only. Version 4 will be deprecated soon, so always pass `version=6` explicitly.",
                         "schema":
                         {
-                            "default": 6,
+                            "example": 6,
                             "type": "number"
                         }
                     },
@@ -559,17 +537,6 @@
                         "schema":
                         {
                             "default": 0,
-                            "type": "number"
-                        }
-                    },
-                    {
-                        "name": "timeout_millis",
-                        "required": false,
-                        "in": "query",
-                        "description": "Timeout in milliseconds",
-                        "schema":
-                        {
-                            "default": 2000,
                             "type": "number"
                         }
                     },
