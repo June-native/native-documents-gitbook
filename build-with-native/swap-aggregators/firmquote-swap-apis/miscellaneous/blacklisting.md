@@ -2,7 +2,7 @@
 
 To protect LP, malicious arbitrage that puts Native liquidity at risk will be profiled, and the user/swapper address will be added to the blacklist.
 
-To avoid producing additional errors during the /firm-quote stage, any quotes submitted with `from_address` or `beneficiary_address` being blacklisted will be subject to a 50bps added spread due to increased risk.
+To avoid producing additional errors during the /firm-quote stage, any quotes submitted with `from_address` or `beneficiary_address` being blacklisted will have a deduction applied to `amountOut` due to increased risk (default 50bps; this is configurable per deployment and may differ for your API key). `from_address` is checked first, then `beneficiary_address`. Addresses on the gray list are quoted with separate, time-based slippage settings rather than this deduction.
 
 We recommend that all upstreams query and cache a copy of the latest blacklisted addresses and apply pre-processing and filtering.
 
@@ -20,8 +20,10 @@ curl "https://v2.api.native.org/swap-api-v2/v1/blacklist?page_size=35000&page_in
 
 Param:
 
-* page\_size: entries per page, min 1, max 35000
-* page\_index: page index
+* page\_size: entries per page. Values below 1 or above 35000 are clamped to 35000
+* page\_index: page index (values below 1 are treated as 1)
+
+The list is cached and rebuilt every few minutes, so recently added addresses may take a short while to appear. Whitelisted and gray-listed addresses are excluded.
 
 Normal return:
 
@@ -52,7 +54,7 @@ No permission return:
 
 #### /is-black-address Endpoint
 
-Check whether a single address is on the blacklist. Use this for addresses that may fall outside the latest 140,000 records returned by `/blacklist`.
+Check whether a single address is on the blacklist (gray-listed addresses return `false`). Like `/blacklist`, this endpoint must be enabled for your API key, otherwise it returns `201009`. Use this for addresses that may fall outside the latest 140,000 records returned by `/blacklist`.
 
 ```
 ## Request
@@ -63,6 +65,7 @@ curl "https://v2.api.native.org/swap-api-v2/v1/is-black-address?address=0x000000
 Param:
 
 * address: the address to check
+* chain\_id: accepted but currently ignored; the lookup is by address only
 
 Normal return:
 
@@ -74,7 +77,7 @@ Normal return:
 
 #### Blacklist status on /firm-quote
 
-Pass optional `show_blacklist_status=true` on `/v1/firm-quote` to include `is_black_address` in the response. Omit the parameter or pass `false` to keep the default response (field omitted).
+Pass optional `show_blacklist_status=true` on `/v1/firm-quote` to include `is_black_address` in the response. The field is not populated on wrap/unwrap or AMM-fallback responses, where it will read `false`. Omit the parameter or pass `false` to keep the default response (field omitted).
 
 ```
 ## Request

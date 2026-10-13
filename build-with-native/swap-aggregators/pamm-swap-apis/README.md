@@ -7,7 +7,7 @@ Native Relay pAMM is an onchain-only swap path into Native Core liquidity. There
 You discover the pair's engine on `NativeRFQPool`, quote with `PropAMMEngine.getQuote`, then execute with `NativeRouter.tradePAMM`.
 
 {% hint style="info" %}
-`directSwapEnabled` is the live flag. Quotes still work when it is false; swaps revert with `DirectSwapDisabled`. Always read the flag onchain before sending a swap.
+`directSwapEnabled` is the live flag. Quotes can still work when it is false, provided the pair has an engine; swaps revert with `DirectSwapDisabled`. Always read the flag onchain before sending a swap.
 {% endhint %}
 
 pAMM is a **single-hop** path. There is no RFQ fallback if you swap directly with `tradePAMM`. Use [FirmQuote Swap APIs](../firmquote-swap-apis/ "mention") when you need a signed RFQ with fallback and a higher swap success rate.
