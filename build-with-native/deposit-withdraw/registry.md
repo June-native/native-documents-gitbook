@@ -64,5 +64,4 @@ Each item in `underlyings`:
 `updated_at` is the last update time, in Unix milliseconds.
 
 * The data is updated about once an hour, so `enabled` can be out of date. Before each deposit, read `isDepositPaused(token)` and `emergencyPaused()` from the vault.
-* If `chains` is empty, the data has not loaded yet. Try again later.
 * Not every chain is listed here yet. For the full list of vaults, use [`accountingDepositContracts`](../native-core/post-info.md#accountingdepositcontracts).
