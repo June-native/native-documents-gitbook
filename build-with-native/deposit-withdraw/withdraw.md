@@ -10,11 +10,11 @@ Read [Deposit & Withdraw](README.md) first for the shared endpoints, discovery q
 
 ## 1. Validate the amount
 
-Three rules govern the amount, and a fourth number caps it. The first two come from `/info` and are enforced at admission. The third is enforced nowhere: break it and Native Core accepts the action, debits the balance, and the release is never constructed.
+Three rules govern the amount, and a fourth number caps it. The first two come from `/info` and are enforced at admission. The third is not enforced: an amount that breaks it still executes and is released, but the payout loses the digits the destination token cannot hold.
 
 * **Minimum** — `min_withdraw_atoms` from the [`accountingWithdrawTokens`](../native-core/post-info.md#accountingwithdrawtokens) entry whose `chain_id` and `asset_id` match your destination chain and asset.
 * **Fee** — `withdraw_fee_atoms` for the asset from [`assets`](../native-core/post-info.md#assets). It is recorded, not deducted: you sign the **gross** amount, Native debits the gross, and the destination chain releases `amount − fee`. `amount` must be strictly greater than the fee.
-* **Decimal cap** — cap the amount at 6 decimal places. Native balances are 8-decimal and the release rescales into the destination token's decimals. USDT and USDC are 6-decimal on Ethereum, Arbitrum and Base, so a 6-decimal cap divides evenly into every destination token currently listed.
+* **Decimal cap** — cap the amount at 6 decimal places. Native balances are 8-decimal, and the release rescales `amount` and the fee into the destination token's own decimals, truncating whatever that token cannot hold. Native debits the full `amount`; truncated digits are neither paid out nor returned to your balance. Several destination tokens are 6-decimal — USDC and USDT on most routes — and no destination token currently listed has fewer, so a 6-decimal amount always converts exactly.
 
 ### The withdrawable ceiling
 
@@ -198,11 +198,11 @@ const released = await publicClient.readContract({
 })
 ```
 
-Compute the credited amount yourself: `amount − withdraw_fee_atoms`, from values you already hold.
+Compute the credited amount yourself from values you already hold: `amount − withdraw_fee_atoms`. Within the decimal cap it matches the payout to within a few of the destination token's smallest units, because the vault rounds the fee it charges on-chain. Beyond the cap, first truncate `amount` and the fee to the destination token's decimals.
 
 To watch the token's `Transfer` event instead, pin the destination ERC20 addresses for the routes you support at integration time. `/info` does not map `(asset_id, chain_id)` onto an address, and symbol matching breaks on the wrapped-native routes — `ETH` is `WETH`, `BNB` is `WBNB` — and on Arbitrum `USDT`, which is `USD₮0`.
 
-A withdrawal debited on Native that still shows `usedNonces == false` after a long wait is stalled, not lost. The release pipeline retries and never drops a debited withdrawal; the decimal cap in step 1 is the most common cause.
+A withdrawal debited on Native that still shows `usedNonces == false` after a long wait is stalled, not lost. The release pipeline retries and never drops a debited withdrawal. A release waits while the destination vault holds less than the amount, so check [the withdrawable ceiling](#the-withdrawable-ceiling) for your route before you sign.
 
 ## What can go wrong
 
@@ -215,7 +215,8 @@ A withdrawal debited on Native that still shows `usedNonces == false` after a lo
 | `ActionNotAllowedForSpotCreditAccount`                  | The signer is a credit account                                           | Credit accounts cannot use this path — see [Account Types](../native-core/account-types.md) |
 | `OwnerDoesNotExist` for an account you know exists      | The typed data does not match, so the recovered signer is a different address | Recover your own signature locally and compare it to the signing address |
 | `submission_status: "timeout"`                          | Outcome not observed in the wait budget — it may still commit            | Reconcile by `cloid`; never re-sign under a new nonce                          |
-| Accepted, `usedNonces` stays `false`                    | Amount is not exactly representable in the destination token's decimals  | Cap amounts at 6 decimal places; contact Native for a stalled one              |
+| Accepted, `usedNonces` stays `false`                    | The release is held — for example, the destination vault cannot cover the amount yet | Check `availableWithdraw` for your route; contact Native for a stalled one |
+| Payout a fraction below `amount − withdraw_fee_atoms`   | `amount` carried more decimals than the destination token; the extra digits were truncated | Cap amounts at 6 decimal places                                  |
 
 ## Next steps
 
