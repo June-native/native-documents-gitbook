@@ -58,7 +58,7 @@ Resolve the routing table at runtime. Vaults are redeployed and asset listings c
 | What you need                                  | Where it comes from                                                                             |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | Vault address per chain                        | `POST /info` [`accountingDepositContracts`](../native-core/post-info.md#accountingdepositcontracts) |
-| Token address, decimals, `asset_id` and minimum deposit, per chain | `api-ui.native.org` `GET /api/v3/core/registry` ([Registry](registry.md)) |
+| Which Native Core `asset_id` each EVM token maps to | `api-ui.native.org` `GET /api/v3/core/registry` ([Registry](registry.md)) |
 | Depositable tokens on a chain                  | vault `getSupportedUnderlyings()`                                                                 |
 | `asset_id`, `balance_decimals`, withdrawal fee | `POST /info` [`assets`](../native-core/post-info.md#assets)                                        |
 | Withdrawable `(chain, asset)` and minimums     | `POST /info` [`accountingWithdrawTokens`](../native-core/post-info.md#accountingwithdrawtokens)    |
