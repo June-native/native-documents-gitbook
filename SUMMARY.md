@@ -86,6 +86,7 @@
   * [Deposit](build-with-native/deposit-withdraw/deposit.md)
   * [Withdraw](build-with-native/deposit-withdraw/withdraw.md)
   * [Vault Contract](build-with-native/deposit-withdraw/vault-contract.md)
+  * [Registry](build-with-native/deposit-withdraw/registry.md)
 * [Native Core Pool](build-with-native/native-core-pool/README.md)
   * [Deposit](build-with-native/native-core-pool/deposit.md)
   * [Yield](build-with-native/native-core-pool/yield.md)
