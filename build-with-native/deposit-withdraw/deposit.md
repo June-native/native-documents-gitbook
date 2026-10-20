@@ -80,7 +80,7 @@ const amount = requested - (requested % scale)
 
 `minDepositDecimalByUnderlying(token)` returns the grid (`8` on every listed token).
 
-**10 USD minimum.** The floor is a fixed amount of the deposited token, set per chain and token, not a conversion from the current price. Read it as `minDepositAmountWei` from the [Registry](registry.md). On a stablecoin it is 10 tokens. On a volatile token, quote above 10 USD rather than exactly at it: a rise in that token's price lifts the floor above what 10 USD buys.
+**10 USD minimum.** The floor is a fixed amount of the deposited token, set per chain and token, not a conversion from the current price. Get it from `minDepositAmountWei` in the [Registry](registry.md). On a stablecoin it is 10 tokens. On a volatile token, quote above 10 USD rather than exactly at it: a rise in that token's price lifts the floor above what 10 USD buys.
 
 ## 4. Approve and deposit
 

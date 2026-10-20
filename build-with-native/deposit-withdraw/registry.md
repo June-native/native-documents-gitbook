@@ -1,16 +1,16 @@
 ---
-description: One keyless read for the deposit routing table — the vault on each chain, and each token's address, decimals, asset_id, pause state and minimum deposit.
+description: Get every deposit vault and the tokens it accepts in one request.
 ---
 
 # Registry
 
-`GET /api/v3/core/registry` returns, in one call, the vault on each EVM chain and every token it accepts that Native credits.
+`GET /api/v3/core/registry` returns the deposit vault on each EVM chain and the tokens each vault accepts.
 
 ```bash
 curl -sS https://api-ui.native.org/api/v3/core/registry
 ```
 
-Keyless, no parameters, mainnet. The response uses the `{code, message, data}` envelope and always returns `code: 0`.
+No API key needed. No parameters. Mainnet only. The HTTP status is always `200` and `code` is always `0`.
 
 ```json
 {
@@ -22,7 +22,6 @@ Keyless, no parameters, mainnet. The response uses the `{code, message, data}` e
       {
         "evmChainId": 56,
         "address": "0xd7AFd8FbEcC1AE7a4Ce5b93eb59D76F967D0Dea7",
-        "enabled": true,
         "underlyings": [
           {
             "address": "0x55d398326f99059fF775485246999027B3197955",
@@ -40,18 +39,30 @@ Keyless, no parameters, mainnet. The response uses the `{code, message, data}` e
 }
 ```
 
-The response carries more fields than shown. Build only on the ones below.
+The example leaves out fields that only the Native web app uses.
 
-| Field                 | Meaning                                                                         |
-| --------------------- | ------------------------------------------------------------------------------- |
-| chain `address`       | The vault: `approve` spender and `deposit()` target                             |
-| token `address`       | The `token` argument to `deposit()`                                             |
-| `decimals`            | The token's own decimals. `deposit()` amounts are in these units                |
-| `assetId`             | The Native `asset_id` the deposit credits                                       |
-| `enabled`             | `false` when deposits of this token are paused                                  |
-| `minDepositDecimal`   | Floor the amount to this many decimal places                                    |
-| `minDepositAmountWei` | Minimum deposit in the token's base units, as a string. `"0"` means no minimum  |
+Each item in `chains`:
 
-* The table refreshes about once an hour, so `enabled` can lag a pause. Read `isDepositPaused(token)` and `emergencyPaused()` on-chain before each deposit.
-* An empty `chains` array means the table is temporarily unavailable. Retry later.
-* [`accountingDepositContracts`](../native-core/post-info.md#accountingdepositcontracts) is the authoritative vault list and can include chains this table does not.
+| Field         | Meaning                    |
+| ------------- | -------------------------- |
+| `evmChainId`  | EVM chain ID               |
+| `address`     | Vault address              |
+| `underlyings` | Tokens this vault accepts  |
+
+Each item in `underlyings`:
+
+| Field                 | Meaning                                                                       |
+| --------------------- | ----------------------------------------------------------------------------- |
+| `address`             | Token address                                                                 |
+| `decimals`            | Token decimals                                                                |
+| `assetId`             | Asset ID on Native Core                                                       |
+| `nativeSymbol`        | Asset symbol on Native Core                                                   |
+| `enabled`             | `true` if deposits of this token are open                                     |
+| `minDepositDecimal`   | Maximum decimal places of a deposit amount                                    |
+| `minDepositAmountWei` | Minimum deposit in the token's smallest unit, as a string. `"0"` means no minimum |
+
+`updated_at` is the last update time, in Unix milliseconds.
+
+* The data is updated about once an hour, so `enabled` can be out of date. Before each deposit, read `isDepositPaused(token)` and `emergencyPaused()` from the vault.
+* If `chains` is empty, the data has not loaded yet. Try again later.
+* Not every chain is listed here yet. For the full list of vaults, use [`accountingDepositContracts`](../native-core/post-info.md#accountingdepositcontracts).

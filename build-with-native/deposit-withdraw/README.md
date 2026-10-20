@@ -45,7 +45,7 @@ Native Core exposes two REST endpoints, and funding uses a handful of queries on
 API_URL=https://api.native.org
 ```
 
-Two reads in this section go to `https://api-ui.native.org` instead: [the withdrawable ceiling](withdraw.md#the-withdrawable-ceiling) and [the Registry](registry.md). Both are keyless and mainnet only, and both answer with their own envelope: the HTTP status is always `200` and the outcome is the body's `code` field. A rate-limited `availableWithdraw` call comes back as `201005`.
+Two calls in this section use `https://api-ui.native.org` instead: [the withdrawable ceiling](withdraw.md#the-withdrawable-ceiling) and [the Registry](registry.md). Both need no API key and serve mainnet only. Both always return HTTP `200`, so check the `code` field in the body. A rate-limited `availableWithdraw` call returns `201005`.
 
 {% hint style="info" %}
 `/info` is rate limited to **1 request per second per IP**. Every polling loop in this section needs an interval at or above that, and a shared budget if you run several at once.
@@ -58,7 +58,7 @@ Resolve the routing table at runtime. Vaults are redeployed and asset listings c
 | What you need                                  | Where it comes from                                                                             |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | Vault address per chain                        | `POST /info` [`accountingDepositContracts`](../native-core/post-info.md#accountingdepositcontracts) |
-| Per token: address, decimals, `asset_id`, pause state, minimum deposit | `api-ui.native.org` `GET /api/v3/core/registry` ([Registry](registry.md)) |
+| Token address, decimals, `asset_id` and minimum deposit, per chain | `api-ui.native.org` `GET /api/v3/core/registry` ([Registry](registry.md)) |
 | Depositable tokens on a chain                  | vault `getSupportedUnderlyings()`                                                                 |
 | `asset_id`, `balance_decimals`, withdrawal fee | `POST /info` [`assets`](../native-core/post-info.md#assets)                                        |
 | Withdrawable `(chain, asset)` and minimums     | `POST /info` [`accountingWithdrawTokens`](../native-core/post-info.md#accountingwithdrawtokens)    |
