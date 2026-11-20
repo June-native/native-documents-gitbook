@@ -12,7 +12,11 @@ pAMM is single-hop only and has no RFQ fallback on the direct path. Use RFQ if y
 
 ### 1. Get an API key
 
-To start testing, please fill out the [form](https://forms.gle/12LaH1JQyhZqBHqw9) and our team will get back to you with the API key.
+Keyed requests use `https://v2.api.native.org` and an `apiKey` header. To start testing with a key, fill out the [form](https://forms.gle/12LaH1JQyhZqBHqw9) and our team will get back to you with the API key.
+
+{% hint style="info" %}
+For public, no-key access, use `https://v2-pub.api.native.org` as the base URL. Call the same paths and leave off the `apiKey` header, for example `https://v2-pub.api.native.org/swap-api-v2/v1/orderbook`. A rate limit applies. For a higher QPS, use the [contact form](https://forms.gle/12LaH1JQyhZqBHqw9).
+{% endhint %}
 
 ### 2. Get orderbook
 
