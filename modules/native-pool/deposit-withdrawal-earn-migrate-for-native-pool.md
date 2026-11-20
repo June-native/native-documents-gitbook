@@ -1,6 +1,6 @@
 # Deposit / Withdrawal / Earn / Migrate for Native Pool
 
-Native Pool allows you to supply supported assets from an EVM wallet or your Native Core balance, withdraw assets through scheduled or instant withdrawal, and migrate eligible legacy Liquidity Pool positions.
+Native Pool runs on each supported EVM chain. You supply supported assets from your EVM wallet on that chain, withdraw them through scheduled or instant withdrawal, and can migrate eligible legacy Liquidity Pool positions.
 
 ### How to Supply Assets from an EVM Wallet
 
@@ -19,17 +19,12 @@ Native Pool allows you to supply supported assets from an EVM wallet or your Nat
 
 #### Step 3: Enter and Confirm the Supply Details
 
-1. Select **From EVM Wallet**.
-2. Select the **Source Chain**.
-3. Enter the amount you want to supply.
-4. Click **Approve** and confirm the approval request in your wallet.
-5. Confirm the supply transaction in your wallet.
+1. Select the **chain** whose pool you want to supply.
+2. Enter the amount you want to supply.
+3. Click **Approve** and confirm the approval request in your wallet.
+4. Confirm the supply transaction in your wallet.
 
 <figure><img src="../../.gitbook/assets/image (93).png" alt=""><figcaption></figcaption></figure>
-
-{% hint style="info" %}
-If your address has not previously activated a Native Core account, a one-time account activation fee of \~ $1 applies to your first deposit. The fee is paid in the source chain’s native gas token, such as ETH on Ethereum or BNB on BNB Chain. Make sure your wallet has enough of the source chain’s native token to cover both the activation fee and subsequent on-chain transaction fees.
-{% endhint %}
 
 #### Step 4: Check Your Position
 
@@ -39,38 +34,6 @@ Once the supply is complete:
 2. Open the **Assets** tab to view your current position on the right side of the page.
 
 <figure><img src="../../.gitbook/assets/image (94).png" alt=""><figcaption></figcaption></figure>
-
-### How to Supply Assets from Your Native Core Balance
-
-#### Step 1: Connect Your Wallet
-
-1. Go to the **Native Pool** page.
-2. Click **Connect Wallet** in the upper-right corner.
-3. Select your wallet and confirm the connection request.
-
-#### Step 2: Select an Asset
-
-1. Browse the list of supported assets.
-2. Click **Supply** next to the asset you want to supply.
-
-<figure><img src="../../.gitbook/assets/image (95).png" alt=""><figcaption></figcaption></figure>
-
-#### Step 3: Enter and Confirm the Supply Details
-
-1. Select **From Native Balance**.
-2. Enter the amount you want to supply.
-3. Click **Supply** and confirm the request in your wallet.
-
-<figure><img src="../../.gitbook/assets/image (96).png" alt=""><figcaption></figcaption></figure>
-
-#### Step 4: Check Your Position
-
-Once the supply is complete:
-
-1. Open the **History** tab to check the transaction status.
-2. Open the **Assets** tab to view your current position on the right side of the page.
-
-<figure><img src="../../.gitbook/assets/image (97).png" alt=""><figcaption></figcaption></figure>
 
 ### How to Withdraw Assets from Native Pool
 
@@ -104,7 +67,7 @@ Check the waiting period shown in the UI carefully before confirming. For exampl
 Once the waiting period ends:
 
 1. Click **Claim**.
-2. Confirm the request in your wallet to move the assets back to your Native Core balance.
+2. Confirm the request in your wallet to receive the assets.
 
 <figure><img src="../../.gitbook/assets/image (100).png" alt=""><figcaption></figcaption></figure>
 

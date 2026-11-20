@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # On-chain events for swap
 
 * Market makers can monitor the pool address for the following event to detect successful trades on-chain.

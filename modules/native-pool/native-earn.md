@@ -1,26 +1,21 @@
 # Native Pool Yield
 
-Native Pool is an earn product on Native Core: deposit supported assets to earn yield, and withdraw them when you need to. To deposit, use your balance from Native Core. Or, use direct EVM deposit if you are a new user or wish to deposit directly from EVM.
+Native Pool is Native's earn product, with a separate pool on each supported EVM chain: deposit supported assets to earn yield, and withdraw them when you need to.
 
 Native Pool is designed for users who want to earn on assets that are actively used for trading liquidity but without the need for actively managing a position or perform complex liquidity provisions.
 
 ### How yield works
 
-Yield is supported by demand for capital on Native Core:
+Yield is supported by demand for the pool's capital:
 
-* **Market Makers:** verified market makers utilise the capital to support trading and settlement on Native Core, generating funding fees.
-* **Native Relay:** Native Relay utilises the capital to execute atomic trades on EVM networks, generating trading fees.
+* **Market Makers:** verified market makers utilise the capital to support quoting and settlement, generating funding fees.
+* **Swaps:** swaps quoted through the [Native RFQ API](../native-relay.md) settle against the pool on each EVM chain, generating trading fees.
 
 Native distributes yield to eligible earning balances. The amount you receive is based on your eligible balance for each asset when a distribution is made. The app shows current yield information and asset-specific terms.
 
 ### Deposit and start earning
 
-You can start earning in either of these ways:
-
-1. Deposit a supported asset from an EVM network directly into Native Pool.
-2. Deposit into Native Core, then transfer an available Core balance into Native Pool.
-
-Once the transfer into Native Pool is complete, the balance is eligible for subsequent yield distributions. Minimum deposit requirements and any first-time account-activation fee are displayed before you confirm a deposit.
+Deposit a supported asset into the Native Pool on its EVM chain. Once the deposit is complete, the balance is eligible for subsequent yield distributions. Minimum deposit requirements are displayed before you confirm a deposit.
 
 ### Withdraw your assets
 
@@ -33,7 +28,7 @@ An amount in a scheduled withdrawal stops earning yield. Before it becomes claim
 
 ### Existing positions
 
-If you have a legacy position, use the Legacy entry in the app to review it. Eligible positions can be migrated into Native Pool, one-time account activation fees may apply.
+If you have a legacy position, use the Legacy entry in the app to review it. Eligible positions can be migrated into Native Pool.
 
 ### Important considerations
 

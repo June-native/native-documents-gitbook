@@ -1,36 +1,28 @@
 ---
-description: Enables Direct-Access for Professional Market Makers
+description: Firm-quote swap API for wallets, aggregators, and solvers
 ---
 
-# Native Relay
+# Native RFQ API
 
-**Native Relay** is an integrator SDK/API that streams prices and routes trades into Native Core.
+The **Native RFQ API** gives wallets, aggregators, and solvers firm, executable quotes on each supported EVM chain.
 
-It lets existing distribution partners tap into the deep Native Core liquidity **without changing any user flow**.
+Professional market makers push their order books to Native through the [Orderbook Push API](../build-with-native/market-makers/). Native prices each request from the latest valid books, signs a firm quote, and returns calldata for the Native Router. The swap settles on-chain on the same chain, backed by the [Native Pool](native-pool/) liquidity there.
 
-#### Modes
+* **Order book:** `GET /orderbook` publishes price levels for every pair Native quotes on a chain.
+* **Indicative quote:** `GET /indicative-quote` returns a price for a given pair and amount.
+* **Firm quote:** `GET /firm-quote` returns a signed quote and executable calldata. A signed quote is final for its validity window — there is no last look.
 
-Relay meets each partner where they already operate. See [Integration Modes](../concepts/integration-modes.md) for the full breakdown.
+#### Who it's for
 
-* **RFQ mode:** Lowest-friction path for existing DEX aggregators.
-* **pAMM mode:** Fully onchain quotes and swaps. No offchain API and no RFQ signature.
-* **Intent mode:** Used for meta-aggregators, intent platforms, solvers, and cross-chain UIs.
-
-#### Who It's For
-
-* **DEX aggregators** — Native Core as a DEX liquidity source.
-* **Wallets & Meta-aggregators** — Native Core as a swap service provider.
-* **Intent platforms & solvers** — Native Core as a solver.
+* **DEX aggregators** — Native as an RFQ liquidity source.
+* **Wallets & swap widgets** — Native as a swap provider.
+* **Solvers** — Native as a source of firm quotes to fill intents.
 
 #### Compatibility with Native V2
 
-Native's earlier V2 Swap API product now lives inside **Native Relay's mode RFQ.**&#x20;
+The Native RFQ API keeps the V2 Swap API's firm-quote interface, so existing integrations continue to work.
 
-The same firm-quote, backward-compatible integration partners already use — while pricing, matching, and settlement move on-chain to Native Core.
-
-### Build with Native Relay
-
-RFQ and pAMM swap paths for aggregators and integrators are documented under Swap Aggregators.
+### Build with the Native RFQ API
 
 {% content-ref url="../build-with-native/swap-aggregators/" %}
 [swap-aggregators](../build-with-native/swap-aggregators/)

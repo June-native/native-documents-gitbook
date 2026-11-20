@@ -1,6 +1,6 @@
 # Addresses
 
-## Native Relay RFQ <a href="#ethereum-mainnet" id="ethereum-mainnet"></a>
+## Native RFQ <a href="#ethereum-mainnet" id="ethereum-mainnet"></a>
 
 {% hint style="warning" %}
 **V3 and V4 will be phased out by end of October 2026.** All new integrations should use NativeRouter V6 (`version=6` on `/firm-quote`). V1 and V2 are already deprecated.

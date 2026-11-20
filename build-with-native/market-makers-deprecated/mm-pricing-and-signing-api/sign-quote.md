@@ -1,10 +1,13 @@
+---
+hidden: true
+---
+
 # Sign-Quote
 
 {% hint style="danger" %}
 This doc is deprecated, for market makers integrations, please refer to:
 
-* [native-core](../../native-core/ "mention")
-* [native-core](../../../modules/native-core/ "mention")
+* [External Market Maker Orderbook Push API](../../market-makers/)
 {% endhint %}
 
 After validating the firm quote, Native will request you to sign the quote, authorizing the swap for the approved amount. The sign quote endpoint must adhere to the following format:

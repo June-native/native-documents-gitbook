@@ -2,9 +2,9 @@
 
 ## Overview
 
-The Native Relay FirmQuote Swap API offers a robust and user-friendly toolkit for seamless integration with Native Core liquidity across various blockchain networks, including Ethereum, BNB Chain, Base, Arbitrum, and others coming in the near future.&#x20;
+The Native RFQ API offers a robust and user-friendly toolkit for seamless integration with Native liquidity across various blockchain networks, including Ethereum, BNB Chain, Base, Arbitrum, and others coming in the near future.&#x20;
 
-Our API enables you to leverage Request-For-Quote (RFQ) pricing from Native Core.
+Our API enables you to leverage Request-For-Quote (RFQ) pricing from Native, built from the order books professional market makers push to Native.
 
 ## **Endpoints**
 

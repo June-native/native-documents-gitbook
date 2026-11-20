@@ -7,7 +7,7 @@ noIndex: true
 
 Slippage is the difference between the expected price of a swap and the price at which it actually executes. A slippage parameter sets the maximum tolerated difference before a swap is rejected.
 
-For swaps routed through [Native Relay](../modules/native-relay.md), slippage is applied in the following scenarios:
+For swaps quoted through the [Native RFQ API](../modules/native-relay.md), slippage is applied in the following scenarios:
 
 1. When external liquidity is aggregated for a swap.
 2. When executing against streamed order-book levels.

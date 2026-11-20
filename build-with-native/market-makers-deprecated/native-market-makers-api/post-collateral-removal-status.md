@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # POST Collateral removal status
 
 {% openapi src="../../../.gitbook/assets/nativeLend.json" path="/v1/lend/collateral-removal-status" method="post" %}

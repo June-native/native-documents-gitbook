@@ -1,6 +1,6 @@
 # Guide
 
-Native Relay connects you with Native Core liquidity on public networks in two same-chain modes:
+Native connects you with its liquidity on public networks in two same-chain modes:
 
 <table><thead><tr><th width="160">Mode</th><th>How you quote</th><th>When to use it</th></tr></thead><tbody><tr><td><strong>RFQ</strong></td><td>Offchain firm-quote API, then submit signed calldata to Native Router</td><td>Existing DEX aggregators, wallets, and solvers. Supports RFQ fallback and a higher swap success rate.</td></tr><tr><td><strong>pAMM</strong></td><td>Fully onchain <code>getQuote</code> + <code>tradePAMM</code>. No API key, no RFQ signature.</td><td>Integrators that want an AMM-style onchain path with no offchain quoting.</td></tr></tbody></table>
 
@@ -8,7 +8,7 @@ Native Relay connects you with Native Core liquidity on public networks in two s
 pAMM is single-hop only and has no RFQ fallback on the direct path. Use RFQ if you need hybrid fallback. Full pAMM reference: [pamm-swap-apis](pamm-swap-apis/ "mention")
 {% endhint %}
 
-## Set up a Swap using Native Relay RFQ APIs
+## Set up a Swap using the Native RFQ API
 
 ### 1. Get an API key
 
@@ -19,7 +19,7 @@ To start testing, please fill out the [form](https://forms.gle/12LaH1JQyhZqBHqw9
 The latest prices for each pair Native quotes on a specified chain are published in an orderbook.
 
 {% hint style="info" %}
-Our RFQ orderbook is refreshed several times per second from Native Core. Books that are no longer valid are dropped from the response, so always quote against the latest `/orderbook` result.
+Our RFQ orderbook is refreshed several times per second from the books market makers push to Native. Books that are no longer valid are dropped from the response, so always quote against the latest `/orderbook` result.
 {% endhint %}
 
 Here's how to retrieve the orderbook:
@@ -247,7 +247,7 @@ async function main() {
 main();
 ```
 
-## Set up a Swap using Native Relay pAMM
+## Set up a Swap using pAMM
 
 pAMM does not use the Swap API. Quote and execution are both onchain on Native Router V6. No API key and no RFQ signature.
 

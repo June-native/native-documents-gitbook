@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # POST Cancel settlement
 
 {% openapi src="../../../.gitbook/assets/nativeLend.json" path="/v1/lend/cancel-settlement" method="post" %}

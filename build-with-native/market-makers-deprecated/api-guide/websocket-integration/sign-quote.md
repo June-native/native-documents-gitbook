@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # Sign-Quote
 
 ### Receiving Sign Quote request

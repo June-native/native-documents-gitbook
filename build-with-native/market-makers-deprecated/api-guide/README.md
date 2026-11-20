@@ -7,8 +7,7 @@ hidden: true
 {% hint style="danger" %}
 This doc is deprecated, for market makers integrations, please refer to:
 
-* [native-core](../../native-core/ "mention")
-* [native-core](../../../modules/native-core/ "mention")
+* [External Market Maker Orderbook Push API](../../market-makers/)
 {% endhint %}
 
 ## 1. Authentication

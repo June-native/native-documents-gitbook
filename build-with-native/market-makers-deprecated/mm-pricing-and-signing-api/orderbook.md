@@ -1,4 +1,5 @@
 ---
+hidden: true
 description: Price levels endpoint for Native APIs and aggregators
 ---
 
@@ -7,8 +8,7 @@ description: Price levels endpoint for Native APIs and aggregators
 {% hint style="danger" %}
 This doc is deprecated, for market makers integrations, please refer to:
 
-* [native-core](../../native-core/ "mention")
-* [native-core](../../../modules/native-core/ "mention")
+* [External Market Maker Orderbook Push API](../../market-makers/)
 {% endhint %}
 
 To indicate current pricing for Native APIs and aggregators, you must provide a price level endpoint that returns the price levels of all supported pairs on a specified chain.
