@@ -2,18 +2,15 @@
 
 Click on the cards below for:
 
-#### Native Relay — Mode RFQ, Same Chain
+#### Native RFQ API
 
 {% content-ref url="firmquote-swap-apis/" %}
 [firmquote-swap-apis](firmquote-swap-apis/)
 {% endcontent-ref %}
 
-#### Native Relay — Mode pAMM, Same Chain
+#### pAMM, Same Chain
 
 {% content-ref url="pamm-swap-apis/" %}
 [pamm-swap-apis](pamm-swap-apis/)
 {% endcontent-ref %}
 
-#### Native Relay — Mode RFQ, Cross Chain
-
-(Coming soon)

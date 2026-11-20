@@ -4,9 +4,9 @@
 The Native Router `externalSwap` calldata is only generated with `version=4`. For other versions the response `txRequest` contains the external AMM transaction directly, with `function` empty and `source` of `[0]`.
 {% endhint %}
 
-Native Core liquidity provides remarkable depth and competitiveness for major assets like WETH and WBTC.&#x20;
+Native liquidity provides remarkable depth and competitiveness for major assets like WETH and WBTC.&#x20;
 
-However, to use the Native Relay API in wallets or swap widgets, Native offers an AMM fallback option to support trading of nearly any tokens.
+However, to use the Native RFQ API in wallets or swap widgets, Native offers an AMM fallback option to support trading of nearly any tokens.
 
 To enable this feature for your API key, contact Native team members through an existing channel.
 
@@ -43,7 +43,7 @@ AMM fallback enables trading for thousands of tokens; therefore, it is impractic
 
 Call `/widget-tokens?chains={chainName}` (comma-separate multiple chains, or use `chain=` for one) with your API key. The response is an object keyed by chain name. Unknown chain names are silently ignored.
 
-* `isSupported: true` means the token is available from Native core liquidity; `false` means it is only available through AMM fallback.
+* `isSupported: true` means the token is available from Native RFQ liquidity; `false` means it is only available through AMM fallback.
 * `isStablecoin`, `isFeatured` and `desc` are not reliable and should not be used.
 
 Example:

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Native Relay pAMM is an onchain-only swap path into Native Core liquidity. There is no offchain quote API and no RFQ signature.
+Native pAMM is an onchain-only swap path into Native liquidity. There is no offchain quote API and no RFQ signature.
 
 You discover the pair's engine on `NativeRFQPool`, quote with `PropAMMEngine.getQuote`, then execute with `NativeRouter.tradePAMM`.
 

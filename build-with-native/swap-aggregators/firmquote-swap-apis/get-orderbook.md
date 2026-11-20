@@ -1,7 +1,7 @@
 # GET Orderbook
 
 {% hint style="info" %}
-Native Relay liquidity is highly efficient and often moves rapidly to meet the market mid-price.
+Native RFQ liquidity is highly efficient and often moves rapidly to meet the market mid-price.
 
 Therefore, it is common for one side of the liquidity to be depleted completely. Or, the available liquidity switches from one direction to the opposite.
 

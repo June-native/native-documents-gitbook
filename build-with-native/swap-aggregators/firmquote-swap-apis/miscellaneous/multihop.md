@@ -1,6 +1,6 @@
 # Multihop
 
-Native Relay API and Router support multihop for pairs that have no direct market, making swapping with Native liquidity more versatile.
+The Native RFQ API and Router support multihop for pairs that have no direct market, making swapping with Native liquidity more versatile.
 
 To enable, add `allow_multihop=true` when requesting `/indicative-quote` or `/firm-quote`.
 
