@@ -23,10 +23,13 @@ Bootstrap real order-book liquidity and price discovery:
 {% endtab %}
 
 {% tab title="Market Makers" %}
-Direct API access to the trade interface:
+Push your book. Native quotes and signs:
 
-* **Direct, exchange-grade access:** Get real-time data and place orders on the Native Core CLOB through the Native Pro direct-access APIs.
-* **Capital-efficient:** Onboard via spot margin — start making instantly without maintaining large, static inventories.
+* **You push, we quote:** Push bids and asks for your assigned pairs. Native prices every firm quote from your latest valid book, applies its own fee, and signs the quote — no last look, no callback.
+* **Inbound only:** Native never fetches prices from you or asks you to sign. A signed quote is final for its full validity.
+* **Two transports, one semantics:** HTTPS or WebSocket. Same book format, same validation.
+
+See [External Market Maker Orderbook Push API](../build-with-native/market-makers/).
 {% endtab %}
 
 {% tab title="Wallets, Aggregators & Solvers" %}

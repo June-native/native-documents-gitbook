@@ -14,7 +14,7 @@ Among onchain liquidity models, AMMs are not capital-efficient for tokenized sto
 
 ### Institutional liquidity infrastructure for RWA markets
 
-Native Core is the onchain orderbook where market makers quote proactively and price discovery happens continuously. Native Relay distributes that liquidity into wallets, aggregators, and trading interfaces.
+Market makers push orderbooks into Native so price discovery can continue around the clock. Native Relay distributes that liquidity into wallets, aggregators, and trading interfaces.
 
 Behind the market, Native's settlement and margin infrastructure helps market makers access capital efficiently. Through cross-margin access, market makers can quote tighter spreads and support deeper books, supporting real 24/7 onchain trading.
 

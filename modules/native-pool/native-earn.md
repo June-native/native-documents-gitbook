@@ -8,7 +8,7 @@ Native Pool is designed for users who want to earn on assets that are actively u
 
 Yield is supported by demand for capital on Native Core:
 
-* **Market Makers:** verified market makers utilise the capital to support trading and settlement on Native Core, generating funding fees.
+* **Market Makers:** verified market makers utilise the capital to support quoting and settlement, generating funding fees.
 * **Native Relay:** Native Relay utilises the capital to execute atomic trades on EVM networks, generating trading fees.
 
 Native distributes yield to eligible earning balances. The amount you receive is based on your eligible balance for each asset when a distribution is made. The app shows current yield information and asset-specific terms.

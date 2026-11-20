@@ -10,7 +10,7 @@ Native Core exposes two REST endpoints and one WebSocket endpoint:
 * `POST /trade` — **writes**. One client-signed action per call (`order`, `cancel`, `cancelAll`, `modify`, `batch`, and the owner-signed `transfer` / `activateFor` / `withdraw` / `settle` / `repay` / `approveAgent` / `revokeAgent`).
 * `/ws` — **streaming**. Push channels for books, trades, fills, and order updates, plus the same `/info` and `/trade` bodies sent over the socket. See [WebSocket](websocket.md).
 
-This page is the front door for anyone integrating **directly** with Native Core: market makers, trading bots, AI-agent builders, and aggregators.
+This page is the front door for anyone integrating **directly** with Native Core: trading bots, AI-agent builders, and aggregators.
 
 There are two ways to integrate:
 

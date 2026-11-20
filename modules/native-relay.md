@@ -1,5 +1,5 @@
 ---
-description: Enables Direct-Access for Professional Market Makers
+description: Streams prices and routes trades for wallets, aggregators, and solvers
 ---
 
 # Native Relay
