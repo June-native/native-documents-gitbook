@@ -27,18 +27,18 @@ layout:
 
 # What is Native
 
-Native is a Non-custodial, Autonomous Trading Infrastructure for Value Exchange.
+Native is non-custodial liquidity infrastructure for on-chain swaps.
 
-It is the first vertically integrated liquidity stack that **decouples pricing logic from asset settlement**: a sovereign, on-chain matching engine provides high-performance price discovery and order matching, while permissionless vaults host assets for settlement across different chains.
+Professional market makers push their order books to Native. Native prices every swap from those books, signs a firm quote, and settles it on-chain on the same EVM chain, backed by the Native Pool there.
 
-The result is institutional-grade liquidity that is **permissionless, non-custodial, and fully transparent** — seamlessly integrated to any chain and any distribution surface, from wallets and aggregators to professional market makers.
+The result is RFQ liquidity that wallets, aggregators, and solvers can reach through one API, with no last look on the quotes Native signs.
 
 ## Why Native
 
-The industry has spent years trying to force high-performance trading into general-purpose environments, leaving traders stuck with opaque off-chain pricing engines, high-latency RFQ models, or MEV-exploited AMMs.
+Swap liquidity is usually a choice between AMMs that leak value to MEV and RFQ venues where makers can reject a trade after the user commits.
 
-Native is built to close that gap: an on-chain price discovery and execution system with ultra high-performance order matching, deterministic settlement and proactive liquidity.
+Native is built to close that gap: makers push firm books, Native quotes and signs on their behalf, and every quote it signs settles on-chain.
 
 ## What We Are Building
 
-<table data-card-size="large" data-view="cards"><thead><tr><th></th><th></th><th></th></tr></thead><tbody><tr><td><a href="modules/native-core/"><strong>Native Core</strong></a></td><td>The on-chain sovereign state machine where price discovery and order matching are finalized.</td><td></td></tr><tr><td><a href="modules/native-pool/"><strong>Native Pool</strong></a></td><td>Core's dedicated earn product to fund various features and generate yield for LPs.</td><td></td></tr><tr><td><a href="modules/native-pro.md"><strong>Native Pro</strong></a></td><td>The institution integration module that exposes Core’s matching engine via direct, exchange-grade interfaces.</td><td></td></tr><tr><td><a href="modules/native-relay.md"><strong>Native Relay</strong></a></td><td>The wallet/aggregator module that streams Core prices and routes orders into Native.</td><td></td></tr></tbody></table>
+<table data-card-size="large" data-view="cards"><thead><tr><th></th><th></th><th></th></tr></thead><tbody><tr><td><a href="modules/native-relay.md"><strong>Native RFQ API</strong></a></td><td>The swap API for wallets, aggregators, and solvers: order books, indicative quotes, and signed firm quotes with executable calldata.</td><td></td></tr><tr><td><a href="modules/native-pool/"><strong>Native Pool</strong></a></td><td>Per-chain liquidity pools on each supported EVM chain. Supply assets to earn yield from the swaps they settle.</td><td></td></tr><tr><td><a href="build-with-native/market-makers/"><strong>Market Makers</strong></a></td><td>Push bids and asks to Native over HTTPS or WebSocket. Native prices and signs every quote.</td><td></td></tr></tbody></table>

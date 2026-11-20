@@ -33,7 +33,7 @@ Native has supported bStocks since day one, delivering 24/7 liquidity, deep mark
 
 **Capital-efficient liquidity for bStocks**
 
-* Native's CLOB and PMM infrastructure supports deep, capital-efficient bStocks markets without relying on a traditional AMM liquidity pair. This helps market makers quote competitively while users access liquidity through their preferred trading interface.
+* Native's PMM infrastructure supports deep, capital-efficient bStocks markets without relying on a traditional AMM liquidity pair. This helps market makers quote competitively while users access liquidity through their preferred trading interface.
 
 
 

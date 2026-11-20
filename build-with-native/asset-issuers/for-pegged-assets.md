@@ -10,13 +10,13 @@ Most onchain users still access primary-market liquidity, with pricing pulled fr
 
 Native is built for secondary-market liquidity. Instead of pulling liquidity from TradFi only when a trade happens, Native enables issuers and LPs to provide inventory while market makers proactively quote on orderbooks. That allows pricing to continue during off-market hours and makes real onchain price discovery possible.
 
-Among onchain liquidity models, AMMs are not capital-efficient for tokenized stocks, while RFQ + CLOB is the structure that can support an orderbook-based secondary market. Native is the first onchain spot liquidity DEX to combine RFQ + CLOB for this market.
+Among onchain liquidity models, AMMs are not capital-efficient for tokenized stocks, while market-maker order books quoted over RFQ can support an orderbook-based secondary market.
 
 ### Institutional liquidity infrastructure for RWA markets
 
-Market makers push orderbooks into Native so price discovery can continue around the clock. Native Relay distributes that liquidity into wallets, aggregators, and trading interfaces.
+Market makers push orderbooks into Native so price discovery can continue around the clock. The Native RFQ API distributes that liquidity into wallets, aggregators, and trading interfaces.
 
-Behind the market, Native's settlement and margin infrastructure helps market makers access capital efficiently. Through cross-margin access, market makers can quote tighter spreads and support deeper books, supporting real 24/7 onchain trading.
+Behind the market, Native's settlement infrastructure helps market makers use capital efficiently, so they can quote tighter spreads and support deeper books for real 24/7 onchain trading.
 
 
 

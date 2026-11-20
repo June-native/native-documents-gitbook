@@ -6,20 +6,12 @@ coverY: 0
 # Benefits for Key Players
 
 {% tabs %}
-{% tab title="Traders" %}
-Get an institutional-grade experience with fully on-chain visibility:
-
-* **High-performance CLOB execution:** Real order-book trading with limit and market orders, deterministic order matching, and sub-second finality.
-* **On-chain transparency:** Every order, match, and balance update is publicly auditable.
-* **Unified cross-chain balance:** Deposit from any supported network and hold a **single balance** for trading.
-{% endtab %}
-
 {% tab title="Asset Issuers" %}
-Bootstrap real order-book liquidity and price discovery:
+Bootstrap firm, market-maker-backed liquidity:
 
-* **Real CLOB listing:** List and bootstrap liquidity with a real central limit order book on Native Core.
+* **Professional quoting:** Market makers push order books for your asset, and Native signs firm quotes from them with no last look.
 * **Capital-efficient provision:** Native's market infrastructure helps market makers use capital efficiently, supporting deeper liquidity at lower cost.
-* **Chain abstraction:** Unified, multi-chain liquidity with Native Relay.
+* **Broad distribution:** Reach wallets, aggregators, and solvers through the Native RFQ API on every supported EVM chain.
 {% endtab %}
 
 {% tab title="Market Makers" %}
@@ -35,8 +27,8 @@ See [External Market Maker Orderbook Push API](../build-with-native/market-maker
 {% tab title="Wallets, Aggregators & Solvers" %}
 Connect your existing order flow:
 
-* **Backward-compatible:** Integrate via Native Relay mode RFQ or mode intent without changing any userflow.
-* **Best execution, high success rate:** Access Native Core prices, and route trades with deep, transparent liquidity and ultra low latency.
-* **Single point of access:** One integration reaches the entire Native Core liquidity across all supported chains.
+* **Backward-compatible:** Integrate the Native RFQ API without changing any user flow.
+* **Best execution, high success rate:** Access Native prices, and route trades with deep, transparent liquidity and ultra low latency.
+* **Single point of access:** One integration reaches Native liquidity across all supported chains.
 {% endtab %}
 {% endtabs %}
