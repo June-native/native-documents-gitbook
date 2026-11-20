@@ -1,10 +1,13 @@
+---
+hidden: true
+---
+
 # GET Market maker info
 
 {% hint style="danger" %}
 This doc is deprecated, for market makers integrations, please refer to:
 
-* [native-core](../../native-core/ "mention")
-* [native-core](../../../modules/native-core/ "mention")
+* [External Market Maker Orderbook Push API](../../market-makers/)
 {% endhint %}
 
 A single interface to return all helpful info for a given market maker. Including:

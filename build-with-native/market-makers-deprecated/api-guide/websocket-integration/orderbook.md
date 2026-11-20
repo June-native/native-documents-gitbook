@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # Orderbook
 
 To indicate current pricing for Native APIs and aggregators, you must send price levels for each supported pair on every network. The recommended frequency is **every second for each pair on every supported network**.

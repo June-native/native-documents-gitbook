@@ -1,10 +1,13 @@
+---
+hidden: true
+---
+
 # Firm-Quote
 
 {% hint style="danger" %}
 This doc is deprecated, for market makers integrations, please refer to:
 
-* [native-core](../../native-core/ "mention")
-* [native-core](../../../modules/native-core/ "mention")
+* [External Market Maker Orderbook Push API](../../market-makers/)
 {% endhint %}
 
 Based on the order book you provide, our router will determine the optimal liquidity source to offer the best price. If your pricing is selected, Native will request a firm quote from you.

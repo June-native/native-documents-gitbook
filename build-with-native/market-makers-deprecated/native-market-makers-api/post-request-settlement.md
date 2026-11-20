@@ -1,3 +1,7 @@
+---
+hidden: true
+---
+
 # POST Request settlement
 
 {% openapi src="../../../.gitbook/assets/nativeLend.json" path="/v1/lend/request-settlement" method="post" %}
