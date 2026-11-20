@@ -4,11 +4,11 @@ hidden: true
 
 # Native Pool Yield
 
-Native Pool distributes yield to eligible earning balances on Native Core.
+Native Pool distributes yield to eligible earning balances in the pool on each supported EVM chain.
 
 ### Where does yield come from?
 
-Yield is funded by demand for capital on Native Core, including market maker utilization and trading fees generated through Native Relay.
+Yield is funded by market maker utilization of pool liquidity and by trading fees from swaps quoted through the Native RFQ API.
 
 Yield is variable and is not a direct rebate of a specific trade or fee. The app displays the current yield information for each supported asset.
 

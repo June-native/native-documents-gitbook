@@ -2,15 +2,15 @@
 
 #### What is Native Pool?
 
-Native Pool is an earn product on Native Core. You deposit supported assets to earn yield and can withdraw them at any time using the available withdrawal options.
+Native Pool is Native's earn product, with a separate pool on each supported EVM chain. You deposit supported assets to earn yield and can withdraw them at any time using the available withdrawal options.
 
 #### How do I start earning?
 
-You can deposit a supported asset directly into Native Pool from an EVM network, or deposit into Native Core and move your available Core balance into Native Pool. Check the app for the currently supported assets, minimum deposit requirements, and any first-time account-activation fee.
+Deposit a supported asset into the Native Pool on its EVM chain. Check the app for the currently supported assets and minimum deposit requirements on each chain.
 
 #### Where does yield come from?
 
-Yield is funded by demand for capital on Native Core, including verified market maker utilization and trading fees generated through Native Relay. Yield is variable; it is not a guaranteed rate of return.
+Yield is funded by verified market maker utilization of pool liquidity and by trading fees from swaps quoted through the Native RFQ API. Yield is variable; it is not a guaranteed rate of return.
 
 #### How is yield distributed?
 
